@@ -7,7 +7,7 @@ public static class FodotEditor
     
 #if TOOLS
 
-    public const string DebugScenePath = "res://fodot_debug_scene";
+    public const string DebugScenePath = "res://.godot/fodot_debug_scene";
     
 #endif
 }

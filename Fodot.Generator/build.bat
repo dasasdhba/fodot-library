@@ -1,2 +1,2 @@
-dotnet run --project Fodot.Generator.fsproj -- ../../project
+dotnet run --project Fodot.Generator.fsproj -- ../../
 pause
