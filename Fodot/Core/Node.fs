@@ -50,27 +50,36 @@ let reparentDirectly parent (node : Node) =
 
 // node get
 
-let getNode<'a when 'a: not struct and 'a :> Node> (name : string) (node : Node) =
+let getNode<'a when 'a: not struct and 'a : null and 'a :> Node> (name : string) (node : Node) =
     node.GetNode<'a>(name)
+    |> Option.ofObj
+    |> Option.defaultWith (fun () -> failwith $"{node}: Node {name} not found")
 
 let tryGetNode<'a when 'a: not struct and 'a : null and 'a :> Node> (name : string) (node : Node) =
     match node.GetNodeOrNull<'a> name with
     | null -> None
     | node -> Some node
 
-let getParent<'a when 'a: not struct and 'a :> Node> (node : Node) =
+let getParent<'a when 'a: not struct and 'a : null and 'a :> Node> (node : Node) =
     node.GetParent<'a>()
+    |> Option.ofObj
+    |> Option.defaultWith (fun () -> failwith $"{node} does not own a parent")
 
 let tryGetParent<'a when 'a: not struct and 'a : null and 'a :> Node> (node : Node) =
     match node.GetParentOrNull<'a>() with
     | null -> None
     | node -> Some node
 
-let getChildInternal<'a when 'a: not struct and 'a :> Node> (idx : int) (node : Node) =
-    node.GetChild<'a>(idx, true)
-    
-let getChild<'a when 'a: not struct and 'a :> Node> (idx : int) (node : Node) =
-    node.GetChild<'a>(idx)
+let private getChildWith<'a when 'a: not struct and 'a : null and 'a :> Node> (idx : int) (inter : bool) (node : Node) =
+    node.GetChild<'a>(idx, inter)
+    |> Option.ofObj
+    |> Option.defaultWith (fun () -> failwith $"{node}: Child at {idx} not found")
+
+let getChild<'a when 'a: not struct and 'a : null and 'a :> Node> (idx : int) (node : Node) =
+    node |> getChildWith<'a> idx false
+
+let getChildInternal<'a when 'a: not struct and 'a : null and 'a :> Node> (idx : int) (node : Node) =
+    node |> getChildWith<'a> idx true
 
 let private tryGetChildWith<'a when 'a: not struct and 'a : null and 'a :> Node> (idx: int) inter (node : Node) =
     match node.GetChildOrNull<'a>(idx, inter) with
@@ -83,26 +92,34 @@ let tryGetChild<'a when 'a: not struct and 'a : null and 'a :> Node> (idx : int)
 let tryGetChildInternal<'a when 'a: not struct and 'a : null and 'a :> Node> (idx : int) (node : Node) =
     node |> tryGetChildWith<'a> idx true
 
-let rec getChildrenRecWith filter (node: Node) =
+let getChildren<'a when 'a: not struct and 'a :> Node> (node : Node) =
     node.GetChildren ()
-    
     |> List.ofSeq
+    |> List.choose (fun c ->
+        match c with
+        | :? 'a as a -> Some a
+        | _ -> None
+    )
+
+let rec getChildrenRecWith<'a when 'a: not struct and 'a :> Node> filter (node: Node) =
+    node
+    |> getChildren<'a>
     |> List.fold (fun acc child ->
         let acc = if filter child then acc @ [child] else acc
         acc |> List.append (child |> getChildrenRecWith filter)
     ) []
 
-let getChildrenRec (node: Node) =
+let getChildrenRec<'a when 'a: not struct and 'a :> Node> (node: Node) =
     node |> getChildrenRecWith (fun _ -> true)
     
-let getChildrenAndSelfRecWith filter (node: Node) =
+let getChildrenAndSelfRecWith<'a when 'a: not struct and 'a :> Node> filter (node: Node) =
     let children = node |> getChildrenRecWith filter
     if filter node then
         node :: children
     else
         children
 
-let getChildrenAndSelfRec (node: Node) =
+let getChildrenAndSelfRec<'a when 'a: not struct and 'a :> Node> (node: Node) =
     node |> getChildrenAndSelfRecWith (fun _ -> true)
 
 // bridge event

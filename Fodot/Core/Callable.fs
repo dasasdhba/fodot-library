@@ -80,11 +80,29 @@ let from<'a, 'b> (f: 'a -> 'b) =
 let call<'a> (args: 'a) (callable: Callable) =
     callable.Call(args |> Variant.fromTuple)
     
+let callAs<'a, 'b> (args: 'a) (callable: Callable) =
+    callable |> call args |> Variant.toType<'b>
+    
+let callAsArray<'a, 'b> (args: 'a) (callable: Callable) =
+    callable |> call args |> Variant.toArray<'b>
+    
+let callAsDictionary<'a, 'b, 'c> (args: 'a) (callable: Callable) =
+    callable |> call args |> Variant.toDictionary<'b, 'c>
+    
 let callDeferred<'a> (args: 'a) (callable: Callable) =
     callable.CallDeferred(args |> Variant.fromTuple)
     
 let invoke (callable: Callable) =
     callable.Call()
+
+let invokeAs<'b> (callable: Callable) =
+    callable |> invoke |> Variant.toType<'b>
+
+let invokeAsArray<'b> (callable: Callable) =
+    callable |> invoke |> Variant.toArray<'b>
+    
+let invokeAsDictionary<'b, 'c> (callable: Callable) =
+    callable |> invoke |> Variant.toDictionary<'b, 'c>
     
 let invokeDeferred (callable: Callable) =
     callable.CallDeferred()

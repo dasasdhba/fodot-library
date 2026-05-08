@@ -134,12 +134,18 @@ type GDSignal<'a> =
 module GD =
     let private loadLock = obj()
     
-    /// This will not init fscript, as we cannot deal with recursive case,
-    /// i.e. we cannot get the subresource. 
-    let load (path : string) =
+    let tryLoad path =
         lock loadLock (fun () ->
             GD.Load path
         )
+        
+        |> Option.ofObj
+    
+    /// This will not init fscript, as we cannot deal with recursive case,
+    /// i.e. we cannot get the subresource. 
+    let load (path : string) =
+        tryLoad path
+        |> Option.defaultWith (fun _ -> failwith $"Failed loading {path} as resource")
         
     let loadAs<'a when 'a :> Resource> (path : string) =
         match load path with
@@ -147,7 +153,7 @@ module GD =
         | :? 'a as obj -> obj
         | _ -> failwith $"Failed loading {path} as {typeof<'a>}"
         
-    let loadSome<'a when 'a :> Resource> (path : string) =
+    let tryLoadAs<'a when 'a :> Resource> (path : string) =
         try
             loadAs<'a> path |> Some
         with

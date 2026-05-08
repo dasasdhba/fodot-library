@@ -6,23 +6,26 @@ open Microsoft.FSharp.Reflection
 
 // metadata
 
+let hasMeta (name : string) (obj : GodotObject) =
+    obj.HasMeta(name)
+
 let setMeta (name : string) (var : 'a) (obj : GodotObject) =
     obj.SetMeta(name, var |> Variant.from)
 
 let getMeta (name : string) (obj : GodotObject) =
-    obj.GetMeta(name)
+    if obj |> hasMeta name |> not then
+        failwith $"{obj}: Meta {name} not found."
+    else
+        obj.GetMeta(name)
 
 let getMetaAs<'a> (name : string) (obj : GodotObject) =
-    obj.GetMeta(name) |> Variant.toType<'a>
+    obj |> getMeta name |> Variant.toType<'a>
     
 let getMetaAsArray<'a> (name : string) (obj : GodotObject) =
-    obj.GetMeta(name) |> Variant.toArray<'a>
+    obj |> getMeta name |> Variant.toArray<'a>
     
 let getMetaAsDictionary<'a, 'b> (name : string) (obj : GodotObject) =
-    obj.GetMeta(name) |> Variant.toDictionary<'a, 'b>
-    
-let hasMeta (name : string) (obj : GodotObject) =
-    obj.HasMeta(name)
+    obj |> getMeta name |> Variant.toDictionary<'a, 'b>
     
 let tryGetMeta (name : string) (obj : GodotObject) =
     if obj |> hasMeta name then
@@ -122,11 +125,17 @@ let hasMethod (method : string) (obj : GodotObject) =
     obj.HasMethod(method)
     
 let call<'a> (method : string) (args : 'a) (obj : GodotObject) =
-    obj.Call (new StringName(method), args |> Variant.fromTuple)
+    if obj |> hasMethod method |> not then
+        failwith $"{obj}: Method {method} not found."
+    else
+        obj.Call (new StringName(method), args |> Variant.fromTuple)
     
 let callDeferred<'a> (method : string) (args : 'a) (obj : GodotObject) =
-    obj.CallDeferred (new StringName(method), args |> Variant.fromTuple) |> ignore
-    
+    if obj |> hasMethod method |> not then
+        failwith $"{obj}: Method {method} not found."
+    else
+        obj.CallDeferred (new StringName(method), args |> Variant.fromTuple) |> ignore
+
 let tryCall<'a> (method : string) (args : 'a) (obj : GodotObject) =
     if obj |> hasMethod method |> not then
         None
