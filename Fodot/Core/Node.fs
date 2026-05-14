@@ -30,11 +30,17 @@ let addSibling (sibling : Node) (node : Node) =
     else
         node |> callDeferred "add_sibling" sibling
 
-let moveChild (idx : int) (node : Node) =
+let moveChild (child: Node) (idx : int) (node : Node) =
     if node |> isAccessSafe then
-        node.MoveChild(node, idx)
+        node.MoveChild(child, idx)
     else
-        node |> callDeferred "move_child" (node, idx)
+        node |> callDeferred "move_child" (child, idx)
+
+let removeChild (child : Node) (node : Node) =
+    if node |> isAccessSafe then
+        node.RemoveChild(child)
+    else
+        node |> callDeferred "remove_child" child
 
 let reparent parent keep (node : Node) =
     if parent |> isAccessSafe then

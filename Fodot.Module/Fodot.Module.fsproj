@@ -10,6 +10,7 @@
         <Compile Include="Vector2.fs" />
         <Compile Include="Color.fs" />
         <Compile Include="Transform2D.fs" />
+        <Compile Include="GodotObject.fs" />
         <Compile Include="CanvasItem.fs" />
         <Compile Include="Tween.fs" />
         <Compile Include="Node.fs" />

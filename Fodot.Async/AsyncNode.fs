@@ -135,6 +135,22 @@ module AsyncNode =
     let run<'a> (action : unit -> 'a) (anode : AsyncNode) =
         anode |> runWithSome None action
     
+    let repeat (interval : float) (times : uint) (action : unit -> unit) (anode : AsyncNode) =
+        let predictor =
+            let mutable counter = 0u
+            let mutable timer = 0.0
+            Delta (fun delta ->
+                timer <- timer + delta
+                if timer >= interval then
+                    timer <- timer - interval
+                    action ()
+                    counter <- counter + 1u
+                    counter >= times
+                else
+                    false
+            )
+        anode |> until predictor
+    
 type AsyncNode with
     member this.Until (predict : ProcessFunc<bool>) =
         this |> AsyncNode.until predict
@@ -168,3 +184,5 @@ type AsyncNode with
         this |> AsyncNode.run action
     member this.RunWith<'a> (proc : ProcessUnit) (action : unit -> 'a) =
         this |> AsyncNode.runWith proc action
+    member this.Repeat (interval : float) (times : uint) (action : unit -> unit) =
+        this |> AsyncNode.repeat interval times action

@@ -1,0 +1,21 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <TargetFramework>$(TargetFrameworkVersion)</TargetFramework>
+        <GenerateDocumentationFile>$(DocumentationFileFlag)</GenerateDocumentationFile>
+        <RootNamespace>Moon</RootNamespace>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <Compile Include="Module\Action.fs" />
+        <Compile Include="Module\Node.fs" />
+        <Folder Include="Library\" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <ProjectReference Include="..\..\module\Fodot.Stage\Fodot.Stage.fsproj" />
+      <ProjectReference Include="..\Fodot.Async\Fodot.Async.fsproj" />
+      <ProjectReference Include="..\Fodot\Fodot.fsproj" />
+    </ItemGroup>
+
+</Project>
