@@ -1,4 +1,3 @@
-using System.Collections.Generic;
 using Godot;
 using Moon.Utils;
 
@@ -17,64 +16,24 @@ public partial class NodePool : Node
     [Export]
     public PackedScene PoolScene { get; set; }
     
-    private Stack<Node> Pool = [];
+    private Library.NodePool pool;
 
     public NodePool() : base()
     {
         Ready += () =>
         {
-            for (int i = 0; i < PoolSize; i++)
-            {
-                var node = CreatePoolNode();
-                Pool.Push(node);
-            }
+            pool = Library.NodePoolModule.create(PoolScene, PoolSize, this);
         };
     }
-
-    public override void _Notification(int what)
-    {
-        if ((ulong)what == NotificationPredelete)
-        {
-            foreach (var node in Pool) node.QueueFree();
-            Pool.Clear();
-        }
-    }
-
-    private Node CreatePoolNode()
-    {
-        var node = PoolScene.InstantiateSafely<Node>();
-        SetPool(node);
-        
-        return node;
-    }
     
-    public int GetPoolCount() => Pool.Count;
-
     public Node GetPoolNode()
     {
-        if (Pool.Count == 0)
-        {
-        #if TOOLS
-            FD.PushWarning($"NodePool at {this.GetUniquePath()} was running out! Consider increasing the pool size.");
-        #endif        
-            return CreatePoolNode();
-        }
-        
-        return Pool.Pop();
+        return pool.Get();
     }
-    
-    private void SetPool(Node node) => node.SetData(PoolNodeData, GetInstanceId());
-    public void ReturnPool(Node node) => Pool.Push(node);
-    
-    private const string PoolNodeData = "PoolNode";
-    public static NodePool GetPool(Node node)
+
+    public T GetPoolNode<T>() where T : Node
     {
-        if (!node.HasData(PoolNodeData)) return null;
-    
-        var r = node.GetData<ulong>(PoolNodeData);
-        if (IsInstanceIdValid(r)) return (NodePool)InstanceFromId(r);
-        
-        return null;
+        return pool.GetAs<T>();
     }
 }
 
@@ -83,26 +42,16 @@ public static class NodePoolExtensions
     /// <summary>
     /// if node is in pool, remove it from parent instead.
     /// </summary>
-    public static void TryQueueFree(this Node node)
+    public static bool TryQueueFree(this Node node)
     {
 #if TOOLS
         if (Engine.IsEditorHint())
         {
             FD.PushWarning($"{node} namely {node.GetPathTo(node.GetTree().GetEditedSceneRoot())} is trying to call TryQueueFree in editor, which is not expected.");
+            return false;
         }
 #endif
         
-        var pool = NodePool.GetPool(node);
-        if (pool != null)
-        {
-            node.GetParent().RemoveChildSafely(node);
-            node.Connect(Node.SignalName.TreeExited, Callable.From(() =>
-            {
-                NodePool.GetPool(node).ReturnPool(node);
-            }), (int)GodotObject.ConnectFlags.OneShot);
-            return;
-        }
-        
-        node.QueueFree();
+        return Library.NodePoolModule.returnPool(node);
     }
 }

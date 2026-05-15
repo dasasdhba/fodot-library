@@ -1,5 +1,6 @@
 module Fodot.Core.Node
 
+open System
 open Fodot.Core
 open Fodot.Core.GodotObject
 open Godot
@@ -194,6 +195,12 @@ let getUnhandledInputEvent (node: Node) =
         _.UnhandledInputEvent
         (fun cache event -> cache.UnhandledInputEvent <- Some event)
         (fun () -> node |> createUnhandledInputEvent)
+
+// dispose
+
+let bindDisposable (dispose : IDisposable) (node: Node) =
+    let del = node |> getDeleteEvent
+    del.Add (fun () -> dispose.Dispose ())
 
 // init
     

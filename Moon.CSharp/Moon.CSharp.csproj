@@ -6,7 +6,6 @@
         <RootNamespace>Moon</RootNamespace>
     </PropertyGroup>
     <ItemGroup>
-      <ProjectReference Include="..\..\module\Fodot.Stage\Fodot.Stage.fsproj" />
       <ProjectReference Include="..\Moon.FSharp\Moon.FSharp.fsproj" />
     </ItemGroup>
 </Project>

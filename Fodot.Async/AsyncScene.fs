@@ -146,13 +146,11 @@ type AsyncScene<'a when 'a :> Node> (cfg : AsyncSceneConfig) =
             node :?> 'a
         | Result.Error node ->
             node :?> 'a
-            
-    member this.Dispose () =
-        disposed <- true
-        cfg.Pool.RemoveMultiple cfg.MaxCount cfg.Scene
         
     interface IDisposable with
-        member this.Dispose () = this.Dispose ()
+        member this.Dispose () =
+            disposed <- true
+            cfg.Pool.RemoveMultiple cfg.MaxCount cfg.Scene
         
 module AsyncScene =
     
@@ -169,16 +167,12 @@ module AsyncScene =
     let fromCfg<'a when 'a :> Node> (cfg : AsyncSceneConfig) =
         new AsyncScene<'a>(cfg)
         
-    let bind (node : Node) (scene : AsyncScene<'a>) =
-        let del = node |> Node.getDeleteEvent
-        del.Add (fun () -> scene.Dispose ())
-        
     let fromCfgWith<'a when 'a :> Node> (node : Node) (cfg : AsyncSceneConfig) =
         let scene = fromCfg<'a> cfg
-        scene |> bind node
+        node |> Node.bindDisposable scene
         scene
         
-    let fromNode<'a when 'a :> Node> (scene : PackedScene) (maxCount : int) (initialCount : int) (node : Node)=
+    let create<'a when 'a :> Node> (scene : PackedScene) (maxCount : int) (initialCount : int) (node : Node)=
         let cfg = createCfg scene maxCount initialCount
         fromCfgWith<'a> node cfg
         

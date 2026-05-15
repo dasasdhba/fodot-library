@@ -27,12 +27,10 @@ public partial class Node2DCaster : Node
 
 	public Node2DCaster() : base()
 	{
-		TreeEntered += () =>
+		Ready += () =>
 		{
-			Node2DLoader = AsyncScene.fromNode<Node2D>(Node2DScene, BufferCount, 0, this);
+			Node2DLoader = AsyncScene.create<Node2D>(Node2DScene, BufferCount, 0, this);
 		};
-		
-		TreeExited += () => Node2DLoader.Dispose();
 	}
 
 	public void Cast()
