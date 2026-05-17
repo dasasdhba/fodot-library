@@ -3,6 +3,48 @@ module Fodot.Module.CanvasItem
 open Fodot.Core
 open Godot
 
+// shader
+
+let hasShaderParam (name : string) (item : CanvasItem) =
+    match item.Material with
+    | :? ShaderMaterial as s ->
+        (s.GetShaderParameter name).VariantType <> Variant.Type.Nil
+    | _ -> false
+
+let setShaderParam (name : string) (value : 'a) (item : CanvasItem) =
+    if item |> hasShaderParam name |> not then
+        failwith $"{item} does not contains a valid ShaderMaterial"
+    (item.Material :?> ShaderMaterial).SetShaderParameter(name, Variant.from value)
+
+let getShaderParam (name : string) (item : CanvasItem) =
+    if item |> hasShaderParam name |> not then
+        failwith $"{item} does not contains a valid ShaderMaterial"
+    (item.Material :?> ShaderMaterial).GetShaderParameter name
+
+let getShaderParamAs<'a> (name : string) (item : CanvasItem) =
+    item |> getShaderParam name |> Variant.toType<'a>
+
+let getShaderParamAsArray<'a> (name : string) (item : CanvasItem) =
+    item |> getShaderParam name |> Variant.toArray<'a>
+
+let getShaderParamAsDictionary<'a, 'b> (name : string) (item : CanvasItem) =
+    item |> getShaderParam name |> Variant.toDictionary<'a, 'b>
+
+let tryGetShaderParam (name : string) (item : CanvasItem) =
+    if item |> hasShaderParam name then
+        item |> getShaderParam name |> Some
+    else
+        None
+
+let tryGetShaderParamAs<'a> (name : string) (item : CanvasItem) =
+    item |> tryGetShaderParam name |> Option.bind (fun r -> r |> Variant.toSome<'a>)
+
+let tryGetShaderParamAsArray<'a> (name : string) (item : CanvasItem) =
+    item |> tryGetShaderParam name |> Option.bind (fun r -> r |> Variant.toSomeArray<'a>)
+
+let tryGetShaderParamAsDictionary<'a, 'b> (name : string) (item : CanvasItem) =
+    item |> tryGetShaderParam name |> Option.bind (fun r -> r |> Variant.toSomeDictionary<'a, 'b>)
+
 // transform
 
 let getTransform (item : CanvasItem) =
