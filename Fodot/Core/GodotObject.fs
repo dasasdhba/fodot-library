@@ -1,6 +1,8 @@
 module Fodot.Core.GodotObject
 
 open System
+open System.Collections.Concurrent
+open Fodot.Common
 open Godot
 open Microsoft.FSharp.Reflection
 
@@ -189,6 +191,9 @@ let tryInvokeAsDictionary<'a, 'b> (method : string) (obj : GodotObject) =
 
 // record
 
+let private cache =
+    ConcurrentDictionary<Type, string array>()
+
 /// convert godot obj's property to readonly record.
 /// cannot handle typed Godot Array or Dictionary, using variant one in record instead.
 let deserialize<'T when 'T : not struct> (obj: GodotObject) : 'T =
@@ -197,15 +202,27 @@ let deserialize<'T when 'T : not struct> (obj: GodotObject) : 'T =
     if not (FSharpType.IsRecord recordType) then
         failwith $"{recordType.Name} is not a valid F# Record."
     
-    let fields = FSharpType.GetRecordFields recordType
+    let props =
+        cache.GetOrAdd(recordType, (fun r ->
+            r
+            |> FSharpType.GetRecordFields
+            
+            |> Array.map (fun prop ->
+                prop.GetCustomAttributes(typeof<GDProperty>, false)
+                |> Array.tryHead
+                |> Option.map (fun attr -> 
+                    (attr :?> GDProperty).Name
+                )
+                |> Option.defaultValue prop.Name
+            )
+        ))
     
-    let fieldValues =
-        fields
+    let values =
+        props
         
         |> Array.map (fun prop ->
-            let fieldName = prop.Name
-            let variant = obj.Get(fieldName)
+            let variant = obj.Get(prop)
             variant.Obj |> box
         )
     
-    FSharpValue.MakeRecord(recordType, fieldValues) :?> 'T
+    FSharpValue.MakeRecord(recordType, values) :?> 'T

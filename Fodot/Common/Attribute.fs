@@ -6,3 +6,8 @@ open System
 type FScriptAttribute(name: string) =
     inherit Attribute()
     member this.Name = name
+
+[<AttributeUsage(AttributeTargets.Field, AllowMultiple = false)>]
+type GDProperty(name: string) =
+    inherit Attribute()
+    member this.Name = name
