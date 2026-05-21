@@ -202,6 +202,10 @@ let bindDisposable (dispose : IDisposable) (node: Node) =
     let del = node |> getDeleteEvent
     del.Add (fun () -> dispose.Dispose ())
 
+let bindNode (another : Node) (node: Node) =
+    let del = node |> getDeleteEvent
+    del.Add (fun () -> another.QueueFree ())
+
 // init
     
 let initScripts (node: Node) =

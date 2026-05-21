@@ -161,39 +161,28 @@ let addProcessBy (config : ProcessConfig) (node: Node) =
 
 // node process logic
 
-let private cachedProcessNodes = ResizeArray<Node>()
-let private cachedPhysicsProcessNodes = ResizeArray<Node>()
+let processComparer =
+    {
+        new IComparer<Node> with
+            member this.Compare (x, y) =
+                match x.ProcessPriority - y.ProcessPriority with
+                | 0 -> x.IsGreaterThan y |> Convert.ToInt32
+                | v -> v
+    }
+    
+let processPhysicsComparer =
+    {
+        new IComparer<Node> with
+            member this.Compare (x, y) =
+                match x.ProcessPhysicsPriority - y.ProcessPhysicsPriority with
+                | 0 -> x.IsGreaterThan y |> Convert.ToInt32
+                | v -> v
+    }
+
+let private cachedProcessNodes = SortedSet<Node>(processComparer)
+let private cachedPhysicsProcessNodes = SortedSet<Node>(processPhysicsComparer)
 let private cachedProcessData = Dictionary<Node, ProcessData>()
 let private cachedPhysicsProcessData = Dictionary<Node, ProcessData>()
-
-let private findNearestIndex (arr : ResizeArray<Node>) (node : Node) =
-    if node.IsInsideTree () |> not then
-        failwith $"{node}: Cannot cache a process node outside the tree."
-    
-    let rec search (n : Node) =
-        let parent = n.GetParent ()
-        if GodotObject.IsInstanceValid parent |> not then
-            None
-        else
-            let idx = n.GetIndex true
-            let r =
-                [0..(idx - 1)]
-                
-                |> List.tryFindIndex (fun i ->
-                    let c = parent.GetChild (i, true)
-                    arr.Contains c
-                )
-                
-            match r with
-            | Some i -> Some (parent.GetChild (i, true))
-            | None -> search parent
-
-    if arr.Contains node then
-        -1
-    else
-        match search node with
-        | Some n -> (arr.IndexOf n) + 1
-        | None -> 0
 
 let private treeUpdateProcessCache physics=
     let queue, cache, data =
@@ -203,9 +192,7 @@ let private treeUpdateProcessCache physics=
             cachedIdleUpdate, cachedProcessNodes, cachedProcessData
     
     for n in queue do
-        let idx = findNearestIndex cache n
-        if idx >= 0 then
-            cache.Insert (idx, n)
+        if cache.Add n then
             data.Add (n, n |> getProcessData physics)
     queue.Clear ()
 
