@@ -14,7 +14,7 @@ let addChildInternal (child : Node) inter (node : Node) =
     if node |> isAccessSafe then
         node.AddChild(child, false, inter)
     else
-        node |> callDeferred "add_child" (child, inter)
+        node |> callDeferred Node.MethodName.AddChild (child, inter)
 
 let addChild (child : Node) (node : Node) =
     node |> addChildInternal child Node.InternalMode.Disabled
@@ -29,25 +29,25 @@ let addSibling (sibling : Node) (node : Node) =
     if node |> isAccessSafe then
         node.AddSibling(sibling)
     else
-        node |> callDeferred "add_sibling" sibling
+        node |> callDeferred Node.MethodName.AddSibling sibling
 
 let moveChild (child: Node) (idx : int) (node : Node) =
     if node |> isAccessSafe then
         node.MoveChild(child, idx)
     else
-        node |> callDeferred "move_child" (child, idx)
+        node |> callDeferred Node.MethodName.MoveChild (child, idx)
 
 let removeChild (child : Node) (node : Node) =
     if node |> isAccessSafe then
         node.RemoveChild(child)
     else
-        node |> callDeferred "remove_child" child
+        node |> callDeferred Node.MethodName.RemoveChild child
 
 let reparent parent keep (node : Node) =
     if parent |> isAccessSafe then
         node.Reparent(parent, keep)
     else
-        node |> callDeferred "reparent" (parent, keep)
+        node |> callDeferred Node.MethodName.Reparent (parent, keep)
 
 let reparentKeep parent (node : Node) =
     node |> reparent parent true

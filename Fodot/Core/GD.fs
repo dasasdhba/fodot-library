@@ -11,11 +11,11 @@ type GDProp<'a> =
         Object : GodotObject
         PropName : string
     }
-    
+    member private this.propName = new StringName(this.PropName)
     member this.Get () =
-        this.Object |> GodotObject.getAs<'a> this.PropName
+        this.Object |> GodotObject.getAs<'a> this.propName
     member this.Set (value : 'a) =
-        this.Object |> GodotObject.set this.PropName value
+        this.Object |> GodotObject.set this.propName value
     static member From<'a> (prop : string) (obj : GodotObject) : GDProp<'a> =
         {
             Object = obj
@@ -29,13 +29,13 @@ type GDNullProp<'a when 'a : null> =
         Object : GodotObject
         PropName : string
     }
-    
+    member private this.propName = new StringName(this.PropName)
     member this.Get () =
-        this.Object |> GodotObject.tryGetAs<'a> this.PropName
+        this.Object |> GodotObject.tryGetAs<'a> this.propName
     member this.Set (value : 'a option) =
         match value with
-        | Some v -> this.Object |> GodotObject.set this.PropName v
-        | None -> this.Object |> GodotObject.set this.PropName null
+        | Some v -> this.Object |> GodotObject.set this.propName v
+        | None -> this.Object |> GodotObject.set this.propName null
     static member From<'a> (prop : string) (obj : GodotObject) : GDNullProp<'a> =
         {
             Object = obj
@@ -49,11 +49,11 @@ type GDPropArray<'a> =
         Object : GodotObject
         PropName : string
     }
-    
+    member private this.propName = new StringName(this.PropName)
     member this.Get () =
-        this.Object |> GodotObject.getAsArray<'a> this.PropName
+        this.Object |> GodotObject.getAsArray<'a> this.propName
     member this.Set (value : Array<'a>) =
-        this.Object |> GodotObject.set this.PropName value
+        this.Object |> GodotObject.set this.propName value
     static member From<'a> (prop : string) (obj : GodotObject) : GDPropArray<'a> =
         {
             Object = obj
@@ -67,11 +67,11 @@ type GDPropDictionary<'a, 'b> =
         Object : GodotObject
         PropName : string
     }
-    
+    member private this.propName = new StringName(this.PropName)
     member this.Get () =
-        this.Object |> GodotObject.getAsDictionary<'a,'b> this.PropName
+        this.Object |> GodotObject.getAsDictionary<'a,'b> this.propName
     member this.Set (value : Dictionary<'a,'b>) =
-        this.Object |> GodotObject.set this.PropName value
+        this.Object |> GodotObject.set this.propName value
     static member From<'a, 'b> (prop : string) (obj : GodotObject) : GDPropDictionary<'a, 'b> =
         {
             Object = obj

@@ -76,46 +76,46 @@ let private createPropertyList (obj : GodotObject) =
     obj.GetPropertyList()
 
     |> Array.ofSeq
-    |> Array.map (fun p -> p["name"] |> Variant.toType<string>)
+    |> Array.map (fun p -> p["name"] |> Variant.toType<StringName>)
     
 let getPropertyList (obj : GodotObject) =
     let propMeta = "_fs_GodotObject_prop_list"
     obj |> getMetaWithDefaultAs propMeta (lazy createPropertyList obj)
 
-let hasProperty (prop : string) (obj : GodotObject) =
+let hasProperty (prop : StringName) (obj : GodotObject) =
     obj |> getPropertyList |> Array.contains prop
 
-let get (prop : string) (obj : GodotObject) =
+let get (prop : StringName) (obj : GodotObject) =
     if obj |> hasProperty prop |> not then
         failwith $"{obj}: Property {prop} not found."
     else
         obj.Get(prop)
 
-let getAs<'a> (prop : string) (obj : GodotObject) =
+let getAs<'a> (prop : StringName) (obj : GodotObject) =
     obj |> get prop |> Variant.toType<'a>
     
-let getAsArray<'a> (prop : string) (obj : GodotObject) =
+let getAsArray<'a> (prop : StringName) (obj : GodotObject) =
     obj |> get prop |> Variant.toArray<'a>
     
-let getAsDictionary<'a, 'b> (prop : string) (obj : GodotObject) =
+let getAsDictionary<'a, 'b> (prop : StringName) (obj : GodotObject) =
     obj |> get prop |> Variant.toDictionary<'a, 'b>
     
-let tryGet (prop : string) (obj : GodotObject) =
+let tryGet (prop : StringName) (obj : GodotObject) =
     if obj |> hasProperty prop |> not then
         None
     else
         obj.Get(prop) |> Some
     
-let tryGetAs<'a> (prop : string) (obj : GodotObject) =
+let tryGetAs<'a> (prop : StringName) (obj : GodotObject) =
     obj |> tryGet prop |> Option.bind (fun r -> r |> Variant.toSome<'a>)
     
-let tryGetAsArray<'a> (prop : string) (obj : GodotObject) =
+let tryGetAsArray<'a> (prop : StringName) (obj : GodotObject) =
     obj |> tryGet prop |> Option.bind (fun r -> r |> Variant.toSomeArray<'a>)
     
-let tryGetAsDictionary<'a, 'b> (prop : string) (obj : GodotObject) =
+let tryGetAsDictionary<'a, 'b> (prop : StringName) (obj : GodotObject) =
     obj |> tryGet prop |> Option.bind (fun r -> r |> Variant.toSomeDictionary<'a, 'b>)
 
-let set (prop : string) (value : 'a) (obj : GodotObject) =
+let set (prop : StringName) (value : 'a) (obj : GodotObject) =
     if obj |> hasProperty prop |> not then
         failwith $"{obj}: Property {prop} not found."
     else
@@ -123,70 +123,70 @@ let set (prop : string) (value : 'a) (obj : GodotObject) =
         
 // method
 
-let hasMethod (method : string) (obj : GodotObject) =
+let hasMethod (method : StringName) (obj : GodotObject) =
     obj.HasMethod(method)
     
-let call<'a> (method : string) (args : 'a) (obj : GodotObject) =
+let call<'a> (method : StringName) (args : 'a) (obj : GodotObject) =
     if obj |> hasMethod method |> not then
         failwith $"{obj}: Method {method} not found."
     else
-        obj.Call (new StringName(method), args |> Variant.fromTuple)
+        obj.Call (method, args |> Variant.fromTuple)
     
-let callDeferred<'a> (method : string) (args : 'a) (obj : GodotObject) =
+let callDeferred<'a> (method : StringName) (args : 'a) (obj : GodotObject) =
     if obj |> hasMethod method |> not then
         failwith $"{obj}: Method {method} not found."
     else
-        obj.CallDeferred (new StringName(method), args |> Variant.fromTuple) |> ignore
+        obj.CallDeferred (method, args |> Variant.fromTuple) |> ignore
 
-let tryCall<'a> (method : string) (args : 'a) (obj : GodotObject) =
+let tryCall<'a> (method : StringName) (args : 'a) (obj : GodotObject) =
     if obj |> hasMethod method |> not then
         None
     else
-        obj.Call (new StringName(method), args |> Variant.fromTuple) |> Some
+        obj.Call (method, args |> Variant.fromTuple) |> Some
 
-let callAs<'a, 'b> (method : string) (args : 'a) (obj : GodotObject) =
+let callAs<'a, 'b> (method : StringName) (args : 'a) (obj : GodotObject) =
     obj |> call<'a> method args |> Variant.toType<'b>
 
-let callAsArray<'a, 'b> (method : string) (args : 'a) (obj : GodotObject) =
+let callAsArray<'a, 'b> (method : StringName) (args : 'a) (obj : GodotObject) =
     obj |> call<'a> method args |> Variant.toArray<'b>
 
-let callAsDictionary<'a, 'b, 'c> (method : string) (args : 'a) (obj : GodotObject) =
+let callAsDictionary<'a, 'b, 'c> (method : StringName) (args : 'a) (obj : GodotObject) =
     obj |> call<'a> method args |> Variant.toDictionary<'b, 'c>
 
-let tryCallAs<'a, 'b> (method : string) (args : 'a) (obj : GodotObject) =
+let tryCallAs<'a, 'b> (method : StringName) (args : 'a) (obj : GodotObject) =
     obj |> tryCall<'a> method args |> Option.bind (fun r -> r |> Variant.toSome<'b>)
 
-let tryCallAsArray<'a, 'b> (method : string) (args : 'a) (obj : GodotObject) =
+let tryCallAsArray<'a, 'b> (method : StringName) (args : 'a) (obj : GodotObject) =
     obj |> tryCall<'a> method args |> Option.bind (fun r -> r |> Variant.toSomeArray<'b>)
 
-let tryCallAsDictionary<'a, 'b, 'c> (method : string) (args : 'a) (obj : GodotObject) =
+let tryCallAsDictionary<'a, 'b, 'c> (method : StringName) (args : 'a) (obj : GodotObject) =
     obj |> tryCall<'a> method args |> Option.bind (fun r -> r |> Variant.toSomeDictionary<'b, 'c>)
 
-let invoke (method : string) (obj : GodotObject) =
+let invoke (method : StringName) (obj : GodotObject) =
     obj |> call<unit> method ()
 
-let invokeDeferred (method : string) (obj : GodotObject) =
+let invokeDeferred (method : StringName) (obj : GodotObject) =
     obj |> callDeferred method ()
 
-let tryInvoke (method : string) (obj : GodotObject) =
+let tryInvoke (method : StringName) (obj : GodotObject) =
     obj |> tryCall<unit> method ()
 
-let invokeAs<'a> (method : string) (obj : GodotObject) =
+let invokeAs<'a> (method : StringName) (obj : GodotObject) =
     obj |> callAs<unit, 'a> method ()
 
-let invokeAsArray<'a> (method : string) (obj : GodotObject) =
+let invokeAsArray<'a> (method : StringName) (obj : GodotObject) =
     obj |> callAsArray<unit, 'a> method ()
 
-let invokeAsDictionary<'a, 'b> (method : string) (obj : GodotObject) =
+let invokeAsDictionary<'a, 'b> (method : StringName) (obj : GodotObject) =
     obj |> callAsDictionary<unit, 'a, 'b> method ()
 
-let tryInvokeAs<'a> (method : string) (obj : GodotObject) =
+let tryInvokeAs<'a> (method : StringName) (obj : GodotObject) =
     obj |> tryCallAs<unit, 'a> method ()
 
-let tryInvokeAsArray<'a> (method : string) (obj : GodotObject) =
+let tryInvokeAsArray<'a> (method : StringName) (obj : GodotObject) =
     obj |> tryCallAsArray<unit, 'a> method ()
     
-let tryInvokeAsDictionary<'a, 'b> (method : string) (obj : GodotObject) =
+let tryInvokeAsDictionary<'a, 'b> (method : StringName) (obj : GodotObject) =
     obj |> tryCallAsDictionary<unit, 'a, 'b> method ()
 
 // record

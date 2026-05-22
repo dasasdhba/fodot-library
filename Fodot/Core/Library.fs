@@ -3,10 +3,10 @@
 open Godot
 
 type GDLib(path : string) =
+    static let libName = new StringName "lib"
     let res = GD.load path
-    let dict =
-        res |> GodotObject.getAsDictionary<string, Variant> "lib"
     
+    member this.Lib =
+        res |> GodotObject.getAsDictionary<string, Variant> libName
     member this.Get<'a> (key : string) =
-        dict[key] |> Variant.toType<'a>
-    member this.Lib = dict
+        this.Lib[key] |> Variant.toType<'a>

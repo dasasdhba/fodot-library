@@ -133,16 +133,19 @@ module FScript =
                 None
         )
         
+    let private fsCallbackGd = new StringName "_get_fscripts"
+    let private fsCallbackCs = new StringName "_GetFScripts"
+        
     let private getCallbackFScripts (obj : GodotObject) =
-        let getCallArrWith (name : string) =
+        let getCallArrWith (name : StringName) =
             match obj |> tryInvokeAs<string[]> name with
             
             | Some arr -> arr |> List.ofSeq
             | None -> []
         
-        getCallArrWith "_get_fscripts"
+        getCallArrWith fsCallbackGd
         
-        |> List.append (getCallArrWith "_GetFScripts")
+        |> List.append (getCallArrWith fsCallbackCs)
 
     let update (obj : GodotObject) =
         let arr =

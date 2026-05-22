@@ -15,6 +15,9 @@ type YamlProperty = {
     [<YamlMember(Alias = "nullable")>]
     Nullable : bool
     
+    [<YamlMember(Alias = "mutable")>]
+    Mutable : bool
+    
     [<YamlMember(Alias = "value")>]
     Value : string
     
@@ -113,6 +116,7 @@ type PropType =
 type PropertyData = {
     Type : PropType
     Nullable : bool
+    Mutable : bool
     Value : string option
     Hint : string option
     HintString : string option
@@ -143,6 +147,7 @@ type ExportProperty =
         | _ -> Property {
             Type = PropType.From yaml.Type
             Nullable = if yaml.Nullable :> obj = null then false else yaml.Nullable
+            Mutable = if yaml.Mutable :> obj = null then false else yaml.Mutable
             Value = Option.ofObj yaml.Value
             Hint = Option.ofObj yaml.Hint
             HintString = Option.ofObj yaml.HintString
@@ -158,15 +163,23 @@ type ExportProperty =
                 | Raw _ -> if p.Nullable then $"GDNullProp<{fs}>" else $"GDProp<{fs}>"
                 | TypedArray _ -> $"GDPropArray<{fs}>"
                 | TypedDictionary _ -> $"GDPropDictionary<{fs}>"
-            $"    let _back_prop_{name} = {pack}.From(\"{name}\") obj"
+            let prop = $"    let _back_prop_{name} = {pack}.From(\"{name}\") obj"
+            if p.Mutable then
+                prop
+            else
+                $"{prop}\n    let _back_prop_value_{name} = _back_prop_{name}.Get()"
         | _ -> ""
     
     member this.AsFsMember name =
         match this with
-        | Property _ ->
-            let back = $"_back_prop_{name}"
+        | Property p ->
             let pascal = toPascalCase name
-            $"    member this.{pascal}\n        with get () = {back}.Get()\n        and set v = {back}.Set v"
+            if p.Mutable then
+                let back = $"_back_prop_{name}"
+                $"    member this.{pascal}\n        with get () = {back}.Get()\n        and set v = {back}.Set v"
+            else
+                let back = $"_back_prop_value_{name}"
+                $"    member val {pascal} = {back} with get"
         | _ -> ""
     
     member this.AsGdExport name =

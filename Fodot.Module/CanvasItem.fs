@@ -51,7 +51,7 @@ let getTransform (item : CanvasItem) =
     item.GetTransform()
 
 let setTransform (v : Transform2D)  (item : CanvasItem)=
-    item |> GodotObject.set "transform" v
+    item |> GodotObject.set Node2D.PropertyName.Transform v
 
 let getPosition (item : CanvasItem) =
     item |> getTransform |> Transform2D.getOrigin
@@ -81,7 +81,7 @@ let getGlobalTransform (item : CanvasItem) =
     item.GetGlobalTransform()
     
 let setGlobalTransform (v : Transform2D)  (item : CanvasItem)=
-    item |> GodotObject.set "global_transform" v
+    item |> GodotObject.set Node2D.PropertyName.GlobalTransform v
 
 let getGlobalPosition (item : CanvasItem) =
     item |> getGlobalTransform |> Transform2D.getOrigin
