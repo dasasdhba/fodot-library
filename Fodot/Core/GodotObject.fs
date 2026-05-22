@@ -8,17 +8,24 @@ open Microsoft.FSharp.Reflection
 
 // metadata
 
+/// will return false if metadata value is null,
+/// if this is unexpected, use Godot's HasMeta instead.
 let hasMeta (name : StringName) (obj : GodotObject) =
     obj.HasMeta(name) && obj.GetMeta(name).VariantType <> Variant.Type.Nil
 
 let setMeta (name : StringName) (var : 'a) (obj : GodotObject) =
     obj.SetMeta(name, var |> Variant.from)
 
+/// will fail if metadata value is null,
+/// if this is unexpected, use Godot's GetMeta instead.
 let getMeta (name : StringName) (obj : GodotObject) =
-    if obj |> hasMeta name |> not then
+    if obj.HasMeta name |> not then
         failwith $"{obj}: Meta {name} not found."
     else
-        obj.GetMeta(name)
+        match obj.GetMeta(name) with
+        | v when v.VariantType = Variant.Type.Nil ->
+            failwith $"{obj}: Meta {name} contains a null value."
+        | v -> v
 
 let getMetaAs<'a> (name : StringName) (obj : GodotObject) =
     obj |> getMeta name |> Variant.toType<'a>
@@ -28,12 +35,16 @@ let getMetaAsArray<'a> (name : StringName) (obj : GodotObject) =
     
 let getMetaAsDictionary<'a, 'b> (name : StringName) (obj : GodotObject) =
     obj |> getMeta name |> Variant.toDictionary<'a, 'b>
-    
+
+/// will return None if metadata value is null,
 let tryGetMeta (name : StringName) (obj : GodotObject) =
-    if obj |> hasMeta name then
-        obj.GetMeta(name) |> Some
-    else
+    if obj.HasMeta name |> not then
         None
+    else
+        match obj.GetMeta(name) with
+        | v when v.VariantType = Variant.Type.Nil ->
+            None
+        | v -> Some v
     
 let tryGetMetaAs<'a> (name : StringName) (obj : GodotObject) =
     obj |> tryGetMeta name |> Option.bind (fun r -> r |> Variant.toSome<'a>)
@@ -88,10 +99,7 @@ let hasProperty (prop : StringName) (obj : GodotObject) =
     obj |> getPropertyList |> Array.contains prop
 
 let get (prop : StringName) (obj : GodotObject) =
-    if obj |> hasProperty prop |> not then
-        failwith $"{obj}: Property {prop} not found."
-    else
-        obj.Get(prop)
+    obj.Get(prop)
 
 let getAs<'a> (prop : StringName) (obj : GodotObject) =
     obj |> get prop |> Variant.toType<'a>
@@ -103,10 +111,10 @@ let getAsDictionary<'a, 'b> (prop : StringName) (obj : GodotObject) =
     obj |> get prop |> Variant.toDictionary<'a, 'b>
     
 let tryGet (prop : StringName) (obj : GodotObject) =
-    if obj |> hasProperty prop |> not then
+    match obj.Get(prop) with
+    | v when v.VariantType = Variant.Type.Nil ->
         None
-    else
-        obj.Get(prop) |> Some
+    | v -> Some v
     
 let tryGetAs<'a> (prop : StringName) (obj : GodotObject) =
     obj |> tryGet prop |> Option.bind (fun r -> r |> Variant.toSome<'a>)
