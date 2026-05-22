@@ -8,43 +8,43 @@ open Microsoft.FSharp.Reflection
 
 // metadata
 
-let hasMeta (name : string) (obj : GodotObject) =
-    obj.HasMeta(name)
+let hasMeta (name : StringName) (obj : GodotObject) =
+    obj.HasMeta(name) && obj.GetMeta(name).VariantType <> Variant.Type.Nil
 
-let setMeta (name : string) (var : 'a) (obj : GodotObject) =
+let setMeta (name : StringName) (var : 'a) (obj : GodotObject) =
     obj.SetMeta(name, var |> Variant.from)
 
-let getMeta (name : string) (obj : GodotObject) =
+let getMeta (name : StringName) (obj : GodotObject) =
     if obj |> hasMeta name |> not then
         failwith $"{obj}: Meta {name} not found."
     else
         obj.GetMeta(name)
 
-let getMetaAs<'a> (name : string) (obj : GodotObject) =
+let getMetaAs<'a> (name : StringName) (obj : GodotObject) =
     obj |> getMeta name |> Variant.toType<'a>
     
-let getMetaAsArray<'a> (name : string) (obj : GodotObject) =
+let getMetaAsArray<'a> (name : StringName) (obj : GodotObject) =
     obj |> getMeta name |> Variant.toArray<'a>
     
-let getMetaAsDictionary<'a, 'b> (name : string) (obj : GodotObject) =
+let getMetaAsDictionary<'a, 'b> (name : StringName) (obj : GodotObject) =
     obj |> getMeta name |> Variant.toDictionary<'a, 'b>
     
-let tryGetMeta (name : string) (obj : GodotObject) =
+let tryGetMeta (name : StringName) (obj : GodotObject) =
     if obj |> hasMeta name then
         obj.GetMeta(name) |> Some
     else
         None
     
-let tryGetMetaAs<'a> (name : string) (obj : GodotObject) =
+let tryGetMetaAs<'a> (name : StringName) (obj : GodotObject) =
     obj |> tryGetMeta name |> Option.bind (fun r -> r |> Variant.toSome<'a>)
     
-let tryGetMetaAsArray<'a> (name : string) (obj : GodotObject) =
+let tryGetMetaAsArray<'a> (name : StringName) (obj : GodotObject) =
     obj |> tryGetMeta name |> Option.bind (fun r -> r |> Variant.toSomeArray<'a>)
 
-let tryGetMetaAsDictionary<'a, 'b> (name : string) (obj : GodotObject) =
+let tryGetMetaAsDictionary<'a, 'b> (name : StringName) (obj : GodotObject) =
     obj |> tryGetMeta name |> Option.bind (fun r -> r |> Variant.toSomeDictionary<'a, 'b>)
 
-let removeMeta (name : string) (obj : GodotObject) =
+let removeMeta (name : StringName) (obj : GodotObject) =
     if obj |> hasMeta name then
         obj.RemoveMeta(name)
         true
@@ -54,21 +54,22 @@ let removeMeta (name : string) (obj : GodotObject) =
 let getMetaList (obj : GodotObject) =
     obj.GetMetaList()
     
-let private getDefaultMetaWith<'a> getter (name : string) (def : Lazy<'a>) (obj : GodotObject) =
-    if obj |> hasMeta name then
-        obj |> getter name
-    else
+let private getDefaultMetaWith<'a> getter (name : StringName) (def : Lazy<'a>) (obj : GodotObject) =
+    obj
+    |> getter name
+    |> Option.defaultWith (fun () ->
         obj |> setMeta name def.Value
         def.Value
+    )
     
-let getMetaWithDefaultAs<'a> (name : string) (def : Lazy<'a>) (obj : GodotObject) =
-    obj |> getDefaultMetaWith getMetaAs name def
+let getMetaWithDefaultAs<'a> (name : StringName) (def : Lazy<'a>) (obj : GodotObject) =
+    obj |> getDefaultMetaWith tryGetMetaAs name def
         
-let getMetaWithDefaultAsArray<'a> (name : string) (def : Lazy<Collections.Array<'a>>) (obj : GodotObject) =
-    obj |> getDefaultMetaWith getMetaAsArray name def
+let getMetaWithDefaultAsArray<'a> (name : StringName) (def : Lazy<Collections.Array<'a>>) (obj : GodotObject) =
+    obj |> getDefaultMetaWith tryGetMetaAsArray name def
         
-let getMetaWithDefaultAsDictionary<'a, 'b> (name : string) (def : Lazy<Collections.Dictionary<'a, 'b>>) (obj : GodotObject) =
-    obj |> getDefaultMetaWith getMetaAsDictionary name def
+let getMetaWithDefaultAsDictionary<'a, 'b> (name : StringName) (def : Lazy<Collections.Dictionary<'a, 'b>>) (obj : GodotObject) =
+    obj |> getDefaultMetaWith tryGetMetaAsDictionary name def
     
 // property get set
 
@@ -77,9 +78,10 @@ let private createPropertyList (obj : GodotObject) =
 
     |> Array.ofSeq
     |> Array.map (fun p -> p["name"] |> Variant.toType<StringName>)
-    
+
+let private propMeta = new StringName "_fs_GodotObject_prop_list"
+
 let getPropertyList (obj : GodotObject) =
-    let propMeta = "_fs_GodotObject_prop_list"
     obj |> getMetaWithDefaultAs propMeta (lazy createPropertyList obj)
 
 let hasProperty (prop : StringName) (obj : GodotObject) =

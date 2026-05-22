@@ -165,9 +165,11 @@ type private CachedEvent () =
     member val DeleteEvent : IEvent<unit> option = None with get, set
     member val InputEvent : IEvent<InputEvent> option = None with get, set
     member val UnhandledInputEvent : IEvent<InputEvent> option = None with get, set
+
+let private cachedEventMeta = new StringName "_fs_node_cached_event"
     
 let private getCachedEventWith getter setter creator node =
-    let cache = node |> getMetaWithDefaultAs "_fs_node_cached_event" (lazy new CachedEvent())
+    let cache = node |> getMetaWithDefaultAs cachedEventMeta (lazy new CachedEvent())
     match getter cache with
     | Some event -> event
     | None ->

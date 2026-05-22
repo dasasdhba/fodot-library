@@ -46,23 +46,25 @@ let private updateRemoveCache physics node =
     else
         cachedIdleRemove.Add node
 
+let private processIdleMeta = new StringName "_fs_node_process_data_idle"
+let private processPhysicsMeta = new StringName "_fs_node_process_data_physics"
+
 let private getProcessDataMeta physics =
     if physics then
-        "_fs_node_process_data_physics"
+        processPhysicsMeta
     else
-        "_fs_node_process_data_idle"
+        processIdleMeta
 
 let private getProcessData physics (node: Node) =
     let meta = getProcessDataMeta physics
-    if node |> hasMeta meta then
-        node |> getMetaAs<ProcessData> meta
-    else
+    node |> getMetaWithDefaultAs<ProcessData> meta (lazy (
         node.add_TreeEntered (fun () -> node |> updateProcessCache physics)
         node.add_TreeExited (fun () -> node |> updateRemoveCache physics)
         
         let res = new ProcessData()
         node |> setMeta meta res
         res
+    ))
     
 let hasProcess physics (node: Node) =
     let meta = getProcessDataMeta physics
