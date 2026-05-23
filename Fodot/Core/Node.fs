@@ -57,75 +57,57 @@ let reparentDirectly parent (node : Node) =
 
 // node get
 
-let getNode<'a when 'a: not struct and 'a : null and 'a :> Node> (name : string) (node : Node) =
-    node.GetNode<'a>(name)
-    |> Option.ofObj
-    |> Option.defaultWith (fun () -> failwith $"{node}: Node {name} not found")
+let getNode<'a when 'a: not struct and 'a :> Node> (path : NodePath) (node : Node) =
+    node.GetNode<'a>(path)
 
-let tryGetNode<'a when 'a: not struct and 'a : null and 'a :> Node> (name : string) (node : Node) =
-    match node.GetNodeOrNull<'a> name with
-    | null -> None
-    | node -> Some node
+let tryGetNode<'a when 'a: null and 'a :> Node> (path : NodePath) (node : Node) =
+    node.GetNodeOrNull<'a> path |> Option.ofObj
 
-let getParent<'a when 'a: not struct and 'a : null and 'a :> Node> (node : Node) =
+let getParent<'a when 'a: not struct and 'a :> Node> (node : Node) =
     node.GetParent<'a>()
-    |> Option.ofObj
-    |> Option.defaultWith (fun () -> failwith $"{node} does not own a parent")
 
-let tryGetParent<'a when 'a: not struct and 'a : null and 'a :> Node> (node : Node) =
-    match node.GetParentOrNull<'a>() with
-    | null -> None
-    | node -> Some node
+let tryGetParent<'a when 'a : null and 'a :> Node> (node : Node) =
+    node.GetParentOrNull<'a>() |> Option.ofObj
 
-let private getChildWith<'a when 'a: not struct and 'a : null and 'a :> Node> (idx : int) (inter : bool) (node : Node) =
-    node.GetChild<'a>(idx, inter)
-    |> Option.ofObj
-    |> Option.defaultWith (fun () -> failwith $"{node}: Child at {idx} not found")
+let getChild<'a when 'a: not struct and 'a :> Node> (idx : int) (node : Node) =
+    node.GetChild<'a>(idx)
 
-let getChild<'a when 'a: not struct and 'a : null and 'a :> Node> (idx : int) (node : Node) =
-    node |> getChildWith<'a> idx false
+let getChildInternal<'a when 'a: not struct and 'a :> Node> (idx : int) (node : Node) =
+    node.GetChild<'a>(idx, true)
 
-let getChildInternal<'a when 'a: not struct and 'a : null and 'a :> Node> (idx : int) (node : Node) =
-    node |> getChildWith<'a> idx true
+let tryGetChildInternalOrNot<'a when 'a : null and 'a :> Node> (idx : int) inter (node : Node) =
+    node.GetChildOrNull<'a>(idx, inter) |> Option.ofObj
 
-let private tryGetChildWith<'a when 'a: not struct and 'a : null and 'a :> Node> (idx: int) inter (node : Node) =
-    match node.GetChildOrNull<'a>(idx, inter) with
-    | null -> None
-    | node -> Some node
+let tryGetChild<'a when 'a : null and 'a :> Node> (idx : int) (node : Node) =
+    node.GetChildOrNull<'a>(idx) |> Option.ofObj
 
-let tryGetChild<'a when 'a: not struct and 'a : null and 'a :> Node> (idx : int) (node : Node) =
-    node |> tryGetChildWith<'a> idx false
+let tryGetChildInternal<'a when 'a : null and 'a :> Node> (idx : int) (node : Node) =
+    node.GetChildOrNull<'a>(idx, true) |> Option.ofObj
 
-let tryGetChildInternal<'a when 'a: not struct and 'a : null and 'a :> Node> (idx : int) (node : Node) =
-    node |> tryGetChildWith<'a> idx true
-
-let getChildrenWith<'a when 'a: not struct and 'a :> Node> filter (node : Node) = seq {
-    for n in node.GetChildren () do
+let getChildrenInternalOrNot<'a when 'a: not struct and 'a :> Node> inter (node : Node) = seq {
+    for n in node.GetChildren inter do
         match n with
-        | :? 'a as a when filter a -> yield a
+        | :? 'a as a -> yield a
         | _ -> ()
 }
 
 let getChildren<'a when 'a: not struct and 'a :> Node> (node : Node) =
-    node |> getChildrenWith<'a> (fun _ -> true)
+    node |> getChildrenInternalOrNot<'a> false
 
-let rec getChildrenRecWith<'a when 'a: not struct and 'a :> Node> filter (node: Node) = seq {
-    for n in node |> getChildrenWith<'a> filter do
+let getChildrenInternal<'a when 'a: not struct and 'a :> Node> (node : Node) =
+    node |> getChildrenInternalOrNot<'a> true
+
+let rec getChildrenRecInternalOrNot<'a when 'a: not struct and 'a :> Node> inter (node: Node) = seq {
+    for n in node |> getChildrenInternalOrNot<'a> inter do
         yield n
-        yield! n |> getChildrenRecWith<'a> filter
+        yield! n |> getChildrenRecInternalOrNot<'a> inter
 }
 
 let getChildrenRec<'a when 'a: not struct and 'a :> Node> (node: Node) =
-    node |> getChildrenRecWith<'a> (fun _ -> true)
-    
-let getChildrenAndSelfRecWith<'a when 'a: not struct and 'a :> Node> filter (node: 'a) = seq {
-    if filter node then
-        yield node
-    yield! node |> getChildrenRecWith<'a> filter
-}
+    node |> getChildrenRecInternalOrNot<'a> false
 
-let getChildrenAndSelfRec<'a when 'a: not struct and 'a :> Node> (node: 'a) =
-    node |> getChildrenAndSelfRecWith<'a> (fun _ -> true)
+let getChildrenRecInternal<'a when 'a: not struct and 'a :> Node> (node: Node) =
+    node |> getChildrenRecInternalOrNot<'a> true
 
 // bridge event
 
@@ -210,4 +192,4 @@ let bindNode (another : Node) (node: Node) =
     
 let initScripts (node: Node) =
     node |> FScript.init
-    node |> getChildrenRec |> Seq.iter (fun c -> c |> FScript.init)
+    node |> getChildrenRecInternal |> Seq.iter (fun c -> c |> FScript.init)
