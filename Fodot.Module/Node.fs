@@ -108,11 +108,17 @@ let getParentFScript<'a> (node : Node) =
 let tryGetParentFScript<'a> (node : Node) =
     node |> Node.tryGetParent |> Option.bind (fun p -> p |> FScript.tryGet<'a>)
 
+let getChildFScriptInternalOrNot idx inter (node : Node) =
+    node.GetChild(idx, inter) |> FScript.get<'a>
+
 let getChildFScript<'a> idx (node : Node) =
     node |> Node.getChild idx |> FScript.get<'a>
 
 let getChildInternalFScript<'a> idx (node : Node) =
     node |> Node.getChildInternal idx |> FScript.get<'a>
+
+let tryGetChildFScriptInternalOrNot idx inter (node : Node) =
+    node |> Node.tryGetChildInternalOrNot idx inter |> Option.bind (fun c -> c |> FScript.tryGet<'a>)
 
 let tryGetChildFScript<'a> idx (node : Node) =
     node |> Node.tryGetChild idx |> Option.bind (fun c -> c |> FScript.tryGet<'a>)
