@@ -36,7 +36,7 @@ let getMetaAsArray<'a> (name : StringName) (obj : GodotObject) =
 let getMetaAsDictionary<'a, 'b> (name : StringName) (obj : GodotObject) =
     obj |> getMeta name |> Variant.toDictionary<'a, 'b>
 
-/// will return None if metadata value is null,
+/// will return None if metadata value is null
 let tryGetMeta (name : StringName) (obj : GodotObject) =
     if obj.HasMeta name |> not then
         None
@@ -126,10 +126,7 @@ let tryGetAsDictionary<'a, 'b> (prop : StringName) (obj : GodotObject) =
     obj |> tryGet prop |> Option.bind (fun r -> r |> Variant.toSomeDictionary<'a, 'b>)
 
 let set (prop : StringName) (value : 'a) (obj : GodotObject) =
-    if obj |> hasProperty prop |> not then
-        failwith $"{obj}: Property {prop} not found."
-    else
-        obj.Set(prop, value |> Variant.from)
+    obj.Set(prop, value |> Variant.from)
         
 // method
 
@@ -137,16 +134,10 @@ let hasMethod (method : StringName) (obj : GodotObject) =
     obj.HasMethod(method)
     
 let call<'a> (method : StringName) (args : 'a) (obj : GodotObject) =
-    if obj |> hasMethod method |> not then
-        failwith $"{obj}: Method {method} not found."
-    else
-        obj.Call (method, args |> Variant.fromTuple)
+    obj.Call (method, args |> Variant.fromTuple)
     
 let callDeferred<'a> (method : StringName) (args : 'a) (obj : GodotObject) =
-    if obj |> hasMethod method |> not then
-        failwith $"{obj}: Method {method} not found."
-    else
-        obj.CallDeferred (method, args |> Variant.fromTuple) |> ignore
+    obj.CallDeferred (method, args |> Variant.fromTuple) |> ignore
 
 let tryCall<'a> (method : StringName) (args : 'a) (obj : GodotObject) =
     if obj |> hasMethod method |> not then

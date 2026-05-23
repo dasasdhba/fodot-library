@@ -99,35 +99,33 @@ let tryGetChild<'a when 'a: not struct and 'a : null and 'a :> Node> (idx : int)
 let tryGetChildInternal<'a when 'a: not struct and 'a : null and 'a :> Node> (idx : int) (node : Node) =
     node |> tryGetChildWith<'a> idx true
 
-let getChildren<'a when 'a: not struct and 'a :> Node> (node : Node) =
-    node.GetChildren ()
-    |> List.ofSeq
-    |> List.choose (fun c ->
-        match c with
-        | :? 'a as a -> Some a
-        | _ -> None
-    )
+let getChildrenWith<'a when 'a: not struct and 'a :> Node> filter (node : Node) = seq {
+    for n in node.GetChildren () do
+        match n with
+        | :? 'a as a when filter a -> yield a
+        | _ -> ()
+}
 
-let rec getChildrenRecWith<'a when 'a: not struct and 'a :> Node> filter (node: Node) =
-    node
-    |> getChildren<'a>
-    |> List.fold (fun acc child ->
-        let acc = if filter child then acc @ [child] else acc
-        acc |> List.append (child |> getChildrenRecWith filter)
-    ) []
+let getChildren<'a when 'a: not struct and 'a :> Node> (node : Node) =
+    node |> getChildrenWith<'a> (fun _ -> true)
+
+let rec getChildrenRecWith<'a when 'a: not struct and 'a :> Node> filter (node: Node) = seq {
+    for n in node |> getChildrenWith<'a> filter do
+        yield n
+        yield! n |> getChildrenRecWith<'a> filter
+}
 
 let getChildrenRec<'a when 'a: not struct and 'a :> Node> (node: Node) =
-    node |> getChildrenRecWith (fun _ -> true)
+    node |> getChildrenRecWith<'a> (fun _ -> true)
     
-let getChildrenAndSelfRecWith<'a when 'a: not struct and 'a :> Node> filter (node: Node) =
-    let children = node |> getChildrenRecWith filter
+let getChildrenAndSelfRecWith<'a when 'a: not struct and 'a :> Node> filter (node: 'a) = seq {
     if filter node then
-        node :: children
-    else
-        children
+        yield node
+    yield! node |> getChildrenRecWith<'a> filter
+}
 
-let getChildrenAndSelfRec<'a when 'a: not struct and 'a :> Node> (node: Node) =
-    node |> getChildrenAndSelfRecWith (fun _ -> true)
+let getChildrenAndSelfRec<'a when 'a: not struct and 'a :> Node> (node: 'a) =
+    node |> getChildrenAndSelfRecWith<'a> (fun _ -> true)
 
 // bridge event
 
@@ -212,4 +210,4 @@ let bindNode (another : Node) (node: Node) =
     
 let initScripts (node: Node) =
     node |> FScript.init
-    node |> getChildrenRec |> List.iter (fun c -> c |> FScript.init)
+    node |> getChildrenRec |> Seq.iter (fun c -> c |> FScript.init)
