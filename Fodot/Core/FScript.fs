@@ -2,25 +2,21 @@ namespace Fodot.Core
 
 open System
 open System.Collections.Concurrent
+open System.Collections.Frozen
+open System.Collections.Generic
 open System.Reflection
-open FSharpPlus
 open Fodot.Common
 open Godot
 open Fodot.Core.GodotObject
     
 module FScript =
     
-    let private cache =
-        ConcurrentDictionary<string, Result<Type list, string>>()
-    let private paramCache =
-        ConcurrentDictionary<Type, ConstructorInfo[]>()
-    
     let mutable private assemblies : Assembly array = [||]
     
     let setAssemblies (a: Assembly array) =
         assemblies <- a
     
-    let private initMap () =
+    let private initTypes () =
         //AppDomain.CurrentDomain.GetAssemblies()
         assemblies
 
@@ -35,40 +31,58 @@ module FScript =
             |> Array.tryHead
             |> Option.map (fun attr -> 
                 let name = (attr :?> FScriptAttribute).Name
-                name, t
+                t, name
             )
         )
         
-        |> Seq.fold (fun (s: ConcurrentDictionary<string, Type list>) (name, t) ->
-            if s.ContainsKey name then
-                s[name] <- t :: s[name]
-            else
-                s[name] <- [t]
-            s
-        ) (ConcurrentDictionary<string, Type list>())
-
-    let private typeMap = lazy initMap()
-
+        |> List.ofSeq
+    
+    let private typeList = lazy initTypes()
+    let private attrMap = lazy (
+        let dict =
+            typeList.Value
+            |> dict
+        dict.ToFrozenDictionary()
+    )
+    
+    let getAttribute<'a> () =
+        attrMap.Value[typeof<'a>]
+    
+    let private typeMap = lazy (
+        let dict =
+            typeList.Value
+            |> List.fold (fun (s: Dictionary<string, Type list>) (t, name) ->
+                if s.ContainsKey name then
+                    s[name] <- t :: s[name]
+                else
+                    s[name] <- [t]
+                s
+            ) (Dictionary<string, Type list>())
+        dict.ToFrozenDictionary ()
+    )
+    
+    let private getTypes (name: string) =
+        typeMap.Value[name]
+    
+    let private paramMap = lazy (
+        let dict =
+            typeList.Value
+            |> List.map (fun (t, _) -> t, t.GetConstructors())
+            |> dict
+        dict.ToFrozenDictionary ()
+    )
+    
     let private getConstructors (t: Type) =
-        paramCache.GetOrAdd(t, fun _ -> t.GetConstructors())
+        paramMap.Value[t]
         
     let buildCache () =
-        for k in typeMap.Value.Keys do
-            let ts = typeMap.Value[k]
-            cache[k] <- Ok ts
-            ts |> List.iter (fun t -> getConstructors t |> ignore)
+        attrMap.Value |> ignore
+        typeMap.Value |> ignore
+        paramMap.Value |> ignore
 
-    let private create (name: string) (args: obj array) = monad {
-        let! typs = 
-            cache.GetOrAdd(name, fun key ->
-                let has, result = typeMap.Value.TryGetValue key
-                if has |> not then
-                    Result.Error $"the script {name} was not found in F# library"
-                else
-                    Ok result
-            )
-        
-        typs
+    let private create (name: string) (args: obj array) =
+        name
+        |> getTypes
         
         |> List.choose (fun typ ->
             typ
@@ -87,7 +101,6 @@ module FScript =
             
             |> Option.map _.Invoke(args)
         )
-    }
 
     type private FScriptData() =
         inherit RefCounted()
@@ -101,7 +114,7 @@ module FScript =
         data.Keys.Add name
         scripts |> List.iter (fun s -> data.Scripts.Add s)
         
-    let private containsKey (name : string) (obj : GodotObject) =
+    let containsKey (name : string) (obj : GodotObject) =
         obj
         |> tryGetMetaAs<FScriptData> fScriptMeta
         |> Option.map (fun data ->
@@ -111,7 +124,6 @@ module FScript =
 
     let private getMetaAndGroupList (obj : GodotObject) =
         obj |> getMetaList
-
         |> List.ofSeq
 
         |> List.append (
@@ -134,18 +146,15 @@ module FScript =
     let private getCallbackFScripts (obj : GodotObject) =
         let getCallArrWith (name : StringName) =
             match obj |> tryInvokeAs<string[]> name with
-            
             | Some arr -> arr |> List.ofSeq
             | None -> []
         
         getCallArrWith fsCallbackGd
-        
         |> List.append (getCallArrWith fsCallbackCs)
 
     let update (obj : GodotObject) =
         let arr =
             obj
-            
             |> getMetaAndGroupList
             |> List.append (obj |> getCallbackFScripts)
             |> List.distinct
@@ -153,12 +162,8 @@ module FScript =
         
         for m in arr do
             try
-                match create m [|obj|] with
-                
-                | Ok scripts ->
-                    obj |> updateScriptData m scripts
-                | Error e ->
-                    raise (Exception e)
+                let scripts = create m [|obj|]
+                obj |> updateScriptData m scripts
             with
             
             | ex -> Logger.pushError $"{obj}: failed creating script {m}: {ex}"
@@ -168,7 +173,20 @@ module FScript =
             ()
         else
             obj |> update
-            
+    
+    let getAll<'a> (obj : GodotObject) =
+        obj
+        |> tryGetMetaAs<FScriptData> fScriptMeta
+        |> Option.map (fun data ->
+            data.Scripts
+            |> Seq.choose (fun s ->
+                match s with
+                | :? 'a as a -> Some a
+                | _ -> None
+            )
+        )
+        |> Option.defaultValue Seq.empty
+    
     let tryGet<'a> (obj : GodotObject) =
         obj
         |> tryGetMetaAs<FScriptData> fScriptMeta
@@ -187,17 +205,10 @@ module FScript =
         obj |> tryGet<'a> |> Option.isSome
         
     let attach<'a> (obj : GodotObject) =
-        let attr =
-            typeof<'a>.GetCustomAttributes(typeof<FScriptAttribute>, false)
-            |> Array.tryHead
-            |> Option.defaultWith (fun () ->
-                failwith $"{typeof<'a>} is not a FScript."
-            )
-            :?> FScriptAttribute
-        let name = attr.Name
+        let attr = getAttribute<'a> ()
         
-        if obj |> containsKey name |> not then
-            obj |> setMeta (new StringName $"fs_{name}") true
+        if obj |> containsKey attr |> not then
+            obj |> setMeta (new StringName $"fs_{attr}") true
             obj |> update
         
         obj |> get<'a>

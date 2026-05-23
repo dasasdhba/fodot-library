@@ -7,10 +7,6 @@
     </PropertyGroup>
 
     <ItemGroup>
-        <PackageReference Include="FSharpPlus" Version="1.9.1" />
-    </ItemGroup>
-
-    <ItemGroup>
         <ProjectReference Include="..\Godot.Bridge\Godot.Bridge.csproj" />
     </ItemGroup>
 
