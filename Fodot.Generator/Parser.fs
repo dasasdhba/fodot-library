@@ -91,6 +91,18 @@ type PropType =
             let v = parts[1].Trim()
             TypedDictionary (k, v)
         | t -> Raw t
+    
+    member this.IsArray() =
+        match this with
+        | Raw "Array" -> true
+        | TypedArray _ -> true
+        | _ -> false
+    
+    member this.IsDictionary() =
+        match this with
+        | Raw "Dictionary" -> true
+        | TypedDictionary _ -> true
+        | _ -> false
         
     member this.GetTextGd () =
         let mapper = mapTypeGd
@@ -160,7 +172,11 @@ type ExportProperty =
             let pack =
                 let fs = p.Type.GetTextFsType()
                 match p.Type with
-                | Raw _ -> if p.Nullable then $"GDNullProp<{fs}>" else $"GDProp<{fs}>"
+                | Raw _ ->
+                    if p.Nullable && (p.Type.IsArray() || p.Type.IsDictionary()) |> not then
+                        $"GDNullProp<{fs}>"
+                    else
+                        $"GDProp<{fs}>"
                 | TypedArray _ -> $"GDPropArray<{fs}>"
                 | TypedDictionary _ -> $"GDPropDictionary<{fs}>"
             let prop = $"    let _back_prop_{name} = {pack}.From(\"{name}\") obj"
@@ -179,7 +195,7 @@ type ExportProperty =
                 $"    member this.{pascal}\n        with get () = {back}.Get()\n        and set v = {back}.Set v"
             else
                 let back = $"_back_prop_value_{name}"
-                $"    member val {pascal} = {back} with get"
+                $"    member this.{pascal} = {back}"
         | _ -> ""
     
     member this.AsGdExport name =
@@ -221,7 +237,11 @@ type ExportProperty =
             let value =
                 match p.Value with
                 | Some v when typ = "String" -> $" = \"{v}\""
+                | Some v when typ = "NodePath" -> $" = ^\"{v}\""
+                | Some v when typ = "StringName" -> $" = &\"{v}\""
                 | Some v -> $" = {v}"
+                | None when p.Type.IsArray() -> " = []"
+                | None when p.Type.IsDictionary() -> " = {}"
                 | None -> ""
             
             $"{export} var {name} : {typ}{value}"
@@ -238,7 +258,7 @@ let signalToFsBack (name : string) (yaml : YamlSignalArg list) =
 
 let signalToFsMember (name : string)=
     let pascal = toPascalCase name
-    $"    member val {pascal} = _back_signal_{name} with get"
+    $"    member this.{pascal} = _back_signal_{name}"
 
 let signalToGd (name : string) (yaml : YamlSignalArg list) =
     let typ =
@@ -269,7 +289,7 @@ let private formatBlock (list : string list) =
 type SafeRoot =
     {
         FScript : string list
-        Extends : string
+        Extends : string option
         ClassName : string option
         Property : Dictionary<string, YamlProperty>
         Signal : Dictionary<string, YamlSignalArg list>
@@ -277,14 +297,17 @@ type SafeRoot =
     
     static member From (yaml : YamlRoot) = {
         FScript = if yaml.FScript :> obj = null then [] else yaml.FScript
-        Extends = yaml.Extends
+        Extends = Option.ofObj yaml.Extends
         ClassName = Option.ofObj yaml.ClassName
         Property = if yaml.Property :> obj = null then Dictionary() else yaml.Property
         Signal = if yaml.Signal :> obj = null then Dictionary() else yaml.Signal
     }
     
     member this.AsGd () =
-        let extends = $"extends {this.Extends}"
+        let extends =
+            match this.Extends with
+            | Some name -> $"extends {name}"
+            | None -> ""
         
         let className =
             match this.ClassName with
@@ -313,7 +336,7 @@ type SafeRoot =
             |> String.concat "\n"
             
         let fs =
-            if this.FScript :> obj = null || this.FScript.Length = 0 then
+            if this.FScript.IsEmpty then
                 ""
             else
                 let l =
@@ -327,7 +350,8 @@ type SafeRoot =
         [extends; className; exports; signals; fs] |> formatBlock
     
     member this.AsFs fileName =
-        let typ = $"type {toPascalCase fileName}(obj : {this.Extends}) ="
+        let extends = this.Extends |> Option.defaultValue "GodotObject"
+        let typ = $"type {toPascalCase fileName}(obj : {extends}) ="
         
         let props =
             this.Property.Keys
