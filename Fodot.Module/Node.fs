@@ -39,7 +39,10 @@ let private setChildrenCacheMonitor prefix meta (root : Node) (node : Node) =
         let clear () =
             root |> GodotObject.removeMeta meta |> ignore
         
-        node |> GodotObject.setMeta signal true
+        // this prevent PackedScene.pack
+        // in which case the metadata will be null
+        // so that signal can be reconstructed here
+        node |> GodotObject.setMeta signal node
         node.add_ChildEnteredTree (fun _ -> clear())
         node.add_ChildExitingTree (fun _ -> clear())
     

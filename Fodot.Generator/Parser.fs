@@ -350,8 +350,9 @@ type SafeRoot =
         [extends; className; exports; signals; fs] |> formatBlock
     
     member this.AsFs fileName =
+        let typName = toPascalCase fileName
         let extends = this.Extends |> Option.defaultValue "GodotObject"
-        let typ = $"type {toPascalCase fileName}(obj : {extends}) ="
+        let typ = $"type {typName}(obj : {extends}) ="
         
         let props =
             this.Property.Keys
@@ -396,8 +397,11 @@ type SafeRoot =
             
             |> List.map signalToFsMember
             |> String.concat "\n"
+        
+        let constructor =
+            $"    static member From o = o |> FScript.attachBy (lazy {typName} o)"
             
-        [typ; backProp; backSignal; memberProp; memberSignal] |> formatBlock
+        [typ; backProp; backSignal; memberProp; memberSignal; constructor] |> formatBlock
         
 // main builder
 
@@ -428,7 +432,10 @@ let rec findParentFsproj (dir: string) =
     let files = Directory.GetFiles(dir)
     match files with
     
-    | fs when fs |> Array.exists (fun f -> Path.GetExtension(f) = ".sln") ->
+    | fs when fs |> Array.exists (fun f ->
+            let ext = Path.GetExtension(f)
+            ext = ".sln" || ext = ".slnx" || f = "project.godot"
+        ) ->
         "null"
     | fs ->
         let fsproj = fs |> Array.tryFind (fun f -> Path.GetExtension(f) = ".fsproj")

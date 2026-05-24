@@ -193,3 +193,11 @@ let bindNode (another : Node) (node: Node) =
 let initScripts (node: Node) =
     node |> FScript.init
     node |> getChildrenRecInternal |> Seq.iter (fun c -> c |> FScript.init)
+    
+let duplicateWith (flag : Node.DuplicateFlags) (node: Node) =
+    let result = node.Duplicate(int flag)
+    result |> initScripts
+    result
+    
+let duplicate (node: Node) =
+    node |> duplicateWith Node.DuplicateFlags.Default

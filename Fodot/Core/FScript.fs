@@ -108,9 +108,17 @@ module FScript =
         member val Scripts = ConcurrentBag<Object>() with get
 
     let private fScriptMeta = new StringName "_fs_script_data"
-
+    
+    let private getScriptData (obj : GodotObject) =
+        obj |> getMetaWithDefaultAs fScriptMeta (lazy new FScriptData())
+    
+    /// This can be used to attach non FScript class.
+    let add (script : 'a) (obj : GodotObject) =
+        let data = obj |> getScriptData
+        data.Scripts.Add script
+    
     let private updateScriptData (name : string) (scripts : Object list) (obj : GodotObject) =
-        let data = obj |> getMetaWithDefaultAs fScriptMeta (lazy new FScriptData())
+        let data = obj |> getScriptData
         data.Keys.Add name
         scripts |> List.iter (fun s -> data.Scripts.Add s)
         
@@ -204,6 +212,9 @@ module FScript =
     let contains<'a> (obj: GodotObject) =
         obj |> tryGet<'a> |> Option.isSome
         
+    /// This can be only used to attach FScript.
+    /// It will check existing script first.
+    /// Warning: you should not call this until init.
     let attach<'a> (obj : GodotObject) =
         let attr = getAttribute<'a> ()
         
@@ -212,3 +223,13 @@ module FScript =
             obj |> update
         
         obj |> get<'a>
+    
+    /// This can be used to attach non FScript class.
+    /// It will check existing class first.
+    let attachBy (script : Lazy<'a>) (obj : GodotObject) =
+        obj
+        |> tryGet<'a>
+        |> Option.defaultWith (fun _ ->
+            obj |> add script.Value
+            script.Value
+        )
