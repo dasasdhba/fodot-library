@@ -61,9 +61,7 @@ let private getProcessData physics (node: Node) =
         node.add_TreeEntered (fun () -> node |> updateProcessCache physics)
         node.add_TreeExited (fun () -> node |> updateRemoveCache physics)
         
-        let res = new ProcessData()
-        node |> setMeta meta res
-        res
+        new ProcessData()
     ))
     
 let hasProcess physics (node: Node) =
