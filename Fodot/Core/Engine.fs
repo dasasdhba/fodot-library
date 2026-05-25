@@ -166,7 +166,7 @@ let processComparer =
         new IComparer<Node> with
             member this.Compare (x, y) =
                 match x.ProcessPriority - y.ProcessPriority with
-                | 0 -> x.IsGreaterThan y |> Convert.ToInt32
+                | 0 -> if x.IsGreaterThan y then 1 else -1
                 | v -> v
     }
     
@@ -175,7 +175,7 @@ let processPhysicsComparer =
         new IComparer<Node> with
             member this.Compare (x, y) =
                 match x.ProcessPhysicsPriority - y.ProcessPhysicsPriority with
-                | 0 -> x.IsGreaterThan y |> Convert.ToInt32
+                | 0 -> if x.IsGreaterThan y then 1 else -1
                 | v -> v
     }
 
