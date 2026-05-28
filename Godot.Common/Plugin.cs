@@ -2,10 +2,10 @@ using Godot.Collections;
 
 namespace Godot.Common;
 
-#if TOOLS
-
 public static class Plugin
 {
+
+#if DEBUG
 
     public static void AddProjectSetting(string key, Variant @default, Variant.Type type, PropertyHint hint = PropertyHint.None, string hintStr = "")
     {
@@ -24,6 +24,8 @@ public static class Plugin
         };
         ProjectSettings.AddPropertyInfo(info);
     }
+    
+#endif
 
     public static T GetProjectSetting<[MustBeVariant] T>(string key, T @default = default)
     {
@@ -36,5 +38,3 @@ public static class Plugin
     }
     
 }
-
-#endif

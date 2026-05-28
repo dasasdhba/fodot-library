@@ -42,7 +42,7 @@ let private setChildrenCacheMonitor prefix meta (root : Node) (node : Node) =
         // this prevent PackedScene.pack
         // in which case the metadata will be null
         // so that signal can be reconstructed here
-        node |> GodotObject.setMeta signal node
+        node |> GodotObject.setMeta signal (new RefCounted())
         node.add_ChildEnteredTree (fun _ -> clear())
         node.add_ChildExitingTree (fun _ -> clear())
     
