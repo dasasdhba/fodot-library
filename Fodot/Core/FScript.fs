@@ -58,6 +58,23 @@ module FScript =
                     s[name] <- [t]
                 s
             ) (Dictionary<string, Type list>())
+    
+    #if DEBUG
+        
+        let allScripts =
+            dict.Keys
+            |> Seq.map (fun name ->
+                let scripts =
+                    dict[name]
+                    |> List.map (fun s -> $"- {s.FullName}")
+                    |> String.concat "\n"
+                $"{name}:\n{scripts}"
+            )
+            |> String.concat "\n"
+        Logger.push $"Loaded scripts: \n{allScripts}"
+        
+    #endif
+        
         dict.ToFrozenDictionary ()
     )
     

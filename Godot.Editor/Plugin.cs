@@ -1,6 +1,6 @@
 using Godot.Collections;
 
-namespace Godot.Common;
+namespace Godot.Editor;
 
 public static class Plugin
 {

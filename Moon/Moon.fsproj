@@ -1,0 +1,26 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <TargetFramework>$(TargetFrameworkVersion)</TargetFramework>
+        <GenerateDocumentationFile>$(DocumentationFileFlag)</GenerateDocumentationFile>
+        <RootNamespace>Moon</RootNamespace>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <Compile Include="Interface\IFlipInit.fs" />
+        <Compile Include="Module\Flip.fs" />
+        <Compile Include="Module\Action.fs" />
+        <Compile Include="Module\Node.fs" />
+        <Compile Include="Module\CanvasItem.fs" />
+        <Compile Include="Library\NodePool.fs" />
+        <Compile Include="Library\Recorder2D.fs" />
+        <Compile Include="Library\Recorder3D.fs" />
+        <Compile Include="CSharp.fs" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <ProjectReference Include="..\..\library\Fodot.Module\Fodot.Module.fsproj" />
+      <ProjectReference Include="..\..\module\Fodot.Stage\Fodot.Stage.fsproj" />
+    </ItemGroup>
+
+</Project>

@@ -3,6 +3,6 @@
         <TargetFramework>$(TargetFrameworkVersion)</TargetFramework>
         <TargetFramework Condition=" '$(GodotTargetPlatform)' == 'android' ">$(AndroidFrameworkVersion)</TargetFramework>
         <EnableDynamicLoading>true</EnableDynamicLoading>
-        <RootNamespace>Godot.Common</RootNamespace>
+        <RootNamespace>Godot</RootNamespace>
     </PropertyGroup>
 </Project>

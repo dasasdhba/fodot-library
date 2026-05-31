@@ -9,8 +9,6 @@ public partial class DeleteBridge : Node
 
     public override void _Notification(int what)
     {
-        base._Notification(what);
-        
         if ((ulong)what == NotificationPredelete)
         {
             EmitSignalDeleted();

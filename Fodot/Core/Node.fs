@@ -43,18 +43,6 @@ let removeChild (child : Node) (node : Node) =
     else
         node |> callDeferred Node.MethodName.RemoveChild child
 
-let reparent parent keep (node : Node) =
-    if parent |> isAccessSafe then
-        node.Reparent(parent, keep)
-    else
-        node |> callDeferred Node.MethodName.Reparent (parent, keep)
-
-let reparentKeep parent (node : Node) =
-    node |> reparent parent true
-
-let reparentDirectly parent (node : Node) =
-    node |> reparent parent false
-
 // node get
 
 let getNode<'a when 'a: not struct and 'a :> Node> (path : NodePath) (node : Node) =
@@ -108,6 +96,26 @@ let getChildrenRec<'a when 'a: not struct and 'a :> Node> (node: Node) =
 
 let getChildrenRecInternal<'a when 'a: not struct and 'a :> Node> (node: Node) =
     node |> getChildrenRecInternalOrNot<'a> true
+
+// reparent
+
+let reparent parent keep (node : Node) =
+    let pSafe =
+        node
+        |> tryGetParent
+        |> Option.map (fun p -> p |> isAccessSafe)
+        |> Option.defaultValue true
+    
+    if pSafe && parent |> isAccessSafe then
+        node.Reparent(parent, keep)
+    else
+        node |> callDeferred Node.MethodName.Reparent (parent, keep)
+
+let reparentKeep parent (node : Node) =
+    node |> reparent parent true
+
+let reparentDirectly parent (node : Node) =
+    node |> reparent parent false
 
 // bridge event
 
