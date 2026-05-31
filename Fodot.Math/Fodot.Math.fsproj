@@ -1,0 +1,14 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <TargetFramework>$(TargetFrameworkVersion)</TargetFramework>
+        <GenerateDocumentationFile>$(DocumentationFileFlag)</GenerateDocumentationFile>
+        <RootNamespace>Fodot.Math</RootNamespace>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <Compile Include="BitFlag.fs" />
+        <Compile Include="Utils.fs" />
+    </ItemGroup>
+
+</Project>

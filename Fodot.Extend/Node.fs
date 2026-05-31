@@ -1,4 +1,4 @@
-module Fodot.Module.Node
+module Fodot.Extend.Node
 
 open Godot
 open Fodot.Core

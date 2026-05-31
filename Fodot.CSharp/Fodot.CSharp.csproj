@@ -1,0 +1,12 @@
+﻿<Project Sdk="Godot.NET.Sdk">
+    <PropertyGroup>
+        <TargetFramework>$(TargetFrameworkVersion)</TargetFramework>
+        <TargetFramework Condition=" '$(GodotTargetPlatform)' == 'android' ">$(AndroidFrameworkVersion)</TargetFramework>
+        <EnableDynamicLoading>true</EnableDynamicLoading>
+        <RootNamespace>Fodot.CSharp</RootNamespace>
+    </PropertyGroup>
+    <ItemGroup>
+      <ProjectReference Include="..\Fodot.Extend\Fodot.Extend.fsproj" />
+      <ProjectReference Include="..\Fodot.Module\Fodot.Module.fsproj" />
+    </ItemGroup>
+</Project>

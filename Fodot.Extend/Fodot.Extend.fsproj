@@ -1,0 +1,19 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <TargetFramework>$(TargetFrameworkVersion)</TargetFramework>
+        <GenerateDocumentationFile>$(DocumentationFileFlag)</GenerateDocumentationFile>
+        <RootNamespace>Fodot.Extend</RootNamespace>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <Compile Include="TileSet.fs" />
+        <Compile Include="GodotObject.fs" />
+        <Compile Include="Node.fs" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <ProjectReference Include="..\Fodot\Fodot.fsproj" />
+    </ItemGroup>
+
+</Project>

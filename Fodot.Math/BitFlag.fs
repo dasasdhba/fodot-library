@@ -1,4 +1,4 @@
-module Fodot.Module.BitFlag
+module Fodot.Math.BitFlag
 
 let getValue (layer : int) (flag : uint) =
     ((flag >>> (layer - 1)) &&& 1u) = 1u
