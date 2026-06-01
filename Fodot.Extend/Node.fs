@@ -3,6 +3,51 @@ module Fodot.Extend.Node
 open Godot
 open Fodot.Core
 
+let getOwnerOrSelf (node : Node) =
+    node.Owner
+    |> Option.ofObj
+    |> Option.defaultValue node
+
+// relative loading
+
+let rec getSceneFilePath (node : Node) =
+    if node.SceneFilePath <> "" then
+        Some node.SceneFilePath
+    else
+        match node.Owner |> Option.ofObj with
+        | None -> None
+        | Some owner -> owner |> getSceneFilePath
+
+let asRelativePath (path : string) (node : Node) =
+    match node |> getSceneFilePath with
+    | None -> path
+    | Some p ->
+        match path with
+        | s when s.StartsWith "@" ->
+            let body = s[1..]
+            let name = p.GetBaseName ()
+           
+            let idx = name.LastIndexOf '_'
+            let name = if idx < 0 then name else name[..(idx - 1)]
+            
+            $"{p.GetBaseDir()}/{name}_{body}"
+        | "" ->
+            p
+        | _ ->
+            $"{p.GetBaseDir()}/{path}"
+
+let load (path : string) (node : Node) =
+    GD.load (node |> asRelativePath path)
+
+let loadAs<'a when 'a :> Resource> path (node : Node) =
+    GD.loadAs<'a> (node |> asRelativePath path)
+
+let tryLoad path node =
+    GD.tryLoad (node |> asRelativePath path)
+
+let tryLoadAs<'a when 'a :> Resource> path (node : Node) =
+    GD.tryLoadAs<'a> (node |> asRelativePath path)
+
 // parent
 
 let rec findParentWith<'a when 'a : null and 'a :> Node> filter (node : Node) =

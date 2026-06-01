@@ -137,15 +137,15 @@ let createEventBy<'n, 'a when 'n :> Node> (child : 'n) signal (node: Node) =
 
 let createDeleteEvent (node: Node) =
     let child = new GodotBridge.DeleteBridge()
-    node |> createEventBy child child.add_SignalDeleted
+    node |> createEventBy child child.add_Deleted
 
 let createInputEvent (node: Node) =
     let child = new GodotBridge.InputBridge()
-    node |> createEventBy child child.add_SignalInput
+    node |> createEventBy child child.add_Input
 
 let createUnhandledInputEvent (node: Node) =
     let child = new GodotBridge.UnhandledInputBridge()
-    node |> createEventBy child child.add_SignalUnhandledInput
+    node |> createEventBy child child.add_UnhandledInput
 
 type private CachedEvent () =
     inherit RefCounted ()
@@ -199,8 +199,12 @@ let bindNode (another : Node) (node: Node) =
 // init
     
 let initScripts (node: Node) =
-    node |> FScript.init
-    node |> getChildrenRecInternal |> Seq.iter (fun c -> c |> FScript.init)
+    seq {
+        yield node
+        yield! node |> getChildrenRecInternal
+    }
+    |> Seq.rev
+    |> Seq.iter (fun c -> c |> FScript.init)
     
 let duplicateWith (flag : Node.DuplicateFlags) (node: Node) =
     let result = node.Duplicate(int flag)

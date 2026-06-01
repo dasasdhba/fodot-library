@@ -1,15 +1,15 @@
+using System;
 using Godot;
 
 namespace GodotBridge;
 
 public partial class InputBridge : Node
 {
-    [Signal]
-    public delegate void InputEventHandler(InputEvent @event);
+    public event Action<InputEvent> Input;
 
     public override void _Input(InputEvent @event)
     {
         base._Input(@event);
-        EmitSignalInput(@event);
+        Input?.Invoke(@event);
     }
 }
