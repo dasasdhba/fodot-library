@@ -1,5 +1,6 @@
 module Fodot.Extend.Node
 
+open FSharp.Extend
 open Godot
 open Fodot.Core
 
@@ -50,97 +51,166 @@ let tryLoadAs<'a when 'a :> Resource> path (node : Node) =
 
 // parent
 
-let rec findParentWith<'a when 'a : null and 'a :> Node> filter (node : Node) =
-    match node.GetParentOrNull<Node>() with
-    | null -> None
-    | :? 'a as a when filter a -> Some a
-    | p -> p |> findParentWith<'a> filter
+let rec chooseParent predictor (node : Node) =
+    node
+    |> Node.tryGetParent<Node>
+    |> Option.bind (fun p ->
+        match predictor p with
+        | None -> p |> chooseParent predictor
+        | v -> v
+    )
+
+let findParentWith<'a when 'a : null and 'a :> Node> filter (node : Node) =
+    node |> chooseParent (fun p ->
+        match p with
+        | :? 'a as a when filter a -> Some a
+        | _ -> None
+    )
     
 let findParent<'a when 'a : null and 'a :> Node> (node : Node) =
     node |> findParentWith<'a> (fun _ -> true)
-    
-let rec findParentCachedWith<'a when 'a : null and 'a :> Node> filter meta (node : Node) =
-    node
-    |> GodotObject.tryGetMetaAs<'a> meta
+
+type ParentCache<'a> = WeakMap<ReLazy<'a option>>
+
+let rec chooseParentCached (map: ParentCache<'a>) predictor (node : Node) =
+    map
+    |> WeakMap.tryGet node
+    |> Option.bind _.Value
     |> Option.orElseWith (fun () ->
-        let result =
-            match node.GetParentOrNull<Node>() with
-            | null -> None
-            | :? 'a as a when filter a -> Some a
-            | p -> p |> findParentCachedWith<'a> filter meta
-        if result |> Option.isSome then
-            node |> GodotObject.setMeta meta result.Value
-        result
+        let result = ReLazy (fun _ ->
+            node
+            |> Node.tryGetParent<Node>
+            |> Option.bind (fun p ->
+                match predictor p with
+                | None -> p |> chooseParentCached map predictor
+                | v -> v
+            )
+        )
+        node.add_TreeExiting (fun _ -> result.Rebuild())
+        map |> WeakMap.addOrUpdate node result
+        result.Value
+    )
+
+let findParentCachedWith<'a when 'a : null and 'a :> Node> (map: ParentCache<'a>) filter (node : Node) =
+    node |> chooseParentCached map (fun p ->
+        match p with
+        | :? 'a as a when filter a -> Some a
+        | _ -> None
     )
         
-let findParentCached<'a when 'a : null and 'a :> Node> meta (node : Node) =
-    node |> findParentCachedWith<'a> (fun _ -> true) meta
+let findParentCached<'a when 'a : null and 'a :> Node> map (node : Node) =
+    node |> findParentCachedWith<'a> map (fun _ -> true)
 
 // children
 
-let private setChildrenCacheMonitor prefix meta (root : Node) (node : Node) =
-    let signal = new StringName $"_{prefix}_{meta}"
-    if node |> GodotObject.hasMeta signal |> not then
-        let clear () =
-            root |> GodotObject.removeMeta meta |> ignore
-        
-        // this prevent PackedScene.pack
-        // in which case the metadata will be null
-        // so that signal can be reconstructed here
-        node |> GodotObject.setMeta signal (new RefCounted())
-        node.add_ChildEnteredTree (fun _ -> clear())
-        node.add_ChildExitingTree (fun _ -> clear())
-    
-let getChildrenCachedInternalOrNotWith<'a when 'a: not struct and 'a :> Node> filter (meta: string) inter (node : Node) =
-    let meta = new StringName $"_cached_children_{meta}"
-    node
-    |> GodotObject.getMetaWithDefaultAsArray<'a> meta (lazy (
-        node |> setChildrenCacheMonitor "cached_signal" meta node
-        node
-        |> Node.getChildrenInternalOrNot<'a> inter
-        |> Seq.filter filter
-        |> Collections.Array<'a>
-    ))
+let private setChildrenCacheMonitor (re : ReLazy<'a>) (node : Node) =
+    node.add_ChildEnteredTree (fun _ -> re.Rebuild())
+    node.add_ChildExitingTree (fun _ -> re.Rebuild())
 
-let getChildrenCachedWith<'a when 'a: not struct and 'a :> Node> filter meta (node : Node) =
-    node |> getChildrenCachedInternalOrNotWith<'a> filter meta false
+type ChildrenCache<'a> = WeakMap<ReLazy<'a list>>
 
-let getChildrenInternalCachedWith<'a when 'a: not struct and 'a :> Node> filter meta (node : Node) =
-    node |> getChildrenCachedInternalOrNotWith<'a> filter meta true
-    
-let getChildrenCached<'a when 'a: not struct and 'a :> Node> meta (node : Node) =
-    node |> getChildrenCachedWith<'a> (fun _ -> true) meta
-
-let getChildrenInternalCached<'a when 'a: not struct and 'a :> Node> meta (node : Node) =
-    node |> getChildrenInternalCachedWith<'a> (fun _ -> true) meta
-    
-let getChildrenRecCachedInternalOrNotWith<'a when 'a: not struct and 'a :> Node> filter (meta: string) inter (node : Node) =
-    let meta = new StringName $"_cached_rec_children_{meta}"
-    node
-    |> GodotObject.getMetaWithDefaultAsArray<'a> meta (lazy (
-        node |> setChildrenCacheMonitor "cached_signal" meta node
-        node
-        |> Node.getChildrenRecInternalOrNot inter
-        |> Seq.choose (fun (child: Node) ->
-            child |> setChildrenCacheMonitor "cached_child_signal" meta node
-            match child with
-            | :? 'a as a when filter a -> Some a
-            | _ -> None
+let chooseChildrenCachedInternalOrNot (map : ChildrenCache<'a>) inter predictor (node : Node) =
+    map
+    |> WeakMap.tryGet node
+    |> Option.map _.Value
+    |> Option.defaultWith (fun () ->
+        let re = ReLazy (fun _ ->
+            node
+            |> Node.getChildrenInternalOrNot<Node> inter
+            |> Seq.choose predictor
+            |> List.ofSeq
         )
-        |> Collections.Array<'a>
-    ))
+        node |> setChildrenCacheMonitor re
+        map |> WeakMap.addOrUpdate node re
+        re.Value
+    )
 
-let getChildrenRecCachedWith<'a when 'a: not struct and 'a :> Node> filter meta (node : Node) =
-    node |> getChildrenRecCachedInternalOrNotWith<'a> filter meta false
+let chooseChildrenCachedInternal map predictor node =
+    node |> chooseChildrenCachedInternalOrNot map true predictor
 
-let getChildrenRecInternalCachedWith<'a when 'a: not struct and 'a :> Node> filter meta (node : Node) =
-    node |> getChildrenRecCachedInternalOrNotWith<'a> filter meta true
+let chooseChildrenCached map predictor node =
+    node |> chooseChildrenCachedInternalOrNot map false predictor
+
+let getChildrenCachedInternalOrNotWith<'a when 'a: not struct and 'a :> Node> map inter filter (node : Node) =
+    node |> chooseChildrenCachedInternalOrNot map inter (fun c ->
+        match c with
+        | :? 'a as a when filter a -> Some a
+        | _ -> None
+    )
+
+let getChildrenCachedWith<'a when 'a: not struct and 'a :> Node> map filter (node : Node) =
+    node |> getChildrenCachedInternalOrNotWith<'a> map false filter
+
+let getChildrenInternalCachedWith<'a when 'a: not struct and 'a :> Node> map filter (node : Node) =
+    node |> getChildrenCachedInternalOrNotWith<'a> map true filter
     
-let getChildrenRecCached<'a when 'a: not struct and 'a :> Node> meta (node : Node) =
-    node |> getChildrenRecCachedWith<'a> (fun _ -> true) meta
+let getChildrenCached<'a when 'a: not struct and 'a :> Node> map (node : Node) =
+    node |> getChildrenCachedWith<'a> map (fun _ -> true)
 
-let getChildrenRecInternalCached<'a when 'a: not struct and 'a :> Node> meta (node : Node) =
-    node |> getChildrenRecInternalCachedWith<'a> (fun _ -> true) meta
+let getChildrenInternalCached<'a when 'a: not struct and 'a :> Node> map (node : Node) =
+    node |> getChildrenInternalCachedWith<'a> map (fun _ -> true)
+
+type ChildrenRecCache<'a> = WeakMap<ReLazy<'a list * Node seq>>
+
+let chooseChildrenRecCachedInternalOrNot (map : ChildrenRecCache<'a>) inter predictor (node : Node) =
+    map
+    |> WeakMap.tryGet node
+    |> Option.map (fun r -> r.Value |> fst)
+    |> Option.defaultWith (fun () ->
+        let re = ReLazy ()
+        node |> setChildrenCacheMonitor re
+        
+        re.Build (fun _ ->
+            let last =
+                map
+                |> WeakMap.tryGet node
+                |> Option.map (fun r -> r.Value |> snd)
+                |> Option.defaultValue Seq.empty
+            
+            let nodes =
+                node
+                |> Node.getChildrenRecInternalOrNot<Node> inter
+            
+            let list =
+                nodes
+                |> Seq.choose (fun c ->
+                    if last |> Seq.contains c |> not then
+                        c |> setChildrenCacheMonitor re
+                    c |> predictor
+                )
+                |> List.ofSeq
+                
+            list, nodes
+        )
+        
+        map |> WeakMap.addOrUpdate node re
+        re.Value |> fst
+    )
+    
+let chooseChildrenRecCachedInternal map predictor node =
+    node |> chooseChildrenRecCachedInternalOrNot map true predictor
+    
+let chooseChildrenRecCached map predictor node =
+    node |> chooseChildrenRecCachedInternalOrNot map false predictor
+    
+let getChildrenRecCachedInternalOrNotWith<'a when 'a: not struct and 'a :> Node> map inter filter (node : Node) =
+    node |> chooseChildrenRecCachedInternalOrNot map inter (fun c ->
+        match c with
+        | :? 'a as a when filter a -> Some a
+        | _ -> None
+    )
+
+let getChildrenRecCachedWith<'a when 'a: not struct and 'a :> Node> map filter (node : Node) =
+    node |> getChildrenRecCachedInternalOrNotWith<'a> map false filter
+
+let getChildrenRecInternalCachedWith<'a when 'a: not struct and 'a :> Node> map filter (node : Node) =
+    node |> getChildrenRecCachedInternalOrNotWith<'a> map true filter
+    
+let getChildrenRecCached<'a when 'a: not struct and 'a :> Node> map (node : Node) =
+    node |> getChildrenRecCachedWith<'a> map (fun _ -> true)
+
+let getChildrenRecInternalCached<'a when 'a: not struct and 'a :> Node> map (node : Node) =
+    node |> getChildrenRecInternalCachedWith<'a> map (fun _ -> true)
     
 // fscripts
 
@@ -176,13 +246,11 @@ let tryGetChildInternalFScript<'a> idx (node : Node) =
 
 let findParentFScript<'a> (node : Node) =
     node
-    |> findParentWith (fun p -> p |> FScript.contains<'a>)
-    |> Option.bind (fun p -> p |> FScript.tryGet<'a>)
+    |> chooseParent (fun p -> p |> FScript.tryGet<'a>)
 
-let findParentFScriptCached<'a> meta (node : Node) =
+let findParentFScriptCached<'a> map (node : Node) =
     node
-    |> findParentCachedWith (fun p -> p |> FScript.contains<'a>) meta
-    |> Option.bind (fun p -> p |> FScript.tryGet<'a>)
+    |> chooseParentCached map (fun p -> p |> FScript.tryGet<'a>)
 
 let getChildrenFScriptsInternalOrNot<'a> inter (node : Node) =
     node
@@ -206,24 +274,22 @@ let getChildrenFScriptsRec<'a> (node : Node) =
 let getChildrenInternalFScriptsRec<'a> (node : Node) =
     node |> getChildrenFScriptsRecInternalOrNot<'a> true
     
-let getChildrenFScriptsCachedInternalOrNot<'a> meta inter (node : Node) =
+let getChildrenFScriptsCachedInternalOrNot<'a> map inter (node : Node) =
     node
-    |> getChildrenCachedInternalOrNotWith (fun c -> c |> FScript.contains<'a>) meta inter
-    |> Seq.map (fun c -> c |> FScript.get<'a>)
+    |> chooseChildrenCachedInternalOrNot map inter (fun c -> c |> FScript.tryGet<'a>)
 
-let getChildrenFScriptsCached<'a> meta (node : Node) =
-    node |> getChildrenFScriptsCachedInternalOrNot<'a> meta false
+let getChildrenFScriptsCached<'a> map (node : Node) =
+    node |> getChildrenFScriptsCachedInternalOrNot<'a> map false
 
-let getChildrenInternalFScriptsCached<'a> meta (node : Node) =
-    node |> getChildrenFScriptsCachedInternalOrNot<'a> meta true
+let getChildrenInternalFScriptsCached<'a> map (node : Node) =
+    node |> getChildrenFScriptsCachedInternalOrNot<'a> map true
 
-let getChildrenFScriptsRecCachedInternalOrNot<'a> meta inter (node : Node) =
+let getChildrenFScriptsRecCachedInternalOrNot<'a> map inter (node : Node) =
     node
-    |> getChildrenRecCachedInternalOrNotWith (fun c -> c |> FScript.contains<'a>) meta inter
-    |> Seq.map (fun c -> c |> FScript.get<'a>)
+    |> chooseChildrenRecCachedInternalOrNot map inter (fun c -> c |> FScript.tryGet<'a>)
 
-let getChildrenFScriptsRecCached<'a> meta (node : Node) =
-    node |> getChildrenFScriptsRecCachedInternalOrNot<'a> meta false
+let getChildrenFScriptsRecCached<'a> map (node : Node) =
+    node |> getChildrenFScriptsRecCachedInternalOrNot<'a> map false
     
-let getChildrenInternalFScriptsRecCached<'a> meta (node : Node) =
-    node |> getChildrenFScriptsRecCachedInternalOrNot<'a> meta true
+let getChildrenInternalFScriptsRecCached<'a> map (node : Node) =
+    node |> getChildrenFScriptsRecCachedInternalOrNot<'a> map true
