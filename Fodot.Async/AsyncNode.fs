@@ -2,7 +2,7 @@ namespace Fodot.Async
 
 open System.Threading
 open System.Threading.Tasks
-open Fodot.Core.Engine
+open Fodot.Core
 open Godot
 
 type AsyncNode =
@@ -33,13 +33,13 @@ module AsyncNode =
                     if predict.Invoke delta then
                         event.Trigger()
             ))
-        let id = anode.Node |> addProcessBy proc
+        let id = proc.AddWith anode.Node
         
         task {
             try
                 do! GDTask.awaitEvent event.Publish anode.Ct
             finally
-                anode.Node |> removeProcess id |> ignore
+                anode.Node |> Engine.removeProcess id |> ignore
         }
         
     let toProcessThread (anode : AsyncNode) =

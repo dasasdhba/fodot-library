@@ -14,6 +14,7 @@
         <Compile Include="Common\Attribute.fs" />
         <Compile Include="Common\Logger.fs" />
         <Compile Include="Common\Singleton.fs" />
+        <Compile Include="Core\WeakMap.fs" />
         <Compile Include="Core\Variant.fs" />
         <Compile Include="Core\Callable.fs" />
         <Compile Include="Core\GodotObject.fs" />

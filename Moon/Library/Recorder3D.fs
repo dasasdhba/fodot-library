@@ -45,5 +45,7 @@ type Recorder3D(node : Node, target : Node3D) =
             
 module Recorder3D =
     
+    let private map = WeakMap<Recorder3D>()
+    
     let get (n3d : Node3D)=
-        n3d |> Node.getSubBinding (fun n -> Recorder3D(n, n3d))
+        n3d |> Node.getSubBinding map (fun n -> Recorder3D(n, n3d))

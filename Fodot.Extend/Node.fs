@@ -25,7 +25,7 @@ let asRelativePath (path : string) (node : Node) =
         match path with
         | s when s.StartsWith "@" ->
             let body = s[1..]
-            let name = p.GetBaseName ()
+            let name = p.GetFile().GetBaseName ()
            
             let idx = name.LastIndexOf '_'
             let name = if idx < 0 then name else name[..(idx - 1)]

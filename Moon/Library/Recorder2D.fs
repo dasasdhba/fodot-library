@@ -46,5 +46,7 @@ type Recorder2D(node : Node, target : CanvasItem) =
             
 module Recorder2D =
     
+    let private map = WeakMap<Recorder2D>()
+    
     let get (item: CanvasItem)=
-        item |> Node.getSubBinding (fun n -> Recorder2D(n, item))
+        item |> Node.getSubBinding map (fun n -> Recorder2D(n, item))

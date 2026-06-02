@@ -7,7 +7,6 @@ open System.Collections.Generic
 open System.Reflection
 open Fodot.Common
 open Godot
-open Fodot.Core.GodotObject
     
 module FScript =
     
@@ -118,21 +117,21 @@ module FScript =
             
             |> Option.map _.Invoke(args)
         )
-
+    
     type private FScriptData() =
-        inherit RefCounted()
         member val Keys = ConcurrentBag<string>() with get
         member val Scripts = ConcurrentBag<Object>() with get
 
-    let private fScriptMeta = new StringName "_fs_script_data"
+    let private fScriptTable = WeakMap<FScriptData>()
     
     let private getScriptData (obj : GodotObject) =
-        obj |> getMetaWithDefaultAs fScriptMeta (lazy new FScriptData())
+        fScriptTable |> WeakMap.getOrAdd obj (lazy FScriptData())
     
-    /// This can be used to attach non FScript class.
-    let add (script : 'a) (obj : GodotObject) =
-        let data = obj |> getScriptData
-        data.Scripts.Add script
+    let private tryGetScriptData (obj : GodotObject) =
+        fScriptTable |> WeakMap.tryGet obj
+    
+    let private hasScriptData (obj : GodotObject) =
+        fScriptTable |> WeakMap.contains obj
     
     let private updateScriptData (name : string) (scripts : Object list) (obj : GodotObject) =
         let data = obj |> getScriptData
@@ -141,14 +140,14 @@ module FScript =
         
     let containsKey (name : string) (obj : GodotObject) =
         obj
-        |> tryGetMetaAs<FScriptData> fScriptMeta
+        |> tryGetScriptData
         |> Option.map (fun data ->
             data.Keys |> Seq.contains name
         )
         |> Option.defaultValue false
 
     let private getMetaAndGroupList (obj : GodotObject) =
-        obj |> getMetaList
+        obj |> GodotObject.getMetaList
         |> List.ofSeq
 
         |> List.append (
@@ -170,7 +169,7 @@ module FScript =
         
     let private getCallbackFScripts (obj : GodotObject) =
         let getCallArrWith (name : StringName) =
-            match obj |> tryInvokeAs<string[]> name with
+            match obj |> GodotObject.tryInvokeAs<string[]> name with
             | Some arr -> arr |> List.ofSeq
             | None -> []
         
@@ -194,14 +193,14 @@ module FScript =
             | ex -> Logger.pushError $"{obj}: failed creating script {m}: {ex}"
             
     let init (obj : GodotObject) =
-        if obj |> hasMeta fScriptMeta then
+        if obj |> hasScriptData then
             ()
         else
             obj |> update
     
     let getAll<'a> (obj : GodotObject) =
         obj
-        |> tryGetMetaAs<FScriptData> fScriptMeta
+        |> tryGetScriptData
         |> Option.map (fun data ->
             data.Scripts
             |> Seq.choose (fun s ->
@@ -214,7 +213,7 @@ module FScript =
     
     let tryGet<'a> (obj : GodotObject) =
         obj
-        |> tryGetMetaAs<FScriptData> fScriptMeta
+        |> tryGetScriptData
         |> Option.bind (fun data ->
             data.Scripts
             |> Seq.tryFind (fun s -> s :? 'a)
@@ -236,17 +235,7 @@ module FScript =
         let attr = getAttribute<'a> ()
         
         if obj |> containsKey attr |> not then
-            obj |> setMeta (new StringName $"fs_{attr}") true
+            obj |> GodotObject.setMeta (new StringName $"fs_{attr}") true
             obj |> update
         
         obj |> get<'a>
-    
-    /// This can be used to attach non FScript class.
-    /// It will check existing class first.
-    let attachBy (script : Lazy<'a>) (obj : GodotObject) =
-        obj
-        |> tryGet<'a>
-        |> Option.defaultWith (fun _ ->
-            obj |> add script.Value
-            script.Value
-        )

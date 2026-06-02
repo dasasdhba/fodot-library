@@ -1,10 +1,11 @@
 module Moon.Module.Node
 
+open Fodot.Common
 open Godot
 open Fodot.Core
 
-let getSubBinding (creator : Node -> 'a) (node : Node)=
-    node |> FScript.attachBy (lazy (
+let getSubBinding (map : WeakMap<'a>) (creator : Node -> 'a) (node : Node)=
+    map |> WeakMap.getOrAdd node (lazy (
         let sub = new Node()
         let result = creator sub
         node |> Node.bindChild sub

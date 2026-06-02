@@ -2,7 +2,6 @@ module Fodot.Core.Node
 
 open System
 open Fodot.Core
-open Fodot.Core.GodotObject
 open Godot
 
 // node access
@@ -14,7 +13,7 @@ let addChildInternal (child : Node) inter (node : Node) =
     if node |> isAccessSafe then
         node.AddChild(child, false, inter)
     else
-        node |> callDeferred Node.MethodName.AddChild (child, inter)
+        node |> GodotObject.callDeferred Node.MethodName.AddChild (child, inter)
 
 let addChild (child : Node) (node : Node) =
     node |> addChildInternal child Node.InternalMode.Disabled
@@ -29,19 +28,19 @@ let addSibling (sibling : Node) (node : Node) =
     if node |> isAccessSafe then
         node.AddSibling(sibling)
     else
-        node |> callDeferred Node.MethodName.AddSibling sibling
+        node |> GodotObject.callDeferred Node.MethodName.AddSibling sibling
 
 let moveChild (child: Node) (idx : int) (node : Node) =
     if node |> isAccessSafe then
         node.MoveChild(child, idx)
     else
-        node |> callDeferred Node.MethodName.MoveChild (child, idx)
+        node |> GodotObject.callDeferred Node.MethodName.MoveChild (child, idx)
 
 let removeChild (child : Node) (node : Node) =
     if node |> isAccessSafe then
         node.RemoveChild(child)
     else
-        node |> callDeferred Node.MethodName.RemoveChild child
+        node |> GodotObject.callDeferred Node.MethodName.RemoveChild child
 
 // node get
 
@@ -109,7 +108,7 @@ let reparent parent keep (node : Node) =
     if pSafe && parent |> isAccessSafe then
         node.Reparent(parent, keep)
     else
-        node |> callDeferred Node.MethodName.Reparent (parent, keep)
+        node |> GodotObject.callDeferred Node.MethodName.Reparent (parent, keep)
 
 let reparentKeep parent (node : Node) =
     node |> reparent parent true
@@ -148,16 +147,14 @@ let createUnhandledInputEvent (node: Node) =
     node |> createEventBy child child.add_UnhandledInput
 
 type private CachedEvent () =
-    inherit RefCounted ()
-    
     member val DeleteEvent : IEvent<unit> option = None with get, set
     member val InputEvent : IEvent<InputEvent> option = None with get, set
     member val UnhandledInputEvent : IEvent<InputEvent> option = None with get, set
 
-let private cachedEventMeta = new StringName "_fs_node_cached_event"
+let private cachedTable = WeakMap<CachedEvent>()
     
 let private getCachedEventWith getter setter creator node =
-    let cache = node |> getMetaWithDefaultAs cachedEventMeta (lazy new CachedEvent())
+    let cache = cachedTable |> WeakMap.getOrAdd node (lazy CachedEvent ())
     match getter cache with
     | Some event -> event
     | None ->

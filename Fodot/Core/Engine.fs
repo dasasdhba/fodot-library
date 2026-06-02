@@ -1,12 +1,9 @@
-module Fodot.Core.Engine
+namespace Fodot.Core
 
 open System
 open System.Collections.Concurrent
 open System.Collections.Generic
-open Fodot.Core.GodotObject
 open Godot
-
-// node process data
 
 type ProcessFunc<'a> =
     | Unit of (unit -> 'a)
@@ -21,119 +18,205 @@ type ProcessFunc<'a> =
 
 type ProcessUnit = ProcessFunc<unit>
     
-type private ProcessData() =
-    inherit RefCounted ()
-    member val Process = ConcurrentDictionary<Guid, ProcessUnit>() with get
-    member this.HasProcess () =
-        this.Process.Count > 0
-    member this.DoProcess delta =
-        this.Process.Values |> Seq.iter (fun f -> f.Invoke delta)
+module Engine =
+    
+    type private ProcessData() =
+        member val Process = ConcurrentDictionary<Guid, ProcessUnit>() with get
+        member this.HasProcess () =
+            this.Process.Count > 0
+        member this.DoProcess delta =
+            this.Process.Values |> Seq.iter (fun f -> f.Invoke delta)
 
-let private cachedIdleUpdate = ConcurrentBag<Node>()
-let private cachedPhysicsUpdate = ConcurrentBag<Node>()
-let private cachedIdleRemove = ConcurrentBag<Node>()
-let private cachedPhysicsRemove = ConcurrentBag<Node>()
+    let private idleMap = WeakMap<ProcessData>()
+    let private physicsMap = WeakMap<ProcessData>()
 
-let private updateProcessCache physics node =
-    if physics then
-        cachedPhysicsUpdate.Add node
-    else
-        cachedIdleUpdate.Add node
+    let private cachedIdleUpdate = ConcurrentBag<Node>()
+    let private cachedPhysicsUpdate = ConcurrentBag<Node>()
+    let private cachedIdleRemove = ConcurrentBag<Node>()
+    let private cachedPhysicsRemove = ConcurrentBag<Node>()
+
+    let private updateProcessCache physics node =
+        if physics then
+            cachedPhysicsUpdate.Add node
+        else
+            cachedIdleUpdate.Add node
+            
+    let private updateRemoveCache physics node =
+        if physics then
+            cachedPhysicsRemove.Add node
+        else
+            cachedIdleRemove.Add node
+
+    let private getProcessDataMap physics =
+        if physics then
+            physicsMap
+        else
+            idleMap
+
+    let private getProcessData physics (node: Node) =
+        let map = getProcessDataMap physics
+        map |> WeakMap.getOrAdd node (lazy (
+            node.add_TreeEntered (fun () -> node |> updateProcessCache physics)
+            node.add_TreeExited (fun () -> node |> updateRemoveCache physics)
+            
+            ProcessData()
+        ))
         
-let private updateRemoveCache physics node =
-    if physics then
-        cachedPhysicsRemove.Add node
-    else
-        cachedIdleRemove.Add node
+    let hasProcess physics (node: Node) =
+        let map = getProcessDataMap physics
+        map |> WeakMap.contains node
 
-let private processIdleMeta = new StringName "_fs_node_process_data_idle"
-let private processPhysicsMeta = new StringName "_fs_node_process_data_physics"
-
-let private getProcessDataMeta physics =
-    if physics then
-        processPhysicsMeta
-    else
-        processIdleMeta
-
-let private getProcessData physics (node: Node) =
-    let meta = getProcessDataMeta physics
-    node |> getMetaWithDefaultAs<ProcessData> meta (lazy (
-        node.add_TreeEntered (fun () -> node |> updateProcessCache physics)
-        node.add_TreeExited (fun () -> node |> updateRemoveCache physics)
+    let hasIdleProcess (node: Node) =
+        node |> hasProcess false
         
-        new ProcessData()
-    ))
-    
-let hasProcess physics (node: Node) =
-    let meta = getProcessDataMeta physics
-    node |> hasMeta meta
+    let hasPhysicsProcess (node: Node) =
+        node |> hasProcess true
 
-let hasIdleProcess (node: Node) =
-    node |> hasProcess false
-    
-let hasPhysicsProcess (node: Node) =
-    node |> hasProcess true
-
-let addProcessType (f : ProcessUnit) (physics : bool) (node: Node) =
-    let data = node |> getProcessData physics
-    if node.IsInsideTree () && data.HasProcess () |> not then
-        node |> updateProcessCache physics
-    let dict = data.Process
-    let id = Guid.NewGuid ()
-    dict.AddOrUpdate(id, (fun _ -> f), (fun _ __ -> f)) |> ignore
-    id
-
-let addProcess (f : unit -> unit) (physics : bool) (node: Node) =
-    node |> addProcessType (Unit f) physics
-    
-let addDeltaProcess (f : float -> unit) (physics : bool) (node: Node) =
-    node |> addProcessType (Delta f) physics
-
-let addDelta32Process (f : float32 -> unit) (physics : bool) (node: Node) =
-    node |> addProcessType (Delta32 f) physics
-
-let addIdleProcess (f : unit -> unit) (node: Node) =
-    node |> addProcess f false
-    
-let addPhysicsProcess (f : unit -> unit) (node: Node) =
-    node |> addProcess f true
-    
-let addIdleDeltaProcess (f : float -> unit) (node: Node) =
-    node |> addDeltaProcess f false
-   
-let addPhysicsDeltaProcess (f : float -> unit) (node: Node) =
-    node |> addDeltaProcess f true
-    
-let addIdleDelta32Process (f : float32 -> unit) (node: Node) =
-    node |> addDelta32Process f false
-    
-let addPhysicsDelta32Process (f : float32 -> unit) (node: Node) =
-    node |> addDelta32Process f true
-
-let private removeProcessWith physics (id: Guid) (node: Node) =
-    if node |> hasProcess physics |> not then
-        false
-    else
+    let addProcessType (f : ProcessUnit) (physics : bool) (node: Node) =
         let data = node |> getProcessData physics
-        let success, _ = data.Process.Remove id
-        success
+        if node.IsInsideTree () && data.HasProcess () |> not then
+            node |> updateProcessCache physics
+        let dict = data.Process
+        let id = Guid.NewGuid ()
+        dict.AddOrUpdate(id, (fun _ -> f), (fun _ __ -> f)) |> ignore
+        id
 
-let removeIdleProcess (id: Guid) (node: Node) =
-    node |> removeProcessWith false id
+    let addProcess (f : unit -> unit) (physics : bool) (node: Node) =
+        node |> addProcessType (Unit f) physics
+        
+    let addDeltaProcess (f : float -> unit) (physics : bool) (node: Node) =
+        node |> addProcessType (Delta f) physics
+
+    let addDelta32Process (f : float32 -> unit) (physics : bool) (node: Node) =
+        node |> addProcessType (Delta32 f) physics
+
+    let addIdleProcess (f : unit -> unit) (node: Node) =
+        node |> addProcess f false
+        
+    let addPhysicsProcess (f : unit -> unit) (node: Node) =
+        node |> addProcess f true
+        
+    let addIdleDeltaProcess (f : float -> unit) (node: Node) =
+        node |> addDeltaProcess f false
+       
+    let addPhysicsDeltaProcess (f : float -> unit) (node: Node) =
+        node |> addDeltaProcess f true
+        
+    let addIdleDelta32Process (f : float32 -> unit) (node: Node) =
+        node |> addDelta32Process f false
+        
+    let addPhysicsDelta32Process (f : float32 -> unit) (node: Node) =
+        node |> addDelta32Process f true
+
+    let private removeProcessWith physics (id: Guid) (node: Node) =
+        if node |> hasProcess physics |> not then
+            false
+        else
+            let data = node |> getProcessData physics
+            let success, _ = data.Process.Remove id
+            success
+
+    let removeIdleProcess (id: Guid) (node: Node) =
+        node |> removeProcessWith false id
+        
+    let removePhysicsProcess (id: Guid) (node: Node) =
+        node |> removeProcessWith true id
+
+    let removeProcess (id: Guid) (node: Node) =
+        node |> removeIdleProcess id || node |> removePhysicsProcess id
+
+    // node process logic
+
+    let processComparer =
+        {
+            new IComparer<Node> with
+                member this.Compare (x, y) =
+                    match x.ProcessPriority - y.ProcessPriority with
+                    | 0 -> if x.IsGreaterThan y then 1 else -1
+                    | v -> v
+        }
+        
+    let processPhysicsComparer =
+        {
+            new IComparer<Node> with
+                member this.Compare (x, y) =
+                    match x.ProcessPhysicsPriority - y.ProcessPhysicsPriority with
+                    | 0 -> if x.IsGreaterThan y then 1 else -1
+                    | v -> v
+        }
+
+    let private cachedProcessNodes = SortedList<Node, ProcessData>(processComparer)
+    let private cachedPhysicsProcessNodes = SortedList<Node, ProcessData>(processPhysicsComparer)
+
+    let private treeUpdateProcessCache physics=
+        let queue, cache =
+            if physics then
+                cachedPhysicsUpdate, cachedPhysicsProcessNodes
+            else
+                cachedIdleUpdate, cachedProcessNodes
+        
+        for n in queue do
+            cache.Add(n, n |> getProcessData physics)
+        queue.Clear ()
+
+    let private treeUpdateRemoveCache physics =
+        let remove, cache =
+            if physics then
+                cachedPhysicsRemove, cachedPhysicsProcessNodes
+            else
+                cachedIdleRemove, cachedProcessNodes
+                
+        for n in remove do
+            cache.Remove n |> ignore
+        remove.Clear ()
+
+    let treeUpdateCache () =
+        treeUpdateProcessCache true
+        treeUpdateProcessCache false
+        treeUpdateRemoveCache true
+        treeUpdateRemoveCache false
+
+    let private treeDoProcess physics (tree : SceneTree) =
+        treeUpdateRemoveCache physics
+        treeUpdateProcessCache physics
+        let nodes, delta =
+            if physics then
+                cachedPhysicsProcessNodes,
+                tree.GetCurrentScene().GetPhysicsProcessDeltaTime()
+            else
+                cachedProcessNodes,
+                tree.GetCurrentScene().GetProcessDeltaTime()
+        nodes |> Seq.iter (fun kv ->
+            let n, d = kv.Key, kv.Value
+            if GodotObject.IsInstanceValid n && n.CanProcess () then
+                d.DoProcess delta
+        )
+
+    // entry point
+
+    let private tree =
+        lazy (
+            // this is optional, it can increase runtime performance
+            // otherwise script cache will be built on their first call
+            FScript.buildCache ()
+            
+            let t = Engine.GetMainLoop () :?> SceneTree
+            t.add_NodeAdded (fun node -> node |> FScript.init)
+            t.add_ProcessFrame (fun () -> t |> treeDoProcess false)
+            t.add_PhysicsFrame (fun () -> t |> treeDoProcess true)
+            
+            t
+        )
+        
+    let getTree () = tree.Value
     
-let removePhysicsProcess (id: Guid) (node: Node) =
-    node |> removeProcessWith true id
-
-let removeProcess (id: Guid) (node: Node) =
-    node |> removeIdleProcess id || node |> removePhysicsProcess id
-
 type ProcessConfig =
     {
         Process : ProcessUnit
         Physics : bool
     }
     member this.AddWith (node : Node) =
-        node |> addProcessType this.Process this.Physics
+        node |> Engine.addProcessType this.Process this.Physics
     static member New physics proc=
         {
             Process = proc
@@ -155,96 +238,3 @@ type ProcessConfig =
         ProcessConfig.New true (Delta f)
     static member NewPhysics (f : float32 -> unit) =
         ProcessConfig.New true (Delta32 f)
-
-let addProcessBy (config : ProcessConfig) (node: Node) =
-    config.AddWith node
-
-// node process logic
-
-let processComparer =
-    {
-        new IComparer<Node> with
-            member this.Compare (x, y) =
-                match x.ProcessPriority - y.ProcessPriority with
-                | 0 -> if x.IsGreaterThan y then 1 else -1
-                | v -> v
-    }
-    
-let processPhysicsComparer =
-    {
-        new IComparer<Node> with
-            member this.Compare (x, y) =
-                match x.ProcessPhysicsPriority - y.ProcessPhysicsPriority with
-                | 0 -> if x.IsGreaterThan y then 1 else -1
-                | v -> v
-    }
-
-let private cachedProcessNodes = SortedSet<Node>(processComparer)
-let private cachedPhysicsProcessNodes = SortedSet<Node>(processPhysicsComparer)
-let private cachedProcessData = Dictionary<Node, ProcessData>()
-let private cachedPhysicsProcessData = Dictionary<Node, ProcessData>()
-
-let private treeUpdateProcessCache physics=
-    let queue, cache, data =
-        if physics then
-            cachedPhysicsUpdate, cachedPhysicsProcessNodes, cachedPhysicsProcessData
-        else
-            cachedIdleUpdate, cachedProcessNodes, cachedProcessData
-    
-    for n in queue do
-        if cache.Add n then
-            data.Add (n, n |> getProcessData physics)
-    queue.Clear ()
-
-let private treeUpdateRemoveCache physics =
-    let remove, cache, data =
-        if physics then
-            cachedPhysicsRemove, cachedPhysicsProcessNodes, cachedPhysicsProcessData
-        else
-            cachedIdleRemove, cachedProcessNodes, cachedProcessData
-            
-    for n in remove do
-        cache.Remove n |> ignore
-        data.Remove n |> ignore
-    remove.Clear ()
-
-let treeUpdateCache () =
-    treeUpdateProcessCache true
-    treeUpdateProcessCache false
-    treeUpdateRemoveCache true
-    treeUpdateRemoveCache false
-
-let private treeDoProcess physics (tree : SceneTree) =
-    treeUpdateRemoveCache physics
-    treeUpdateProcessCache physics
-    let nodes, data, delta =
-        if physics then
-            cachedPhysicsProcessNodes,
-            cachedPhysicsProcessData,
-            tree.GetCurrentScene().GetPhysicsProcessDeltaTime()
-        else
-            cachedProcessNodes,
-            cachedProcessData,
-            tree.GetCurrentScene().GetProcessDeltaTime()
-    nodes |> Seq.iter (fun n ->
-        if GodotObject.IsInstanceValid n && n.CanProcess () then
-            data[n].DoProcess delta
-    )
-
-// entry point
-
-let private tree =
-    lazy (
-        // this is optional, it can increase runtime performance
-        // otherwise script cache will be built on their first call
-        FScript.buildCache ()
-        
-        let t = Engine.GetMainLoop () :?> SceneTree
-        t.add_NodeAdded (fun node -> node |> FScript.init)
-        t.add_ProcessFrame (fun () -> t |> treeDoProcess false)
-        t.add_PhysicsFrame (fun () -> t |> treeDoProcess true)
-        
-        t
-    )
-    
-let getTree () = tree.Value
