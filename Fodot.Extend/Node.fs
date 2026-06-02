@@ -1,5 +1,6 @@
 module Fodot.Extend.Node
 
+open System.Collections.Generic
 open FSharp.Extend
 open Godot
 open Fodot.Core
@@ -86,7 +87,7 @@ let rec chooseParentCached (map: ParentCache<'a>) predictor (node : Node) =
                 | v -> v
             )
         )
-        node.add_TreeExiting (fun _ -> result.Rebuild())
+        node.add_TreeExited (fun _ -> result.Rebuild())
         map |> WeakMap.addOrUpdate node result
         result.Value
     )
@@ -120,6 +121,7 @@ let chooseChildrenCachedInternalOrNot (map : ChildrenCache<'a>) inter predictor 
             |> Seq.choose predictor
             |> List.ofSeq
         )
+        node.add_TreeExited (fun _ -> re.Rebuild())
         node |> setChildrenCacheMonitor re
         map |> WeakMap.addOrUpdate node re
         re.Value
@@ -150,7 +152,7 @@ let getChildrenCached<'a when 'a: not struct and 'a :> Node> map (node : Node) =
 let getChildrenInternalCached<'a when 'a: not struct and 'a :> Node> map (node : Node) =
     node |> getChildrenInternalCachedWith<'a> map (fun _ -> true)
 
-type ChildrenRecCache<'a> = WeakMap<ReLazy<'a list * Node seq>>
+type ChildrenRecCache<'a> = WeakMap<ReLazy<'a list * HashSet<Node>>>
 
 let chooseChildrenRecCachedInternalOrNot (map : ChildrenRecCache<'a>) inter predictor (node : Node) =
     map
@@ -158,6 +160,7 @@ let chooseChildrenRecCachedInternalOrNot (map : ChildrenRecCache<'a>) inter pred
     |> Option.map (fun r -> r.Value |> fst)
     |> Option.defaultWith (fun () ->
         let re = ReLazy ()
+        node.add_TreeExited (fun _ -> re.Rebuild())
         node |> setChildrenCacheMonitor re
         
         re.Build (fun _ ->
@@ -165,7 +168,7 @@ let chooseChildrenRecCachedInternalOrNot (map : ChildrenRecCache<'a>) inter pred
                 map
                 |> WeakMap.tryGet node
                 |> Option.map (fun r -> r.Value |> snd)
-                |> Option.defaultValue Seq.empty
+                |> Option.defaultWith (fun () -> HashSet<Node>())
             
             let nodes =
                 node
@@ -174,13 +177,14 @@ let chooseChildrenRecCachedInternalOrNot (map : ChildrenRecCache<'a>) inter pred
             let list =
                 nodes
                 |> Seq.choose (fun c ->
-                    if last |> Seq.contains c |> not then
+                    if last.Contains c |> not then
                         c |> setChildrenCacheMonitor re
                     c |> predictor
                 )
                 |> List.ofSeq
                 
-            list, nodes
+            nodes |> Seq.iter (fun n -> last.Add n |> ignore)
+            list, last
         )
         
         map |> WeakMap.addOrUpdate node re
