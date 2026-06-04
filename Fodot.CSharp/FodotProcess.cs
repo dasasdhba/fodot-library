@@ -40,12 +40,12 @@ public static class FodotProcess
 
     public static Guid AddProcess(this Node node, Action<double> proc, bool physics)
     {
-        return Core.Engine.addDeltaProcess(proc.AsFSharpFunc(), physics, node);
+        return Core.Engine.addDeltaProcess(physics, proc.AsFSharpFunc(), node);
     }
 
     public static Guid AddProcess(this Node node, Action proc, bool physics)
     {
-        return Core.Engine.addProcess(proc.AsFSharpFunc(), physics, node);
+        return Core.Engine.addProcess(physics, proc.AsFSharpFunc(), node);
     }
 
     public static Guid AddIdleProcess(this Node node, Action<double> proc)

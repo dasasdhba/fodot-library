@@ -8,13 +8,12 @@ open Fodot.Core
 let repeat (interval : float) (action : unit -> unit) (physics: bool) (node : Node) =
     let mutable timer = 0.0
     node
-    |> Engine.addDeltaProcess (fun delta ->
-            timer <- timer + delta
-            if timer >= interval then
-                timer <- timer - interval
-                action ()
-        )
-        physics
+    |> Engine.addDeltaProcess physics (fun delta ->
+        timer <- timer + delta
+        if timer >= interval then
+            timer <- timer - interval
+            action ()
+    )
         
 let repeatIdle (interval : float) (action : unit -> unit) (node : Node) =
     repeat interval action false node

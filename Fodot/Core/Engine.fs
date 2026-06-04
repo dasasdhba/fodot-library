@@ -73,7 +73,7 @@ module Engine =
     let hasPhysicsProcess (node: Node) =
         node |> hasProcess true
 
-    let addProcessType (f : ProcessUnit) (physics : bool) (node: Node) =
+    let addProcessType (physics : bool) (f : ProcessUnit) (node: Node) =
         let data = node |> getProcessData physics
         if node.IsInsideTree () && data.HasProcess () |> not then
             node |> updateProcessCache physics
@@ -82,32 +82,32 @@ module Engine =
         dict |> Dict.update id f
         id
 
-    let addProcess (f : unit -> unit) (physics : bool) (node: Node) =
-        node |> addProcessType (Unit f) physics
+    let addProcess (physics : bool) (f : unit -> unit) (node: Node) =
+        node |> addProcessType physics (Unit f)
         
-    let addDeltaProcess (f : float -> unit) (physics : bool) (node: Node) =
-        node |> addProcessType (Delta f) physics
+    let addDeltaProcess (physics : bool) (f : float -> unit) (node: Node) =
+        node |> addProcessType physics (Delta f)
 
-    let addDelta32Process (f : float32 -> unit) (physics : bool) (node: Node) =
-        node |> addProcessType (Delta32 f) physics
+    let addDelta32Process (physics : bool) (f : float32 -> unit) (node: Node) =
+        node |> addProcessType physics (Delta32 f)
 
     let addIdleProcess (f : unit -> unit) (node: Node) =
-        node |> addProcess f false
+        node |> addProcess false f
         
     let addPhysicsProcess (f : unit -> unit) (node: Node) =
-        node |> addProcess f true
+        node |> addProcess true f
         
     let addIdleDeltaProcess (f : float -> unit) (node: Node) =
-        node |> addDeltaProcess f false
+        node |> addDeltaProcess false f
        
     let addPhysicsDeltaProcess (f : float -> unit) (node: Node) =
-        node |> addDeltaProcess f true
+        node |> addDeltaProcess true f
         
     let addIdleDelta32Process (f : float32 -> unit) (node: Node) =
-        node |> addDelta32Process f false
+        node |> addDelta32Process false f
         
     let addPhysicsDelta32Process (f : float32 -> unit) (node: Node) =
-        node |> addDelta32Process f true
+        node |> addDelta32Process true f
 
     let private removeProcessWith physics (id: Guid) (node: Node) =
         if node |> hasProcess physics |> not then
@@ -216,7 +216,7 @@ type ProcessConfig =
         Physics : bool
     }
     member this.AddWith (node : Node) =
-        node |> Engine.addProcessType this.Process this.Physics
+        node |> Engine.addProcessType this.Physics this.Process
     static member New physics proc=
         {
             Process = proc

@@ -17,6 +17,14 @@ public static class Mathe
         return origin + axis;
     }
 
+    public static Vector2 Flip(this Vector2 vec2, bool flipH, bool flipV = false)
+    {
+        var result = vec2;
+        if (flipH) result.X *= -1;
+        if (flipV) result.Y *= -1;
+        return result;
+    }
+
     /// <summary>
     /// the search function should be like: search(x) = false if x &lt; t
     /// where t &gt; 0, true otherwise. the function will start at 0 and max

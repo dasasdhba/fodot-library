@@ -5,6 +5,12 @@ module Fodot.Extend.GodotObject
 open Godot
 open Fodot.Core
 
+let validate (obj : 'a) =
+    if GodotObject.IsInstanceValid obj then
+        Some obj
+    else
+        None
+
 // interface
 
 let tryGetInterface<'a> (obj : GodotObject) =

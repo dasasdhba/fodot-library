@@ -23,7 +23,13 @@ let inline unitQuad (maxHeight: ^a) (finalHeight : ^a) (center : ^a) =
     let y = (bc * c - a) / cm1c;
     
     fun (p : ^a) -> p * p * x + p * y
-    
+
+let inline flip (flag: bool) (value : ^a) =
+    if flag then
+        LanguagePrimitives.GenericZero< ^a> - value
+    else
+        value
+
 let partitionInt (total : int) (count : int) =
     let r = total / count
     let b = total % count
