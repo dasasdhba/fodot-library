@@ -37,7 +37,7 @@ module AsyncNode =
         
         task {
             try
-                do! GDTask.awaitEvent event.Publish anode.Ct
+                do! event.Publish |> Event.awaitWith anode.Ct
             finally
                 anode.Node |> Engine.removeProcess id |> ignore
         }
@@ -112,7 +112,7 @@ module AsyncNode =
         anode |> waitTweenWithSome None tween
     
     let private waitEventWithSome (proc : ProcessUnit option) (event: IEvent<'Delegate, 'Args>) (anode : AsyncNode) =
-        let task = GDTask.awaitEvent event anode.Ct
+        let task = event |> Event.awaitWith anode.Ct
         anode |> waitWithSome proc task
         
     let waitEventWith (proc : ProcessUnit) (event: IEvent<'Delegate, 'Args>) (anode : AsyncNode) =

@@ -1,9 +1,10 @@
 using System;
 using System.Collections.Generic;
+using Godot;
 
-namespace Godot;
+namespace Moon;
 
-public static class Utils
+public static class GodotExtensions
 {
     #region Collections
 

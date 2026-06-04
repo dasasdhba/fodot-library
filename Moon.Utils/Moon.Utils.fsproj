@@ -3,12 +3,12 @@
     <PropertyGroup>
         <TargetFramework>$(TargetFrameworkVersion)</TargetFramework>
         <GenerateDocumentationFile>$(DocumentationFileFlag)</GenerateDocumentationFile>
-        <RootNamespace>Fodot.Math</RootNamespace>
+        <RootNamespace>Moon.Utils</RootNamespace>
     </PropertyGroup>
 
     <ItemGroup>
         <Compile Include="BitFlag.fs" />
-        <Compile Include="Utils.fs" />
+        <Compile Include="Math.fs" />
     </ItemGroup>
 
 </Project>

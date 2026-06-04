@@ -1,6 +1,7 @@
 module Fodot.Core.Node
 
 open System
+open Fodot.Bridge
 open Fodot.Core
 open Godot
 
@@ -135,15 +136,15 @@ let createEventBy<'n, 'a when 'n :> Node> (child : 'n) signal (node: Node) =
     event.Publish
 
 let createDeleteEvent (node: Node) =
-    let child = new GodotBridge.DeleteBridge()
+    let child = new DeleteBridge()
     node |> createEventBy child child.add_Deleted
 
 let createInputEvent (node: Node) =
-    let child = new GodotBridge.InputBridge()
+    let child = new InputBridge()
     node |> createEventBy child child.add_Input
 
 let createUnhandledInputEvent (node: Node) =
-    let child = new GodotBridge.UnhandledInputBridge()
+    let child = new UnhandledInputBridge()
     node |> createEventBy child child.add_UnhandledInput
 
 type private CachedEvent () =
@@ -151,10 +152,10 @@ type private CachedEvent () =
     member val InputEvent : IEvent<InputEvent> option = None with get, set
     member val UnhandledInputEvent : IEvent<InputEvent> option = None with get, set
 
-let private cachedTable = WeakMap<CachedEvent>()
+let private cachedTable = WeakMeta<CachedEvent>()
     
 let private getCachedEventWith getter setter creator node =
-    let cache = cachedTable |> WeakMap.getOrAdd node (lazy CachedEvent ())
+    let cache = cachedTable |> WeakMeta.getOrAdd node (lazy CachedEvent ())
     match getter cache with
     | Some event -> event
     | None ->

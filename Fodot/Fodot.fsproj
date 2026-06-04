@@ -7,14 +7,15 @@
     </PropertyGroup>
 
     <ItemGroup>
-        <ProjectReference Include="..\Godot.Bridge\Godot.Bridge.csproj" />
+        <ProjectReference Include="..\FSharp.Extend\FSharp.Extend.fsproj" />
+        <ProjectReference Include="..\Fodot.Bridge\Fodot.Bridge.csproj" />
     </ItemGroup>
 
     <ItemGroup>
         <Compile Include="Common\Attribute.fs" />
         <Compile Include="Common\Logger.fs" />
         <Compile Include="Common\Singleton.fs" />
-        <Compile Include="Core\WeakMap.fs" />
+        <Compile Include="Core\WeakMeta.fs" />
         <Compile Include="Core\Variant.fs" />
         <Compile Include="Core\Callable.fs" />
         <Compile Include="Core\GodotObject.fs" />

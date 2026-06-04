@@ -11,13 +11,13 @@ type NodePool (scene : PackedScene) =
     let pool = ConcurrentQueue<Node>()
     let mutable disposed = false
     
-    static member PoolTable = WeakMap<NodePool>()
+    static member PoolTable = WeakMeta<NodePool>()
     member val Disposed = disposed with get
         
     member this.Store count =
         for i in 0 .. count - 1 do
             let node = scene |> PackedScene.instantiate
-            NodePool.PoolTable |> WeakMap.addOrUpdate node this
+            NodePool.PoolTable |> WeakMeta.addOrUpdate node this
             node.add_TreeExited (fun _ ->
                 if not disposed then
                     this.Return node
@@ -62,7 +62,7 @@ module NodePool =
     let returnPool (node : Node) =
         let canReturn =
             NodePool.PoolTable
-            |> WeakMap.tryGet node
+            |> WeakMeta.tryGet node
             |> Option.map (fun p -> p.Disposed |> not)
             |> Option.defaultValue false
             

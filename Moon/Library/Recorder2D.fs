@@ -2,7 +2,6 @@ namespace Moon.Library
 
 open Fodot.Common
 open Fodot.Core
-open Fodot.Stage
 open Fodot.Module
 open Godot
 open Moon.Module
@@ -23,7 +22,7 @@ type Recorder2D(node : Node, target : CanvasItem) =
     
     member private this.Process = node |> Engine.addPhysicsDelta32Process (fun delta ->
         if GodotObject.IsInstanceValid target |> not then
-            Logger.pushWarn $"Recorder2D with {node |> Node.getUniquePath}: trying to record an invalid target."
+            Logger.pushWarn $"Recorder2D with {node.GetPath()}: trying to record an invalid target."
             node |> Engine.removePhysicsProcess this.Process |> ignore
         
         elif this.Disabled then
@@ -46,7 +45,7 @@ type Recorder2D(node : Node, target : CanvasItem) =
             
 module Recorder2D =
     
-    let private map = WeakMap<Recorder2D>()
+    let private map = WeakMeta<Recorder2D>()
     
     let get (item: CanvasItem)=
         item |> Node.getSubBinding map (fun n -> Recorder2D(n, item))

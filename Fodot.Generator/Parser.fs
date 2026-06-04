@@ -399,8 +399,8 @@ type SafeRoot =
             |> String.concat "\n"
         
         let constructor =
-            $"    static member private _bind_map = WeakMap<{typName}>()\n" +
-            $"    static member From o = {typName}._bind_map |> WeakMap.getOrAdd o (lazy {typName} o)"
+            $"    static member private _bind_map = WeakMeta<{typName}>()\n" +
+            $"    static member From o = {typName}._bind_map |> WeakMeta.getOrAdd o (lazy {typName} o)"
             
         [typ; backProp; backSignal; memberProp; memberSignal; constructor] |> formatBlock
         

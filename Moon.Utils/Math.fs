@@ -1,4 +1,4 @@
-module Fodot.Math.Utils
+module Moon.Utils.Math
 
 /// Generate a quad crossing with (0,0), (center, maxHeight), (1, finalHeight)
 let inline unitQuad (maxHeight: ^a) (finalHeight : ^a) (center : ^a) =

@@ -1,5 +1,6 @@
 namespace Fodot.Async
 
+open FSharp.Concurrent
 open Fodot.Common
 open Fodot.Core
 open System
@@ -38,12 +39,13 @@ type AsyncScenePool() =
             ConcurrentQueue<Node>()
         )
         
-        let mutable node = null
-        if queue.TryDequeue (&node) then
-            Ok node
-        else
+        queue
+        |> Queue.tryDequeue
+        |> Option.map Ok
+        |> Option.defaultWith (fun _ ->
             Logger.pushWarn $"{scene} at {scene.ResourcePath} has not been cached yet, try to increase initial count, or use pooling instead."
             PackedScene.instantiate scene |> Result.Error
+        )
     
     member private this.RemoveWith count (scene : PackedScene) =
         let matching, remain =
@@ -55,15 +57,17 @@ type AsyncScenePool() =
         else
             queuedAdd <- remain
             
-            let mutable remain = count - matching.Length
+            let remain = count - matching.Length
             let queue = pool.GetOrAdd(scene, fun s ->
                 ConcurrentQueue<Node>()
             )
+            let remain = max queue.Count remain
             
-            let mutable node = null
-            while queue.TryDequeue (&node) && remain > 0 do
-                node.QueueFree ()
-                remain <- remain - 1
+            for _ in 1..remain do
+                queue
+                |> Queue.tryDequeue
+                |> Option.map (fun n -> n.QueueFree ())
+                |> ignore
     
     member private this.Remove () =
         queuedRemove

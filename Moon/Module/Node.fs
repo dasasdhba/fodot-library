@@ -3,8 +3,8 @@ module Moon.Module.Node
 open Godot
 open Fodot.Core
 
-let getSubBinding (map : WeakMap<'a>) (creator : Node -> 'a) (node : Node)=
-    map |> WeakMap.getOrAdd node (lazy (
+let getSubBinding (map : WeakMeta<'a>) (creator : Node -> 'a) (node : Node)=
+    map |> WeakMeta.getOrAdd node (lazy (
         let sub = new Node()
         let result = creator sub
         node |> Node.bindChild sub
@@ -13,7 +13,7 @@ let getSubBinding (map : WeakMap<'a>) (creator : Node -> 'a) (node : Node)=
     ))
 
 let whenReady (action : unit -> unit) (node : Node) =
-    if node.IsInsideTree() then
+    if node.IsNodeReady() then
         action()
     else
         node.add_Ready (fun _ -> action())

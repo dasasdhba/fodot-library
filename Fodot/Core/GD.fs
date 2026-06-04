@@ -1,6 +1,9 @@
 namespace Fodot.Core
 
 open System
+open System.Collections.Concurrent
+open FSharp.Concurrent
+open Fodot.Common
 open Godot
 open Godot.Collections
 
@@ -9,17 +12,16 @@ open Godot.Collections
 type GDProp<'a> =
     {
         Object : GodotObject
-        PropName : string
+        PropName : StringName
     }
-    member private this.propName = new StringName(this.PropName)
     member this.Get () =
-        this.Object |> GodotObject.getAs<'a> this.propName
+        this.Object |> GodotObject.getAs<'a> this.PropName
     member this.Set (value : 'a) =
-        this.Object |> GodotObject.set this.propName value
+        this.Object |> GodotObject.set this.PropName value
     static member From<'a> (prop : string) (obj : GodotObject) : GDProp<'a> =
         {
             Object = obj
-            PropName = prop
+            PropName = new StringName(prop)
         }
 
 /// A wrapper for GodotObject's property which allows null value.
@@ -27,19 +29,18 @@ type GDProp<'a> =
 type GDNullProp<'a when 'a : null> =
     {
         Object : GodotObject
-        PropName : string
+        PropName : StringName
     }
-    member private this.propName = new StringName(this.PropName)
     member this.Get () =
-        this.Object |> GodotObject.tryGetAs<'a> this.propName
+        this.Object |> GodotObject.tryGetAs<'a> this.PropName
     member this.Set (value : 'a option) =
         match value with
-        | Some v -> this.Object |> GodotObject.set this.propName v
-        | None -> this.Object |> GodotObject.set this.propName null
+        | Some v -> this.Object |> GodotObject.set this.PropName v
+        | None -> this.Object |> GodotObject.set this.PropName null
     static member From<'a> (prop : string) (obj : GodotObject) : GDNullProp<'a> =
         {
             Object = obj
-            PropName = prop
+            PropName = new StringName(prop)
         }
 
 /// A wrapper for GodotObject's array property.
@@ -47,17 +48,16 @@ type GDNullProp<'a when 'a : null> =
 type GDPropArray<'a> =
     {
         Object : GodotObject
-        PropName : string
+        PropName : StringName
     }
-    member private this.propName = new StringName(this.PropName)
     member this.Get () =
-        this.Object |> GodotObject.getAsArray<'a> this.propName
+        this.Object |> GodotObject.getAsArray<'a> this.PropName
     member this.Set (value : Array<'a>) =
-        this.Object |> GodotObject.set this.propName value
+        this.Object |> GodotObject.set this.PropName value
     static member From<'a> (prop : string) (obj : GodotObject) : GDPropArray<'a> =
         {
             Object = obj
-            PropName = prop
+            PropName = new StringName(prop)
         }
 
 /// A wrapper for GodotObject's dictionary property.
@@ -65,73 +65,87 @@ type GDPropArray<'a> =
 type GDPropDictionary<'a, 'b> =
     {
         Object : GodotObject
-        PropName : string
+        PropName : StringName
     }
-    member private this.propName = new StringName(this.PropName)
     member this.Get () =
-        this.Object |> GodotObject.getAsDictionary<'a,'b> this.propName
+        this.Object |> GodotObject.getAsDictionary<'a,'b> this.PropName
     member this.Set (value : Dictionary<'a,'b>) =
-        this.Object |> GodotObject.set this.propName value
+        this.Object |> GodotObject.set this.PropName value
     static member From<'a, 'b> (prop : string) (obj : GodotObject) : GDPropDictionary<'a, 'b> =
         {
             Object = obj
-            PropName = prop
+            PropName = new StringName(prop)
         }
 
 type GDSignal<'a> =
     {
         Object : GodotObject
-        SignalName : string
+        SignalName : StringName
     }
-    member private this.signalName = new StringName(this.SignalName)
-    
     static member From (signal : string) (obj : GodotObject) : GDSignal<'a> =
         {
             Object = obj
-            SignalName = signal
+            SignalName = new StringName(signal)
         }
     
-    member this.ConnectWithFlag (call : 'a -> unit) (flags : GodotObject.ConnectFlags) =
+    member this.ConnectWithFlag (call : Callable) (flags : GodotObject.ConnectFlags) =
         this.Object.Connect(
-            this.signalName,
-            Callable.from call,
+            this.SignalName,
+            call,
             uint32 flags
         )
         
-    member this.Connect (call : 'a -> unit) =
+    member this.Connect (call : Callable) =
         this.Object.Connect(
-            this.signalName,
-            Callable.from call
+            this.SignalName,
+            call
         )
         
-    member this.Disconnect (call : 'a -> unit)=
+    member this.Disconnect (call : Callable)=
         this.Object.Disconnect(
-            this.signalName,
-            Callable.from call
+            this.SignalName,
+            call
         )
-        
+    
+    member this.IsConnected (call : Callable) =
+        this.Object.IsConnected(
+            this.SignalName,
+            call
+        )
+            
     member this.Emit (args : 'a) =
-        this.Object.EmitSignal(this.signalName, args |> Variant.fromTuple)
+        this.Object.EmitSignal(this.SignalName, args |> Variant.fromTuple)
+    
+    member private this.handlers = ConcurrentDictionary<Handler<'a>, Callable>()
         
     interface IEvent<'a> with
         member this.AddHandler handler =
-            this.Connect (fun a -> handler.Invoke(null, a)) |> ignore
+            if this.handlers |> Dict.tryAdd handler (lazy (
+                let call = Callable.from(fun a -> handler.Invoke(null, a))
+                this.Connect call |> ignore
+                call
+            )) |> not then
+                Logger.pushWarn $"{this.Object}.{this.SignalName}: Handler {handler} already exists!"
         
         member this.RemoveHandler handler =
-            this.Disconnect (fun a -> handler.Invoke(null, a))
+            this.handlers
+            |> Dict.tryRemove handler
+            |> Option.map this.Disconnect
+            |> ignore
         
         member this.Subscribe observer =
-            let handler = observer.OnNext
+            let call = Callable.from observer.OnNext
             let disconnect = this.Disconnect
-            this.Connect handler |> ignore
+            this.Connect call |> ignore
             
             {
                 new IDisposable with
                 member this.Dispose() =
-                    disconnect handler
+                    disconnect call
             }
         
 module GD =
+    
     let private loadLock = obj()
     
     let tryLoad path =

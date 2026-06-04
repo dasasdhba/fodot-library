@@ -3,6 +3,7 @@ namespace Fodot.Core
 open System
 open System.Collections.Concurrent
 open System.Collections.Generic
+open FSharp.Concurrent
 open Godot
 
 type ProcessFunc<'a> =
@@ -21,14 +22,14 @@ type ProcessUnit = ProcessFunc<unit>
 module Engine =
     
     type private ProcessData() =
-        member val Process = ConcurrentDictionary<Guid, ProcessUnit>() with get
+        member this.Process = ConcurrentDictionary<Guid, ProcessUnit>()
         member this.HasProcess () =
             this.Process.Count > 0
         member this.DoProcess delta =
             this.Process.Values |> Seq.iter (fun f -> f.Invoke delta)
 
-    let private idleMap = WeakMap<ProcessData>()
-    let private physicsMap = WeakMap<ProcessData>()
+    let private idleMap = WeakMeta<ProcessData>()
+    let private physicsMap = WeakMeta<ProcessData>()
 
     let private cachedIdleUpdate = ConcurrentBag<Node>()
     let private cachedPhysicsUpdate = ConcurrentBag<Node>()
@@ -55,7 +56,7 @@ module Engine =
 
     let private getProcessData physics (node: Node) =
         let map = getProcessDataMap physics
-        map |> WeakMap.getOrAdd node (lazy (
+        map |> WeakMeta.getOrAdd node (lazy (
             node.add_TreeEntered (fun () -> node |> updateProcessCache physics)
             node.add_TreeExited (fun () -> node |> updateRemoveCache physics)
             
@@ -64,7 +65,7 @@ module Engine =
         
     let hasProcess physics (node: Node) =
         let map = getProcessDataMap physics
-        map |> WeakMap.contains node
+        map |> WeakMeta.contains node
 
     let hasIdleProcess (node: Node) =
         node |> hasProcess false
@@ -78,7 +79,7 @@ module Engine =
             node |> updateProcessCache physics
         let dict = data.Process
         let id = Guid.NewGuid ()
-        dict.AddOrUpdate(id, (fun _ -> f), (fun _ __ -> f)) |> ignore
+        dict |> Dict.addOrUpdate id f
         id
 
     let addProcess (f : unit -> unit) (physics : bool) (node: Node) =
@@ -113,8 +114,7 @@ module Engine =
             false
         else
             let data = node |> getProcessData physics
-            let success, _ = data.Process.Remove id
-            success
+            data.Process |> Dict.tryRemove id |> Option.isSome
 
     let removeIdleProcess (id: Guid) (node: Node) =
         node |> removeProcessWith false id

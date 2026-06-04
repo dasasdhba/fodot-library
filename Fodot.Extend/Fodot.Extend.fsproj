@@ -14,7 +14,6 @@
 
     <ItemGroup>
       <ProjectReference Include="..\Fodot\Fodot.fsproj" />
-      <ProjectReference Include="..\FSharp.Extend\FSharp.Extend.fsproj" />
     </ItemGroup>
 
 </Project>

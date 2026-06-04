@@ -1,7 +1,7 @@
 using System;
 using Godot;
 
-namespace GodotBridge;
+namespace Fodot.Bridge;
 
 public partial class UnhandledInputBridge : Node
 {

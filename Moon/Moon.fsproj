@@ -20,7 +20,8 @@
 
     <ItemGroup>
       <ProjectReference Include="..\..\library\Fodot.Module\Fodot.Module.fsproj" />
-      <ProjectReference Include="..\..\module\Fodot.Stage\Fodot.Stage.fsproj" />
+      <ProjectReference Include="..\Fodot.Async\Fodot.Async.fsproj" />
+      <ProjectReference Include="..\Fodot.Extend\Fodot.Extend.fsproj" />
     </ItemGroup>
 
 </Project>

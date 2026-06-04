@@ -122,16 +122,16 @@ module FScript =
         member val Keys = ConcurrentBag<string>() with get
         member val Scripts = ConcurrentBag<Object>() with get
 
-    let private fScriptTable = WeakMap<FScriptData>()
+    let private fScriptTable = WeakMeta<FScriptData>()
     
     let private getScriptData (obj : GodotObject) =
-        fScriptTable |> WeakMap.getOrAdd obj (lazy FScriptData())
+        fScriptTable |> WeakMeta.getOrAdd obj (lazy FScriptData())
     
     let private tryGetScriptData (obj : GodotObject) =
-        fScriptTable |> WeakMap.tryGet obj
+        fScriptTable |> WeakMeta.tryGet obj
     
     let private hasScriptData (obj : GodotObject) =
-        fScriptTable |> WeakMap.contains obj
+        fScriptTable |> WeakMeta.contains obj
     
     let private updateScriptData (name : string) (scripts : Object list) (obj : GodotObject) =
         let data = obj |> getScriptData

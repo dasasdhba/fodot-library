@@ -71,11 +71,11 @@ let findParentWith<'a when 'a : null and 'a :> Node> filter (node : Node) =
 let findParent<'a when 'a : null and 'a :> Node> (node : Node) =
     node |> findParentWith<'a> (fun _ -> true)
 
-type ParentCache<'a> = WeakMap<ReLazy<'a option>>
+type ParentCache<'a> = WeakMeta<ReLazy<'a option>>
 
 let rec chooseParentCached (map: ParentCache<'a>) predictor (node : Node) =
     map
-    |> WeakMap.tryGet node
+    |> WeakMeta.tryGet node
     |> Option.bind _.Value
     |> Option.orElseWith (fun () ->
         let result = ReLazy (fun _ ->
@@ -88,7 +88,7 @@ let rec chooseParentCached (map: ParentCache<'a>) predictor (node : Node) =
             )
         )
         node.add_TreeExited (fun _ -> result.Rebuild())
-        map |> WeakMap.addOrUpdate node result
+        map |> WeakMeta.addOrUpdate node result
         result.Value
     )
 
@@ -108,11 +108,11 @@ let private setChildrenCacheMonitor (re : ReLazy<'a>) (node : Node) =
     node.add_ChildEnteredTree (fun _ -> re.Rebuild())
     node.add_ChildExitingTree (fun _ -> re.Rebuild())
 
-type ChildrenCache<'a> = WeakMap<ReLazy<'a list>>
+type ChildrenCache<'a> = WeakMeta<ReLazy<'a list>>
 
 let chooseChildrenCachedInternalOrNot (map : ChildrenCache<'a>) inter predictor (node : Node) =
     map
-    |> WeakMap.tryGet node
+    |> WeakMeta.tryGet node
     |> Option.map _.Value
     |> Option.defaultWith (fun () ->
         let re = ReLazy (fun _ ->
@@ -123,7 +123,7 @@ let chooseChildrenCachedInternalOrNot (map : ChildrenCache<'a>) inter predictor 
         )
         node.add_TreeExited (fun _ -> re.Rebuild())
         node |> setChildrenCacheMonitor re
-        map |> WeakMap.addOrUpdate node re
+        map |> WeakMeta.addOrUpdate node re
         re.Value
     )
 
@@ -152,11 +152,11 @@ let getChildrenCached<'a when 'a: not struct and 'a :> Node> map (node : Node) =
 let getChildrenInternalCached<'a when 'a: not struct and 'a :> Node> map (node : Node) =
     node |> getChildrenInternalCachedWith<'a> map (fun _ -> true)
 
-type ChildrenRecCache<'a> = WeakMap<ReLazy<'a list * HashSet<Node>>>
+type ChildrenRecCache<'a> = WeakMeta<ReLazy<'a list * HashSet<Node>>>
 
 let chooseChildrenRecCachedInternalOrNot (map : ChildrenRecCache<'a>) inter predictor (node : Node) =
     map
-    |> WeakMap.tryGet node
+    |> WeakMeta.tryGet node
     |> Option.map (fun r -> r.Value |> fst)
     |> Option.defaultWith (fun () ->
         let re = ReLazy ()
@@ -166,7 +166,7 @@ let chooseChildrenRecCachedInternalOrNot (map : ChildrenRecCache<'a>) inter pred
         re.Build (fun _ ->
             let last =
                 map
-                |> WeakMap.tryGet node
+                |> WeakMeta.tryGet node
                 |> Option.map (fun r -> r.Value |> snd)
                 |> Option.defaultWith (fun () -> HashSet<Node>())
             
@@ -187,7 +187,7 @@ let chooseChildrenRecCachedInternalOrNot (map : ChildrenRecCache<'a>) inter pred
             list, last
         )
         
-        map |> WeakMap.addOrUpdate node re
+        map |> WeakMeta.addOrUpdate node re
         re.Value |> fst
     )
     
