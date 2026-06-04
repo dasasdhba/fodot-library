@@ -25,8 +25,4 @@
       <ProjectReference Include="..\Fodot.Extend\Fodot.Extend.fsproj" />
     </ItemGroup>
 
-    <ItemGroup>
-      <PackageReference Include="FSharpPlus" Version="1.9.1" />
-    </ItemGroup>
-
 </Project>

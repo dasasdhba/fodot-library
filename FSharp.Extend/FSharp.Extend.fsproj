@@ -13,6 +13,7 @@
         <Compile Include="Concurrent\Bag.fs" />
         <Compile Include="Extend\ReLazy.fs" />
         <Compile Include="Extend\WeakMap.fs" />
+        <Compile Include="Extend\Dict.fs" />
     </ItemGroup>
 
 </Project>

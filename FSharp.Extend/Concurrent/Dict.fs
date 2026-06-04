@@ -5,6 +5,9 @@ open System.Collections.Concurrent
 let update key value (dict : ConcurrentDictionary<'a, 'b>) =
     dict.AddOrUpdate(key, value, (fun _ _ -> value)) |> ignore
 
+let containsKey key (dict : ConcurrentDictionary<'a, 'b>) =
+    dict.ContainsKey key
+
 let tryAdd key (value : Lazy<'b>) (dict : ConcurrentDictionary<'a, 'b>) =
     if dict.ContainsKey key then
         false
@@ -21,4 +24,7 @@ let tryRemove key (dict : ConcurrentDictionary<'a, 'b>) =
     match dict.TryRemove(key, &v) with
     | true -> Some v
     | false -> None
+    
+let remove key (dict : ConcurrentDictionary<'a, 'b>) =
+    dict |> tryRemove key |> Option.isSome
     
