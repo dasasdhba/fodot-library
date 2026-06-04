@@ -2,7 +2,7 @@ module FSharp.Concurrent.Dict
 
 open System.Collections.Concurrent
 
-let addOrUpdate key value (dict : ConcurrentDictionary<'a, 'b>) =
+let update key value (dict : ConcurrentDictionary<'a, 'b>) =
     dict.AddOrUpdate(key, value, (fun _ _ -> value)) |> ignore
 
 let tryAdd key (value : Lazy<'b>) (dict : ConcurrentDictionary<'a, 'b>) =

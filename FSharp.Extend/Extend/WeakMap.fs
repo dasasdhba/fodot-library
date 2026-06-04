@@ -9,8 +9,13 @@ module WeakMap =
     let remove key (map: WeakMap<'a, 'b>) =
         map.Remove key
     
-    let addOrUpdate key value (map: WeakMap<'a, 'b>) =
+    let update key value (map: WeakMap<'a, 'b>) =
         map.AddOrUpdate(key, value)
+    
+    let addOrUpdate key (value : Lazy<'b>) (updateFunc : 'b -> 'b) (map: WeakMap<'a, 'b>) =
+        match map.TryGetValue key with
+        | true, v -> map |> update key (updateFunc v)
+        | false, _ -> map |> update key value.Value
     
     let getOrAdd key (value : Lazy<'b>) (map: WeakMap<'a, 'b>) =
         match map.TryGetValue key with

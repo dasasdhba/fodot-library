@@ -10,6 +10,13 @@ let getOwnerOrSelf (node : Node) =
     |> Option.ofObj
     |> Option.defaultValue node
 
+let getNameInOwner (node : Node) =
+    if node.IsUniqueNameInOwner () then
+        "%" + node.Name.ToString ()
+    else
+        let owner = node |> getOwnerOrSelf
+        owner.GetPathTo node |> string
+
 // relative loading
 
 let rec getSceneFilePath (node : Node) =
@@ -88,7 +95,7 @@ let rec chooseParentCached (map: ParentCache<'a>) predictor (node : Node) =
             )
         )
         node.add_TreeExited (fun _ -> result.Rebuild())
-        map |> WeakMeta.addOrUpdate node result
+        map |> WeakMeta.update node result
         result.Value
     )
 
@@ -123,7 +130,7 @@ let chooseChildrenCachedInternalOrNot (map : ChildrenCache<'a>) inter predictor 
         )
         node.add_TreeExited (fun _ -> re.Rebuild())
         node |> setChildrenCacheMonitor re
-        map |> WeakMeta.addOrUpdate node re
+        map |> WeakMeta.update node re
         re.Value
     )
 
@@ -187,7 +194,7 @@ let chooseChildrenRecCachedInternalOrNot (map : ChildrenRecCache<'a>) inter pred
             list, last
         )
         
-        map |> WeakMeta.addOrUpdate node re
+        map |> WeakMeta.update node re
         re.Value |> fst
     )
     
@@ -218,82 +225,82 @@ let getChildrenRecInternalCached<'a when 'a: not struct and 'a :> Node> map (nod
     
 // fscripts
 
-let getNodeFScript<'a> path (node : Node) =
+let getNodeFs<'a> path (node : Node) =
     node |> Node.getNode path |> FScript.get<'a>
 
-let tryGetNodeFScript<'a> path (node : Node) =
+let tryGetNodeFs<'a> path (node : Node) =
     node |> Node.tryGetNode path |> Option.bind (fun n -> n |> FScript.tryGet<'a>)
 
-let getParentFScript<'a> (node : Node) =
+let getParentFs<'a> (node : Node) =
     node |> Node.getParent |> FScript.get<'a>
 
-let tryGetParentFScript<'a> (node : Node) =
+let tryGetParentFs<'a> (node : Node) =
     node |> Node.tryGetParent |> Option.bind (fun p -> p |> FScript.tryGet<'a>)
 
-let getChildFScriptInternalOrNot idx inter (node : Node) =
+let getChildFsInternalOrNot idx inter (node : Node) =
     node.GetChild(idx, inter) |> FScript.get<'a>
 
-let getChildFScript<'a> idx (node : Node) =
+let getChildFs<'a> idx (node : Node) =
     node |> Node.getChild idx |> FScript.get<'a>
 
-let getChildInternalFScript<'a> idx (node : Node) =
+let getChildInternalFs<'a> idx (node : Node) =
     node |> Node.getChildInternal idx |> FScript.get<'a>
 
-let tryGetChildFScriptInternalOrNot idx inter (node : Node) =
+let tryGetChildFsInternalOrNot idx inter (node : Node) =
     node |> Node.tryGetChildInternalOrNot idx inter |> Option.bind (fun c -> c |> FScript.tryGet<'a>)
 
-let tryGetChildFScript<'a> idx (node : Node) =
+let tryGetChildFs<'a> idx (node : Node) =
     node |> Node.tryGetChild idx |> Option.bind (fun c -> c |> FScript.tryGet<'a>)
 
-let tryGetChildInternalFScript<'a> idx (node : Node) =
+let tryGetChildInternalFs<'a> idx (node : Node) =
     node |> Node.tryGetChildInternal idx |> Option.bind (fun c -> c |> FScript.tryGet<'a>)
 
-let findParentFScript<'a> (node : Node) =
+let findParentFs<'a> (node : Node) =
     node
     |> chooseParent (fun p -> p |> FScript.tryGet<'a>)
 
-let findParentFScriptCached<'a> map (node : Node) =
+let findParentFsCached<'a> map (node : Node) =
     node
     |> chooseParentCached map (fun p -> p |> FScript.tryGet<'a>)
 
-let getChildrenFScriptsInternalOrNot<'a> inter (node : Node) =
+let getChildrenFsInternalOrNot<'a> inter (node : Node) =
     node
     |> Node.getChildrenInternalOrNot inter
     |> Seq.choose (fun c -> c |> FScript.tryGet<'a>)
 
-let getChildrenFScripts<'a> (node : Node) =
-    node |> getChildrenFScriptsInternalOrNot<'a> false
+let getChildrenFs<'a> (node : Node) =
+    node |> getChildrenFsInternalOrNot<'a> false
 
-let getChildrenInternalFScripts<'a> (node : Node) =
-    node |> getChildrenFScriptsInternalOrNot<'a> true
+let getChildrenInternalFs<'a> (node : Node) =
+    node |> getChildrenFsInternalOrNot<'a> true
 
-let getChildrenFScriptsRecInternalOrNot<'a> inter (node : Node) =
+let getChildrenFsRecInternalOrNot<'a> inter (node : Node) =
     node
     |> Node.getChildrenRecInternalOrNot inter
     |> Seq.choose (fun c -> c |> FScript.tryGet<'a>)
 
-let getChildrenFScriptsRec<'a> (node : Node) =
-    node |> getChildrenFScriptsRecInternalOrNot<'a> false
+let getChildrenFsRec<'a> (node : Node) =
+    node |> getChildrenFsRecInternalOrNot<'a> false
     
-let getChildrenInternalFScriptsRec<'a> (node : Node) =
-    node |> getChildrenFScriptsRecInternalOrNot<'a> true
+let getChildrenInternalFsRec<'a> (node : Node) =
+    node |> getChildrenFsRecInternalOrNot<'a> true
     
-let getChildrenFScriptsCachedInternalOrNot<'a> map inter (node : Node) =
+let getChildrenFsCachedInternalOrNot<'a> map inter (node : Node) =
     node
     |> chooseChildrenCachedInternalOrNot map inter (fun c -> c |> FScript.tryGet<'a>)
 
-let getChildrenFScriptsCached<'a> map (node : Node) =
-    node |> getChildrenFScriptsCachedInternalOrNot<'a> map false
+let getChildrenFsCached<'a> map (node : Node) =
+    node |> getChildrenFsCachedInternalOrNot<'a> map false
 
-let getChildrenInternalFScriptsCached<'a> map (node : Node) =
-    node |> getChildrenFScriptsCachedInternalOrNot<'a> map true
+let getChildrenInternalFsCached<'a> map (node : Node) =
+    node |> getChildrenFsCachedInternalOrNot<'a> map true
 
-let getChildrenFScriptsRecCachedInternalOrNot<'a> map inter (node : Node) =
+let getChildrenFsRecCachedInternalOrNot<'a> map inter (node : Node) =
     node
     |> chooseChildrenRecCachedInternalOrNot map inter (fun c -> c |> FScript.tryGet<'a>)
 
-let getChildrenFScriptsRecCached<'a> map (node : Node) =
-    node |> getChildrenFScriptsRecCachedInternalOrNot<'a> map false
+let getChildrenFsRecCached<'a> map (node : Node) =
+    node |> getChildrenFsRecCachedInternalOrNot<'a> map false
     
-let getChildrenInternalFScriptsRecCached<'a> map (node : Node) =
-    node |> getChildrenFScriptsRecCachedInternalOrNot<'a> map true
+let getChildrenInternalFsRecCached<'a> map (node : Node) =
+    node |> getChildrenFsRecCachedInternalOrNot<'a> map true

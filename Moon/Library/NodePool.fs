@@ -17,7 +17,7 @@ type NodePool (scene : PackedScene) =
     member this.Store count =
         for i in 0 .. count - 1 do
             let node = scene |> PackedScene.instantiate
-            NodePool.PoolTable |> WeakMeta.addOrUpdate node this
+            NodePool.PoolTable |> WeakMeta.update node this
             node.add_TreeExited (fun _ ->
                 if not disposed then
                     this.Return node

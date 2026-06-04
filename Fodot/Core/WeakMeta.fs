@@ -10,8 +10,11 @@ module WeakMeta =
     let remove obj (map: WeakMeta<'a>) =
         map |> WeakMap.remove obj
     
-    let addOrUpdate obj value (map: WeakMeta<'a>) =
-        map |> WeakMap.addOrUpdate obj value
+    let update obj value (map: WeakMeta<'a>) =
+        map |> WeakMap.update obj value
+    
+    let addOrUpdate obj value updateFunc (map: WeakMeta<'a>) =
+        map |> WeakMap.addOrUpdate obj value updateFunc
     
     let getOrAdd obj (value : Lazy<'a>) (map: WeakMeta<'a>) =
         map |> WeakMap.getOrAdd obj value

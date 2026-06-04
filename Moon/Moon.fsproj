@@ -12,6 +12,7 @@
         <Compile Include="Module\Action.fs" />
         <Compile Include="Module\Node.fs" />
         <Compile Include="Module\CanvasItem.fs" />
+        <Compile Include="Library\OwnerDict.fs" />
         <Compile Include="Library\NodePool.fs" />
         <Compile Include="Library\Recorder2D.fs" />
         <Compile Include="Library\Recorder3D.fs" />
@@ -22,6 +23,10 @@
       <ProjectReference Include="..\..\library\Fodot.Module\Fodot.Module.fsproj" />
       <ProjectReference Include="..\Fodot.Async\Fodot.Async.fsproj" />
       <ProjectReference Include="..\Fodot.Extend\Fodot.Extend.fsproj" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <PackageReference Include="FSharpPlus" Version="1.9.1" />
     </ItemGroup>
 
 </Project>
