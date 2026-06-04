@@ -79,7 +79,7 @@ module Engine =
             node |> updateProcessCache physics
         let dict = data.Process
         let id = Guid.NewGuid ()
-        dict |> Dict.update id f
+        dict[id] <- f
         id
 
     let addProcess (physics : bool) (f : unit -> unit) (node: Node) =

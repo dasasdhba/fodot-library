@@ -1,13 +1,13 @@
 namespace Moon.Library
 
 open System
-open System.Collections.Generic
-open FSharp.Extend
+open System.Collections.Concurrent
+open FSharp.Concurrent
 open Fodot.Core
 open Fodot.Extend
 open Godot
 
-type OwnerDict<'a> = WeakMeta<Dictionary<string, 'a>>
+type OwnerDict<'a> = WeakMeta<ConcurrentDictionary<string, 'a>>
 
 module OwnerDict =
     
@@ -16,7 +16,7 @@ module OwnerDict =
         
     let getDict (node : Node) (dict : OwnerDict<'a>) =
         dict |> WeakMeta.getOrAdd (node |> Node.getOwnerOrSelf) (lazy 
-            Dictionary<string, 'a>()
+            ConcurrentDictionary<string, 'a>()
         )
     
     let tryGet node key (dict : OwnerDict<'a>) =
