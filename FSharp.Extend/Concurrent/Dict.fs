@@ -3,7 +3,7 @@ module FSharp.Concurrent.Dict
 open System.Collections.Concurrent
 
 let update key value (dict : ConcurrentDictionary<'a, 'b>) =
-    dict.AddOrUpdate(key, value, (fun _ _ -> value)) |> ignore
+    dict.AddOrUpdate(key, (fun _ -> value), (fun _ _ -> value)) |> ignore
 
 let containsKey key (dict : ConcurrentDictionary<'a, 'b>) =
     dict.ContainsKey key

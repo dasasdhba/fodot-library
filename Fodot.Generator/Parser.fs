@@ -195,7 +195,7 @@ type ExportProperty =
                 $"    member this.{pascal}\n        with get () = {back}.Get()\n        and set v = {back}.Set v"
             else
                 let back = $"_back_prop_value_{name}"
-                $"    member this.{pascal} = {back}"
+                $"    member val {pascal} = {back}"
         | _ -> ""
     
     member this.AsGdExport name =
@@ -258,7 +258,7 @@ let signalToFsBack (name : string) (yaml : YamlSignalArg list) =
 
 let signalToFsMember (name : string)=
     let pascal = toPascalCase name
-    $"    member this.{pascal} = _back_signal_{name}"
+    $"    member val {pascal} = _back_signal_{name}"
 
 let signalToGd (name : string) (yaml : YamlSignalArg list) =
     let typ =
@@ -469,7 +469,7 @@ let removeCompileItem file fsproj =
     
 let rec getYamlFiles (dir: string) : Dictionary<string, string list>  =
     let dir = Path.GetFullPath(dir)
-    let files = Directory.GetFiles(dir, "*.yaml")
+    let files = Directory.GetFiles(dir, "*.gd.yaml")
     let dict = Dictionary<string, string list>()
     if files.Length > 0 then
         let fsproj = findParentFsproj dir

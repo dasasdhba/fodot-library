@@ -22,7 +22,7 @@ type ProcessUnit = ProcessFunc<unit>
 module Engine =
     
     type private ProcessData() =
-        member this.Process = ConcurrentDictionary<Guid, ProcessUnit>()
+        member val Process = ConcurrentDictionary<Guid, ProcessUnit>()
         member this.HasProcess () =
             this.Process.Count > 0
         member this.DoProcess delta =
