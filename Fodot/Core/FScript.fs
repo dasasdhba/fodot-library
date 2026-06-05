@@ -1,7 +1,6 @@
 namespace Fodot.Core
 
 open System
-open System.Collections.Concurrent
 open System.Collections.Frozen
 open System.Collections.Generic
 open System.Reflection
@@ -119,8 +118,8 @@ module FScript =
         )
     
     type private FScriptData() =
-        member val Keys = ConcurrentBag<string>() with get
-        member val Scripts = ConcurrentBag<Object>() with get
+        member val Keys : string list = [] with get, set
+        member val Scripts : obj list = [] with get, set
 
     let private fScriptTable = WeakMeta<FScriptData>()
     
@@ -132,11 +131,6 @@ module FScript =
     
     let private hasScriptData (obj : GodotObject) =
         fScriptTable |> WeakMeta.contains obj
-    
-    let private updateScriptData (name : string) (scripts : Object list) (obj : GodotObject) =
-        let data = obj |> getScriptData
-        data.Keys.Add name
-        scripts |> List.iter (fun s -> data.Scripts.Add s)
         
     let containsKey (name : string) (obj : GodotObject) =
         obj
@@ -184,13 +178,21 @@ module FScript =
             |> List.distinct
             |> List.filter (fun s -> obj |> containsKey s |> not)
         
-        for m in arr do
-            try
-                let scripts = create m [|obj|]
-                obj |> updateScriptData m scripts
-            with
+        let keys, objs =
+            arr |> List.fold (fun (keys, objs) m ->
+                try
+                    let scripts = create m [|obj|]
+                    m :: keys, scripts @ objs
+                with
+                
+                | ex ->
+                    Logger.pushError $"{obj}: failed creating script {m}: {ex}"
+                    keys, objs
+            ) ([], [])
             
-            | ex -> Logger.pushError $"{obj}: failed creating script {m}: {ex}"
+        let data = getScriptData obj
+        data.Keys <- keys
+        data.Scripts <- objs
             
     let init (obj : GodotObject) =
         if obj |> hasScriptData then

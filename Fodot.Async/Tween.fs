@@ -3,11 +3,8 @@ module Fodot.Async.Tween
 open Godot
 
 let asTask (tween: Tween) = task {
-    let! _ = tween |> GodotObject.toSignal "finished"
-    ()
+    do! tween.ToSignalFinished()
 }
 
-let asTaskWith ct (tween: Tween) = task {
-    let! _ = tween |> GodotObject.toSignalWith ct "finished"
-    ()
-}
+let asTaskWith ct (tween: Tween) =
+    tween |> Signal.awaitWith ct Tween.SignalName.Finished

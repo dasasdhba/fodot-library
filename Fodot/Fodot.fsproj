@@ -15,6 +15,7 @@
         <Compile Include="Common\Attribute.fs" />
         <Compile Include="Common\Logger.fs" />
         <Compile Include="Common\Singleton.fs" />
+        <Compile Include="Core\GDTask.fs" />
         <Compile Include="Core\WeakMeta.fs" />
         <Compile Include="Core\Variant.fs" />
         <Compile Include="Core\Callable.fs" />

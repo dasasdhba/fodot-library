@@ -3,7 +3,6 @@ namespace Fodot.Core
 open System
 open System.Collections.Concurrent
 open System.Collections.Generic
-open FSharp.Concurrent
 open Godot
 
 type ProcessFunc<'a> =
@@ -22,31 +21,33 @@ type ProcessUnit = ProcessFunc<unit>
 module Engine =
     
     type private ProcessData() =
-        member val Process = ConcurrentDictionary<Guid, ProcessUnit>()
+        member val Process : (Guid * ProcessUnit) list = [] with get, set
         member this.HasProcess () =
-            this.Process.Count > 0
+            this.Process |> List.isEmpty |> not
         member this.DoProcess delta =
-            this.Process.Values |> Seq.iter (fun f -> f.Invoke delta)
+            this.Process |> List.iter (fun (_, f) ->
+                f.Invoke delta
+            )
 
     let private idleMap = WeakMeta<ProcessData>()
     let private physicsMap = WeakMeta<ProcessData>()
 
-    let private cachedIdleUpdate = ConcurrentBag<Node>()
-    let private cachedPhysicsUpdate = ConcurrentBag<Node>()
-    let private cachedIdleRemove = ConcurrentBag<Node>()
-    let private cachedPhysicsRemove = ConcurrentBag<Node>()
+    let private cachedIdleUpdate = ConcurrentQueue<Node>()
+    let private cachedPhysicsUpdate = ConcurrentQueue<Node>()
+    let private cachedIdleRemove = ConcurrentQueue<Node>()
+    let private cachedPhysicsRemove = ConcurrentQueue<Node>()
 
     let private updateProcessCache physics node =
         if physics then
-            cachedPhysicsUpdate.Add node
+            cachedPhysicsUpdate.Enqueue node
         else
-            cachedIdleUpdate.Add node
+            cachedIdleUpdate.Enqueue node
             
     let private updateRemoveCache physics node =
         if physics then
-            cachedPhysicsRemove.Add node
+            cachedPhysicsRemove.Enqueue node
         else
-            cachedIdleRemove.Add node
+            cachedIdleRemove.Enqueue node
 
     let private getProcessDataMap physics =
         if physics then
@@ -77,9 +78,8 @@ module Engine =
         let data = node |> getProcessData physics
         if node.IsInsideTree () && data.HasProcess () |> not then
             node |> updateProcessCache physics
-        let dict = data.Process
         let id = Guid.NewGuid ()
-        dict[id] <- f
+        data.Process <- data.Process @ [id, f]
         id
 
     let addProcess (physics : bool) (f : unit -> unit) (node: Node) =
@@ -114,7 +114,11 @@ module Engine =
             false
         else
             let data = node |> getProcessData physics
-            data.Process |> Dict.tryRemove id |> Option.isSome
+            data.Process
+            |> List.tryFindIndex (fun (i, _) -> id = i)
+            |> Option.map (fun i ->
+                data.Process <- data.Process |> List.removeAt i)
+            |> Option.isSome
 
     let removeIdleProcess (id: Guid) (node: Node) =
         node |> removeProcessWith false id
@@ -126,23 +130,34 @@ module Engine =
         node |> removeIdleProcess id || node |> removePhysicsProcess id
 
     // node process logic
+    
+    let private nodeComparer physics (x: Node) (y: Node) =
+        let vx = GodotObject.IsInstanceValid x |> Convert.ToInt32
+        let vy = GodotObject.IsInstanceValid y |> Convert.ToInt32
+        if vx + vy < 2 then
+            vx - vy
+        else
+            let result =
+                if physics then
+                    x.ProcessPhysicsPriority - y.ProcessPhysicsPriority
+                else
+                    x.ProcessPriority - y.ProcessPriority
+            match result with
+            | 0 -> if x.IsGreaterThan y then 1 else -1
+            | v -> v
 
     let processComparer =
         {
             new IComparer<Node> with
                 member this.Compare (x, y) =
-                    match x.ProcessPriority - y.ProcessPriority with
-                    | 0 -> if x.IsGreaterThan y then 1 else -1
-                    | v -> v
+                    nodeComparer false x y
         }
         
     let processPhysicsComparer =
         {
             new IComparer<Node> with
                 member this.Compare (x, y) =
-                    match x.ProcessPhysicsPriority - y.ProcessPhysicsPriority with
-                    | 0 -> if x.IsGreaterThan y then 1 else -1
-                    | v -> v
+                    nodeComparer true x y
         }
 
     let private cachedProcessNodes = SortedList<Node, ProcessData>(processComparer)
@@ -155,9 +170,9 @@ module Engine =
             else
                 cachedIdleUpdate, cachedProcessNodes
         
-        for n in queue do
+        let mutable n = null
+        while queue.TryDequeue(&n) do
             cache.Add(n, n |> getProcessData physics)
-        queue.Clear ()
 
     let private treeUpdateRemoveCache physics =
         let remove, cache =
@@ -166,15 +181,15 @@ module Engine =
             else
                 cachedIdleRemove, cachedProcessNodes
                 
-        for n in remove do
+        let mutable n = null
+        while remove.TryDequeue(&n) do
             cache.Remove n |> ignore
-        remove.Clear ()
 
     let treeUpdateCache () =
-        treeUpdateProcessCache true
-        treeUpdateProcessCache false
         treeUpdateRemoveCache true
         treeUpdateRemoveCache false
+        treeUpdateProcessCache true
+        treeUpdateProcessCache false
 
     let private treeDoProcess physics (tree : SceneTree) =
         treeUpdateRemoveCache physics

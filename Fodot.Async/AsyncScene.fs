@@ -14,7 +14,7 @@ type AsyncScenePool() =
     let mutable queuedRemove : PackedScene list = []
     let pool =
         ConcurrentDictionary<PackedScene, ConcurrentQueue<Node>> ()
-    let mutable addTask : Task<unit> option = None
+    let mutable addTask : Task option = None
     
     member this.Update (scene : PackedScene) =
         let node = PackedScene.instantiate scene
@@ -61,14 +61,18 @@ type AsyncScenePool() =
             let queue = pool.GetOrAdd(scene, fun s ->
                 ConcurrentQueue<Node>()
             )
-            let remain = max queue.Count remain
             
-            for _ in 1..remain do
-                queue
-                |> Queue.tryDequeue
-                |> Option.map (fun n -> n.QueueFree ())
-                |> ignore
-    
+            let rec free c =
+                if c <= 0 then () else
+                
+                match queue |> Queue.tryDequeue with
+                | Some n ->
+                    n.QueueFree ()
+                    free (c - 1)
+                | _ -> ()
+            
+            free remain
+            
     member private this.Remove () =
         queuedRemove
         |> List.countBy id
@@ -77,7 +81,7 @@ type AsyncScenePool() =
         queuedRemove <- []
     
     member private this.CreateAddTask () =
-        GDTask.runOnThread(fun () ->
+        Task.Run(fun () ->
             while queuedAdd.Length > 0 do
                 lock queueLock (fun () ->
                     let scene = queuedAdd.Head
@@ -87,7 +91,7 @@ type AsyncScenePool() =
         )
     
     member private this.CreateRemoveTask () =
-        GDTask.runOnThread(fun () ->
+        Task.Run(fun () ->
             lock queueLock (fun () ->
                 this.Remove ()
             )

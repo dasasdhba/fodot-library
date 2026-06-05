@@ -91,14 +91,14 @@ module AsyncNode =
     let wait<'a> (waitTask : Task<'a>) (anode : AsyncNode) =
         anode |> waitWithSome None waitTask
     
-    let private waitSignalWithSome (proc : ProcessUnit option) (obj : GodotObject) (signal : string) (anode : AsyncNode) =
-        let task = obj |> GodotObject.toSignalWith anode.Ct signal
+    let private waitSignalWithSome (proc : ProcessUnit option) (obj : GodotObject) (signal : StringName) (anode : AsyncNode) =
+        let task = obj |> Signal.awaitWith anode.Ct signal
         anode |> waitWithSome proc task
     
-    let waitSignalWith (proc : ProcessUnit) (obj : GodotObject) (signal : string) (anode : AsyncNode) =
+    let waitSignalWith (proc : ProcessUnit) (obj : GodotObject) (signal : StringName) (anode : AsyncNode) =
         anode |> waitSignalWithSome (Some proc) obj signal
     
-    let waitSignal (obj : GodotObject) (signal : string) (anode : AsyncNode) =
+    let waitSignal (obj : GodotObject) (signal : StringName) (anode : AsyncNode) =
         anode |> waitSignalWithSome None obj signal
     
     let private waitTweenWithSome (proc : ProcessUnit option) (tween : Tween) (anode : AsyncNode) =
@@ -122,12 +122,8 @@ module AsyncNode =
         anode |> waitEventWithSome None event
         
     let private runWithSome<'a> (proc : ProcessUnit option) (action : unit -> 'a) (anode : AsyncNode) =
-        let t = GDTask.runOnThreadWith anode.Ct action
-        task {
-            let! result = anode |> waitWithSome proc t
-            do! anode |> toProcessThread
-            return result
-        }
+        let t = Task.Run(action, anode.Ct)
+        anode |> waitWithSome proc t
         
     let runWith<'a> (proc : ProcessUnit) (action : unit -> 'a) (anode : AsyncNode) =
         anode |> runWithSome (Some proc) action
@@ -168,9 +164,9 @@ type AsyncNode with
         this |> AsyncNode.wait waitTask
     member this.WaitWith<'a> (proc : ProcessUnit) (waitTask : Task<'a>) =
         this |> AsyncNode.waitWith proc waitTask
-    member this.WaitSignal (obj : GodotObject) (signal : string) =
+    member this.WaitSignal (obj : GodotObject) (signal : StringName) =
         this |> AsyncNode.waitSignal obj signal
-    member this.WaitSignalWith (proc : ProcessUnit) (obj : GodotObject) (signal : string) =
+    member this.WaitSignalWith (proc : ProcessUnit) (obj : GodotObject) (signal : StringName) =
         this |> AsyncNode.waitSignalWith proc obj signal
     member this.WaitTween (tween : Tween) =
         this |> AsyncNode.waitTween tween
