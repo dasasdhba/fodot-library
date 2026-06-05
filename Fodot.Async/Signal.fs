@@ -14,4 +14,4 @@ let awaitWith<'a> (ct: CancellationToken) signal obj =
     signal.AsTask ct
     
 let await<'a> signal obj =
-    awaitWith CancellationToken.None signal obj
+    awaitWith<'a> CancellationToken.None signal obj

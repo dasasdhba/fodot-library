@@ -7,4 +7,4 @@ let asTask (tween: Tween) = task {
 }
 
 let asTaskWith ct (tween: Tween) =
-    tween |> Signal.awaitWith ct Tween.SignalName.Finished
+    tween |> Signal.awaitWith<unit> ct Tween.SignalName.Finished
