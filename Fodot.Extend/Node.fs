@@ -5,27 +5,31 @@ open FSharp.Extend
 open Godot
 open Fodot.Core
 
-let getOwnerOrSelf (node : Node) =
-    node.Owner
-    |> Option.ofObj
-    |> Option.defaultValue node
+// scene owner
 
-let getNameInOwner (node : Node) =
-    if node.IsUniqueNameInOwner () then
-        "%" + node.Name.ToString ()
+let rec getSceneOwner (node : Node) =
+    match node.Owner |> Option.ofObj with
+    | None -> None
+    | Some owner when owner.SceneFilePath <> "" -> Some owner
+    | Some owner -> owner |> getSceneOwner
+
+let getOwnerOrSelf (node : Node) =
+    if node.SceneFilePath <> "" then
+        node
     else
-        let owner = node |> getOwnerOrSelf
-        owner.GetPathTo node |> string
+        node
+        |> getSceneOwner
+        |> Option.defaultValue node
 
 // relative loading
 
-let rec getSceneFilePath (node : Node) =
+let getSceneFilePath (node : Node) =
     if node.SceneFilePath <> "" then
         Some node.SceneFilePath
     else
-        match node.Owner |> Option.ofObj with
-        | None -> None
-        | Some owner -> owner |> getSceneFilePath
+        node
+        |> getSceneOwner
+        |> Option.map _.SceneFilePath
 
 let asRelativePath (path : string) (node : Node) =
     match node |> getSceneFilePath with

@@ -6,10 +6,9 @@ open Godot
 open Fodot.Core
 
 let validate (obj : 'a) =
-    if GodotObject.IsInstanceValid obj then
-        Some obj
-    else
-        None
+    obj
+    |> Option.ofObj
+    |> Option.filter GodotObject.IsInstanceValid
 
 // interface
 

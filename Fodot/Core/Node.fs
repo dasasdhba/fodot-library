@@ -14,7 +14,7 @@ let addChildInternal (child : Node) inter (node : Node) =
     if node |> isAccessSafe then
         node.AddChild(child, false, inter)
     else
-        node |> GDTask.post _.AddChild(child, false, inter)
+        node |> GDThread.postBy _.AddChild(child, false, inter)
 
 let addChild (child : Node) (node : Node) =
     node |> addChildInternal child Node.InternalMode.Disabled
@@ -29,19 +29,19 @@ let addSibling (sibling : Node) (node : Node) =
     if node |> isAccessSafe then
         node.AddSibling(sibling)
     else
-        node |> GDTask.post _.AddSibling(sibling)
+        node |> GDThread.postBy _.AddSibling(sibling)
 
 let moveChild (child: Node) (idx : int) (node : Node) =
     if node |> isAccessSafe then
         node.MoveChild(child, idx)
     else
-        node |> GDTask.post _.MoveChild(child, idx)
+        node |> GDThread.postBy _.MoveChild(child, idx)
 
 let removeChild (child : Node) (node : Node) =
     if node |> isAccessSafe then
         node.RemoveChild(child)
     else
-        node |> GDTask.post _.RemoveChild(child)
+        node |> GDThread.postBy _.RemoveChild(child)
 
 // node get
 
@@ -109,7 +109,7 @@ let reparent parent keep (node : Node) =
     if pSafe && parent |> isAccessSafe then
         node.Reparent(parent, keep)
     else
-        node |> GDTask.post _.Reparent(parent, keep)
+        node |> GDThread.postBy _.Reparent(parent, keep)
 
 let reparentKeep parent (node : Node) =
     node |> reparent parent true

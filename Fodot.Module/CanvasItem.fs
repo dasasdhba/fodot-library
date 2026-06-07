@@ -64,7 +64,7 @@ let getPosition (item : CanvasItem) =
     | :? Control as ctrl ->
         ctrl.Position
     | _ ->
-        item |> getTransform |> Transform2D.getOrigin
+        item |> getTransform |> _.Origin
 
 let setPosition pos (item : CanvasItem) =
     match item with
@@ -73,7 +73,7 @@ let setPosition pos (item : CanvasItem) =
     | :? Control as ctrl ->
         ctrl.Position <- pos
     | _ ->
-        item |> setTransform (item |> getTransform |> Transform2D.setOrigin pos)
+        item |> setTransform (item |> getTransform |> Transform2D.withOrigin pos)
 
 let getRotation (item : CanvasItem) =
     match item with
@@ -82,7 +82,7 @@ let getRotation (item : CanvasItem) =
     | :? Control as ctrl ->
         ctrl.Rotation
     | _ ->
-        item |> getTransform |> Transform2D.getRotation
+        item |> getTransform |> _.Rotation
 
 let setRotation rot (item: CanvasItem) =
     match item with
@@ -91,7 +91,7 @@ let setRotation rot (item: CanvasItem) =
     | :? Control as ctrl ->
         ctrl.Rotation <- rot
     | _ ->
-        item |> setTransform (item |> getTransform |> Transform2D.setRotation rot)
+        item |> setTransform (item |> getTransform |> Transform2D.withRotation rot)
 
 let getScale (item : CanvasItem) =
     match item with
@@ -100,7 +100,7 @@ let getScale (item : CanvasItem) =
     | :? Control as ctrl ->
         ctrl.Scale
     | _ ->
-        item |> getTransform |> Transform2D.getScale
+        item |> getTransform |> _.Scale
     
 let setScale scale (item: CanvasItem) =
     match item with
@@ -109,21 +109,21 @@ let setScale scale (item: CanvasItem) =
     | :? Control as ctrl ->
         ctrl.Scale <- scale
     | _ ->
-        item |> setTransform (item |> getTransform |> Transform2D.setScale scale)
+        item |> setTransform (item |> getTransform |> Transform2D.withScale scale)
     
 let getSkew (item: CanvasItem) =
     match item with
     | :? Node2D as n2d ->
         n2d.Skew
     | _ ->
-        item |> getTransform |> Transform2D.getSkew
+        item |> getTransform |> _.Skew
 
 let setSkew skew (item: CanvasItem) =
     match item with
     | :? Node2D as n2d ->
         n2d.Skew <- skew
     | _ ->
-        item |> setTransform (item |> getTransform |> Transform2D.setSkew skew)
+        item |> setTransform (item |> getTransform |> Transform2D.withSkew skew)
 
 let getGlobalTransform (item : CanvasItem) =
     item.GetGlobalTransform()
@@ -142,7 +142,7 @@ let getGlobalPosition (item : CanvasItem) =
     | :? Control as ctrl ->
         ctrl.GlobalPosition
     | _ ->
-        item |> getGlobalTransform |> Transform2D.getOrigin
+        item |> getGlobalTransform |> _.Origin
 
 let setGlobalPosition pos (item: CanvasItem) =
     match item with
@@ -151,49 +151,49 @@ let setGlobalPosition pos (item: CanvasItem) =
     | :? Control as ctrl ->
         ctrl.GlobalPosition <- pos
     | _ ->
-        item |> setGlobalTransform (item |> getGlobalTransform |> Transform2D.setOrigin pos)
+        item |> setGlobalTransform (item |> getGlobalTransform |> Transform2D.withOrigin pos)
 
 let getGlobalRotation (item : CanvasItem) =
     match item with
     | :? Node2D as n2d ->
         n2d.GlobalRotation
     | _ ->
-        item |> getGlobalTransform |> Transform2D.getRotation
+        item |> getGlobalTransform |> _.Rotation
 
 let setGlobalRotation rot (item : CanvasItem) =
     match item with
     | :? Node2D as n2d ->
         n2d.GlobalRotation <- rot
     | _ ->
-        item |> setGlobalTransform (item |> getGlobalTransform |> Transform2D.setRotation rot)
+        item |> setGlobalTransform (item |> getGlobalTransform |> Transform2D.withRotation rot)
 
 let getGlobalScale (item : CanvasItem) =
     match item with
     | :? Node2D as n2d ->
         n2d.GlobalScale
     | _ ->
-        item |> getGlobalTransform |> Transform2D.getScale
+        item |> getGlobalTransform |> _.Scale
     
 let setGlobalScale scale (item: CanvasItem) =
     match item with
     | :? Node2D as n2d ->
         n2d.GlobalScale <- scale
     | _ ->
-        item |> setGlobalTransform (item |> getGlobalTransform |> Transform2D.setScale scale)
+        item |> setGlobalTransform (item |> getGlobalTransform |> Transform2D.withScale scale)
     
 let getGlobalSkew (item: CanvasItem) =
     match item with
     | :? Node2D as n2d ->
         n2d.GlobalSkew
     | _ ->
-        item |> getGlobalTransform |> Transform2D.getSkew
+        item |> getGlobalTransform |> _.Skew
 
 let setGlobalSkew skew (item: CanvasItem) =
     match item with
     | :? Node2D as n2d ->
         n2d.GlobalSkew <- skew
     | _ ->
-        item |> setGlobalTransform (item |> getGlobalTransform |> Transform2D.setSkew skew)
+        item |> setGlobalTransform (item |> getGlobalTransform |> Transform2D.withSkew skew)
 
 type CanvasItem with
 

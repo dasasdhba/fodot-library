@@ -7,10 +7,7 @@ open Fodot.Core
 // godot signal
 
 let awaitWith<'a> (ct: CancellationToken) signal obj =
-    let signal : GDSignal<'a> = {
-        Object = obj
-        SignalName = signal
-    }
+    let signal = obj |> GDSignal<'a>.New signal
     signal.AsTask ct
     
 let await<'a> signal obj =
