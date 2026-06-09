@@ -122,6 +122,7 @@ type PhysicsShapeQuerier2D(parent : PhysicsQueryShape2D, shapes: (Shape2D * Tran
                         let gt = gt |> Transform2D.withOrigin (gt.Origin + offset)
                         q.Shape <- s
                         q.Transform <- gt
+                        q.Motion <- motion
                         s, gt, dss.CastMotion q |> PhysicsQueryMotionCastResult.From
                     )
                     |> Array.minBy (fun (_, _, r) -> r.SafeFraction)
@@ -241,6 +242,7 @@ type PhysicsShapeQuerier3D(parent : PhysicsQueryShape3D, shapes: (Shape3D * Tran
                         let gt = gt |> Transform3D.withOrigin (gt.Origin + offset)
                         q.Shape <- s
                         q.Transform <- gt
+                        q.Motion <- motion
                         s, gt, dss.CastMotion q |> PhysicsQueryMotionCastResult.From
                     )
                     |> Array.minBy (fun (_, _, r) -> r.SafeFraction)
