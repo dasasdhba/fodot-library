@@ -12,9 +12,13 @@ module PhysicsQueryShape2D =
         |> Array.map (fun i ->
             seq {
                 for j in 0 .. col.ShapeOwnerGetShapeCount(i) - 1 do
-                    let shape = col.ShapeOwnerGetShape(i, j)
-                    let gt = col.ShapeOwnerGetTransform(i)
-                    yield (shape, gt)
+                    let owner = col.ShapeOwnerGetOwner(i)
+                    match owner with
+                    | :? CanvasItem as c ->
+                        let shape = col.ShapeOwnerGetShape(i, j)
+                        let gt = c |> CanvasItem.getGlobalTransform
+                        yield (shape, gt)
+                    | _ -> ()
             }
         )
         |> Seq.concat
@@ -28,9 +32,13 @@ module PhysicsQueryShape3D =
         |> Array.map (fun i ->
             seq {
                 for j in 0 .. col.ShapeOwnerGetShapeCount(i) - 1 do
-                    let shape = col.ShapeOwnerGetShape(i, j)
-                    let gt = col.ShapeOwnerGetTransform(i)
-                    yield (shape, gt)
+                    let owner = col.ShapeOwnerGetOwner(i)
+                    match owner with
+                    | :? Node3D as n ->
+                        let shape = col.ShapeOwnerGetShape(i, j)
+                        let gt = n.GlobalTransform
+                        yield (shape, gt)
+                    | _ -> ()
             }
         )
         |> Seq.concat
@@ -54,17 +62,17 @@ type PhysicsShapeQuerier2D(parent : PhysicsQueryShape2D, shapes: (Shape2D * Tran
     let param = (parent :> IPhysicsQuery).Param
     
     member this.Query (?offset : Vector2, ?maxResult : int) =
-        let offset = defaultArg offset Vector2.Zero
-        let maxResult = defaultArg maxResult 32
-        
-        use query = new PhysicsShapeQueryParameters2D()
-        query |> param.Attach
-        query.Margin <- parent.Margin
-        
-        query
-        |> Seq.unfold (fun q ->
-            state.SpaceState
-            |> Option.bind (fun dss ->
+        state.SpaceState
+        |> Option.map (fun dss ->
+            let offset = defaultArg offset Vector2.Zero
+            let maxResult = defaultArg maxResult 32
+            
+            let query = new PhysicsShapeQueryParameters2D()
+            query |> param.Attach
+            query.Margin <- parent.Margin
+            
+            query
+            |> Seq.unfold (fun q ->
                 shapes
                 |> Array.tryPick (fun (s, gt) ->
                     q.Shape <- s
@@ -81,41 +89,42 @@ type PhysicsShapeQuerier2D(parent : PhysicsQueryShape2D, shapes: (Shape2D * Tran
                     )
                 )
             )
+            |> Seq.truncate maxResult
         )
-        |> Seq.truncate maxResult
+        |> Option.defaultValue Seq.empty
     
     member this.Cast (motion : Vector2, ?offset : Vector2) =
-        let offset = defaultArg offset Vector2.Zero
-        
-        use query = new PhysicsShapeQueryParameters2D()
-        query |> param.Attach
-        query.Margin <- parent.Margin
-        query.Motion <- motion
-        
         state.SpaceState
         |> Option.map (fun dss ->
+            let offset = defaultArg offset Vector2.Zero
+        
+            let query = new PhysicsShapeQueryParameters2D()
+            query |> param.Attach
+            query.Margin <- parent.Margin
+            query.Motion <- motion
+            
             shapes
             |> Array.map (fun (s, gt) ->
                 query.Shape <- s
                 query.Transform <- gt |> Transform2D.withOrigin (gt.Origin + offset)
-                dss.CastMotion query |> PhysicsQueryMotionCastResult.From
+                dss.CastMotion query |> PhysicsQueryMotionResult.From
             )
             |> Array.minBy _.SafeFraction
         )
-        |> Option.defaultValue PhysicsQueryMotionCastResult.Default
+        |> Option.defaultValue PhysicsQueryMotionResult.Default
         
     member this.CastAndQuery (motion : Vector2, ?offset : Vector2, ?maxResult : int) =
-        let offset = defaultArg offset Vector2.Zero
-        let maxResult = defaultArg maxResult 32
-        
-        use query = new PhysicsShapeQueryParameters2D()
-        query |> param.Attach
-        query.Margin <- parent.Margin
-        
-        query
-        |> Seq.unfold (fun q ->
-            state.SpaceState
-            |> Option.bind (fun dss ->
+        state.SpaceState
+        |> Option.map (fun dss ->
+            let offset = defaultArg offset Vector2.Zero
+            let maxResult = defaultArg maxResult 32
+            
+            let query = new PhysicsShapeQueryParameters2D()
+            query |> param.Attach
+            query.Margin <- parent.Margin
+            
+            query
+            |> Seq.unfold (fun q ->
                 let s, gt, cast =
                     shapes
                     |> Array.map (fun (s, gt) ->
@@ -123,7 +132,7 @@ type PhysicsShapeQuerier2D(parent : PhysicsQueryShape2D, shapes: (Shape2D * Tran
                         q.Shape <- s
                         q.Transform <- gt
                         q.Motion <- motion
-                        s, gt, dss.CastMotion q |> PhysicsQueryMotionCastResult.From
+                        s, gt, dss.CastMotion q |> PhysicsQueryMotionResult.From
                     )
                     |> Array.minBy (fun (_, _, r) -> r.SafeFraction)
                 
@@ -144,8 +153,9 @@ type PhysicsShapeQuerier2D(parent : PhysicsQueryShape2D, shapes: (Shape2D * Tran
                     (cast, res), q
                 )
             )
+            |> Seq.truncate maxResult
         )
-        |> Seq.truncate maxResult
+        |> Option.defaultValue Seq.empty
         
 type PhysicsQueryShape2D with
 
@@ -174,17 +184,17 @@ type PhysicsShapeQuerier3D(parent : PhysicsQueryShape3D, shapes: (Shape3D * Tran
     let param = (parent :> IPhysicsQuery).Param
     
     member this.Query (?offset : Vector3, ?maxResult : int) =
-        let offset = defaultArg offset Vector3.Zero
-        let maxResult = defaultArg maxResult 32
-        
-        use query = new PhysicsShapeQueryParameters3D()
-        query |> param.Attach
-        query.Margin <- parent.Margin
-        
-        query
-        |> Seq.unfold (fun q ->
-            state.SpaceState
-            |> Option.bind (fun dss ->
+        state.SpaceState
+        |> Option.map (fun dss ->
+            let offset = defaultArg offset Vector3.Zero
+            let maxResult = defaultArg maxResult 32
+            
+            let query = new PhysicsShapeQueryParameters3D()
+            query |> param.Attach
+            query.Margin <- parent.Margin
+            
+            query
+            |> Seq.unfold (fun q ->
                 shapes
                 |> Array.tryPick (fun (s, gt) ->
                     q.Shape <- s
@@ -201,41 +211,42 @@ type PhysicsShapeQuerier3D(parent : PhysicsQueryShape3D, shapes: (Shape3D * Tran
                     )
                 )
             )
+            |> Seq.truncate maxResult
         )
-        |> Seq.truncate maxResult
+        |> Option.defaultValue Seq.empty
     
     member this.Cast (motion : Vector3, ?offset : Vector3) =
-        let offset = defaultArg offset Vector3.Zero
-        
-        use query = new PhysicsShapeQueryParameters3D()
-        query |> param.Attach
-        query.Margin <- parent.Margin
-        query.Motion <- motion
-        
         state.SpaceState
         |> Option.map (fun dss ->
+            let offset = defaultArg offset Vector3.Zero
+        
+            let query = new PhysicsShapeQueryParameters3D()
+            query |> param.Attach
+            query.Margin <- parent.Margin
+            query.Motion <- motion
+            
             shapes
             |> Array.map (fun (s, gt) ->
                 query.Shape <- s
                 query.Transform <- gt |> Transform3D.withOrigin (gt.Origin + offset)
-                dss.CastMotion query |> PhysicsQueryMotionCastResult.From
+                dss.CastMotion query |> PhysicsQueryMotionResult.From
             )
             |> Array.minBy _.SafeFraction
         )
-        |> Option.defaultValue PhysicsQueryMotionCastResult.Default
+        |> Option.defaultValue PhysicsQueryMotionResult.Default
     
     member this.CastAndQuery (motion : Vector3, ?offset : Vector3, ?maxResult : int) =
-        let offset = defaultArg offset Vector3.Zero
-        let maxResult = defaultArg maxResult 32
-        
-        use query = new PhysicsShapeQueryParameters3D()
-        query |> param.Attach
-        query.Margin <- parent.Margin
-        
-        query
-        |> Seq.unfold (fun q ->
-            state.SpaceState
-            |> Option.bind (fun dss ->
+        state.SpaceState
+        |> Option.map (fun dss ->
+            let offset = defaultArg offset Vector3.Zero
+            let maxResult = defaultArg maxResult 32
+            
+            let query = new PhysicsShapeQueryParameters3D()
+            query |> param.Attach
+            query.Margin <- parent.Margin
+            
+            query
+            |> Seq.unfold (fun q ->
                 let s, gt, cast =
                     shapes
                     |> Array.map (fun (s, gt) ->
@@ -243,7 +254,7 @@ type PhysicsShapeQuerier3D(parent : PhysicsQueryShape3D, shapes: (Shape3D * Tran
                         q.Shape <- s
                         q.Transform <- gt
                         q.Motion <- motion
-                        s, gt, dss.CastMotion q |> PhysicsQueryMotionCastResult.From
+                        s, gt, dss.CastMotion q |> PhysicsQueryMotionResult.From
                     )
                     |> Array.minBy (fun (_, _, r) -> r.SafeFraction)
                 
@@ -264,8 +275,9 @@ type PhysicsShapeQuerier3D(parent : PhysicsQueryShape3D, shapes: (Shape3D * Tran
                     (cast, res), q
                 )
             )
+            |> Seq.truncate maxResult
         )
-        |> Seq.truncate maxResult
+        |> Option.defaultValue Seq.empty
     
 type PhysicsQueryShape3D with
 

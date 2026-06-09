@@ -2,11 +2,19 @@ namespace Moon.Library
 
 open Godot
 
+type IPhysicsQueryResult =
+    abstract member Collider : GodotObject with get
+    abstract member Rid : Rid with get
+
 type PhysicsQueryPointResult =
     {
         Collider : GodotObject
         Rid : Rid
     }
+    
+    interface IPhysicsQueryResult with
+        member this.Collider = this.Collider
+        member this.Rid = this.Rid
     
     static member From (result : PhysicsShapeQueryResults2D) =
         seq {
@@ -32,6 +40,10 @@ type PhysicsQueryRayResult2D =
         Normal : Vector2
     }
     
+    interface IPhysicsQueryResult with
+        member this.Collider = this.Collider
+        member this.Rid = this.Rid
+    
     static member From (result : PhysicsRayQueryResult2D) =
         {
             Collider = result.GetCollider()
@@ -47,6 +59,10 @@ type PhysicsQueryRayResult3D =
         Position : Vector3
         Normal : Vector3
     }
+    
+    interface IPhysicsQueryResult with
+        member this.Collider = this.Collider
+        member this.Rid = this.Rid
     
     static member From (result : PhysicsRayQueryResult3D) =
         {
@@ -64,6 +80,10 @@ type PhysicsQueryShapeResult2D =
         Normal : Vector2
         Velocity : Vector2
     }
+    
+    interface IPhysicsQueryResult with
+        member this.Collider = this.Collider
+        member this.Rid = this.Rid
     
     static member From (result : PhysicsShapeRestInfo2D) =
         {
@@ -83,6 +103,10 @@ type PhysicsQueryShapeResult3D =
         Velocity : Vector3
     }
     
+    interface IPhysicsQueryResult with
+        member this.Collider = this.Collider
+        member this.Rid = this.Rid
+    
     static member From (result : PhysicsShapeRestInfo3D) =
         {
             Collider = result.GetColliderId() |> GodotObject.InstanceFromId
@@ -92,7 +116,7 @@ type PhysicsQueryShapeResult3D =
             Velocity = result.GetLinearVelocity()
         }
         
-type PhysicsQueryMotionCastResult =
+type PhysicsQueryMotionResult =
     {
         SafeFraction : float32
         UnsafeFraction : float32
@@ -109,31 +133,19 @@ type PhysicsQueryMotionCastResult =
             SafeFraction = result[0]
             UnsafeFraction = result[1]
         }
-        
-type PhysicsQueryMotionTestResult2D =
-    {
-        Collider : GodotObject
-        Rid : Rid
-        Velocity : Vector2
-        Depth : float32
-        Normal : Vector2
-        Position : Vector2
-        SafeFraction : float32
-        UnsafeFraction : float32
-        Remainder : Vector2
-        Travel : Vector2
-    }
+
+module PhysicsQueryResult =
     
-    static member From (result : PhysicsTestMotionResult2D) =
-        {
-            Collider = result.GetCollider()
-            Rid = result.GetColliderRid()
-            Velocity = result.GetColliderVelocity()
-            Depth = result.GetCollisionDepth()
-            Normal = result.GetCollisionNormal()
-            Position = result.GetCollisionPoint()
-            SafeFraction = result.GetCollisionSafeFraction()
-            UnsafeFraction = result.GetCollisionUnsafeFraction()
-            Remainder = result.GetRemainder()
-            Travel = result.GetTravel()
-        }
+    let chooseAndExclude<'a, 'b when 'a :> IPhysicsQueryResult>
+        (query : IPhysicsQuery)
+        (pattern : 'a -> 'b option)
+        (results : 'a seq) : 'b seq =
+        
+        results
+        |> Seq.choose (fun r ->
+            match pattern r with
+            | Some s -> Some s
+            | None ->
+                query |> PhysicsQuery.addExclude r.Rid
+                None
+        )

@@ -12,7 +12,7 @@ type NodePool (scene : PackedScene) =
     let mutable disposed = false
     
     static member PoolTable = WeakMeta<NodePool>()
-    member val Disposed = disposed with get
+    member this.Disposed = disposed
         
     member this.Store count =
         for i in 0 .. count - 1 do

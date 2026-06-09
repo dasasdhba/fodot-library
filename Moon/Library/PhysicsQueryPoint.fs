@@ -13,14 +13,15 @@ type PhysicsQueryPoint2D(node : CanvasItem, param : PhysicsQueryBasicParameters)
         member val Param = param with get, set
     
     member this.QueryGlobal (position : Vector2, ?maxResult : int) =
-        let maxResult = defaultArg maxResult 32
-        
         state.SpaceState
         |> Option.map (fun s ->
-            use query = new PhysicsPointQueryParameters2D()
+            let maxResult = defaultArg maxResult 32
+            
+            let query = new PhysicsPointQueryParameters2D()
             query |> (this :> IPhysicsQuery).Param.Attach
             query.Position <- position
             query.CanvasInstanceId <- node.GetInstanceId()
+            
             s.IntersectPoint (query, maxResult) |> PhysicsQueryPointResult.From
         )
         |> Option.defaultValue Seq.empty
@@ -41,13 +42,14 @@ type PhysicsQueryPoint3D(node : Node3D, param : PhysicsQueryBasicParameters) =
         member val Param = param with get, set
     
     member this.QueryGlobal (position : Vector3, ?maxResult : int) =
-        let maxResult = defaultArg maxResult 32
-        
         state.SpaceState
         |> Option.map (fun s ->
-            use query = new PhysicsPointQueryParameters3D()
+            let maxResult = defaultArg maxResult 32
+            
+            let query = new PhysicsPointQueryParameters3D()
             query |> (this :> IPhysicsQuery).Param.Attach
             query.Position <- position
+            
             s.IntersectPoint (query, maxResult) |> PhysicsQueryPointResult.From
         )
         |> Option.defaultValue Seq.empty

@@ -8,10 +8,11 @@ type PhysicsState2D(node : Node) =
     let mutable state : PhysicsDirectSpaceState2D option = None
     
     let updateSpace () =
-        state <-
+        let result =
             node.GetViewport() |> Option.ofObj
             |> Option.bind (fun v -> v.FindWorld2D() |> Option.ofObj)
             |> Option.map _.DirectSpaceState
+        state <- result
     
     do
         node.add_TreeEntered updateSpace
@@ -21,7 +22,7 @@ type PhysicsState2D(node : Node) =
     static member Get(node : Node) =
         map |> WeakMeta.getOrAdd node (lazy PhysicsState2D(node))
     
-    member val SpaceState = state
+    member this.SpaceState = state
     
 type PhysicsState3D(node : Node) =
     
@@ -41,4 +42,4 @@ type PhysicsState3D(node : Node) =
     static member Get(node : Node) =
         map |> WeakMeta.getOrAdd node (lazy PhysicsState3D(node))
     
-    member val SpaceState = state
+    member this.SpaceState = state
