@@ -3,6 +3,7 @@ namespace Fodot.Core
 open System
 open System.Collections.Concurrent
 open System.Collections.Generic
+open FSharp.Extend
 open Godot
 
 type ProcessFunc<'a> =
@@ -115,9 +116,8 @@ module Engine =
         else
             let data = node |> getProcessData physics
             data.Process
-            |> List.tryFindIndex (fun (i, _) -> id = i)
-            |> Option.map (fun i ->
-                data.Process <- data.Process |> List.removeAt i)
+            |> List.remove (fun (i, _) -> id = i)
+            |> Option.map (fun r -> data.Process <- r)
             |> Option.isSome
 
     let removeIdleProcess (id: Guid) (node: Node) =
