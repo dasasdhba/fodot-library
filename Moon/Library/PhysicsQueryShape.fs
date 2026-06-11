@@ -64,6 +64,54 @@ type PhysicsShapeQuerier2D(parent : PhysicsQueryShape2D, shapes: (Shape2D * Tran
     
     let state = parent.State
     
+    let insideQuery offset (dss : PhysicsDirectSpaceState2D) (query : PhysicsShapeQueryParameters2D) =
+        shapes
+        |> Array.tryPick (fun (s, gt) ->
+            query.Shape <- s
+            query.Transform <- gt |> Transform2D.withOrigin (gt.Origin + offset)
+            dss.GetRestInfo query
+            |> Option.ofObj
+            |> Option.map (fun r ->
+                let res = PhysicsQueryShapeResult2D.From r
+                query.Exclude <-
+                    let ex = query.Exclude
+                    ex.Add res.Rid
+                    ex
+                res
+            )
+        )
+        
+    let castQuery motion offset (dss : PhysicsDirectSpaceState2D) (query : PhysicsShapeQueryParameters2D) =
+        let s, gt, cast =
+            shapes
+            |> Array.map (fun (s, gt) ->
+                let gt = gt |> Transform2D.withOrigin (gt.Origin + offset)
+                query.Shape <- s
+                query.Transform <- gt
+                query.Motion <- motion
+                s, gt, dss.CastMotion query |> PhysicsQueryMotionResult.From
+            )
+            |> Array.minBy (fun (_, _, r) -> r.SafeFraction)
+        
+        if cast.SafeFraction >= 1f then None else
+        
+        let travel = min 1f (cast.UnsafeFraction + 1e-5f)
+        let gt = gt |> Transform2D.withOrigin (gt.Origin + motion * travel)
+        query.Shape <- s
+        query.Transform <- gt
+        query.Motion <- Vector2.Zero
+       
+        dss.GetRestInfo query
+        |> Option.ofObj
+        |> Option.map (fun r ->
+            let res = PhysicsQueryShapeResult2D.From r
+            query.Exclude <-
+                let ex = query.Exclude
+                ex.Add res.Rid
+                ex
+            cast, res
+        )
+    
     interface IPhysicsQuery with
         member val Param = (parent :> IPhysicsQuery).Param with get, set
     
@@ -137,53 +185,13 @@ type PhysicsShapeQuerier2D(parent : PhysicsQueryShape2D, shapes: (Shape2D * Tran
             query |> (this :> IPhysicsQuery).Param.Attach
             query.Margin <- margin
             
-            let inline insideUnfold() =
-                shapes
-                |> Array.tryPick (fun (s, gt) ->
-                    query.Shape <- s
-                    query.Transform <- gt |> Transform2D.withOrigin (gt.Origin + offset)
-                    dss.GetRestInfo query
-                    |> Option.ofObj
-                    |> Option.map (fun r ->
-                        let res = PhysicsQueryShapeResult2D.From r
-                        query.Exclude <-
-                            let ex = query.Exclude
-                            ex.Add res.Rid
-                            ex
-                        (PhysicsQueryMotionResult.Zero, res), ()
-                    )
-                )
-                
-            let inline castUnfold() =
-                let s, gt, cast =
-                    shapes
-                    |> Array.map (fun (s, gt) ->
-                        let gt = gt |> Transform2D.withOrigin (gt.Origin + offset)
-                        query.Shape <- s
-                        query.Transform <- gt
-                        query.Motion <- motion
-                        s, gt, dss.CastMotion query |> PhysicsQueryMotionResult.From
-                    )
-                    |> Array.minBy (fun (_, _, r) -> r.SafeFraction)
-                
-                if cast.SafeFraction >= 1f then None else
-                
-                let travel = min 1f (cast.UnsafeFraction + 1e-5f)
-                let gt = gt |> Transform2D.withOrigin (gt.Origin + motion * travel)
-                query.Shape <- s
-                query.Transform <- gt
-                query.Motion <- Vector2.Zero
-               
-                dss.GetRestInfo query
-                |> Option.ofObj
-                |> Option.map (fun r ->
-                    let res = PhysicsQueryShapeResult2D.From r
-                    query.Exclude <-
-                        let ex = query.Exclude
-                        ex.Add res.Rid
-                        ex
-                    (cast, res), ()
-                )
+            let insideUnfold() =
+                insideQuery offset dss query
+                |> Option.map (fun r -> (PhysicsQueryMotionResult.Zero, r), ())
+            
+            let castUnfold() =
+                castQuery motion offset dss query
+                |> Option.map (fun r -> r, ())
             
             seq {
                 if hitFromInside &&
@@ -192,16 +200,36 @@ type PhysicsShapeQuerier2D(parent : PhysicsQueryShape2D, shapes: (Shape2D * Tran
                     
                     yield! () |> Seq.unfold insideUnfold
                 
-                yield!  () |> Seq.unfold castUnfold
+                yield! () |> Seq.unfold castUnfold
             }
             |> Seq.truncate maxResult
         )
         |> Option.defaultValue Seq.empty
     
-    /// Equivalent to CastAndQuery(motion = Vector2.Zero, ..., hitFromInside = true)
     member this.Query (?offset : Vector2, ?maxResult : int, ?margin : float32) =
-        this.CastAndQuery(Vector2.Zero, ?offset = offset, ?maxResult = maxResult, ?margin = margin, hitFromInside = true)
-        |> Seq.map snd
+        state.SpaceState
+        |> Option.map (fun dss ->
+            let offset = defaultArg offset Vector2.Zero
+            let maxResult = defaultArg maxResult parent.MaxResult
+            let margin = defaultArg margin parent.Margin
+            
+            let query = new PhysicsShapeQueryParameters2D()
+            query |> (this :> IPhysicsQuery).Param.Attach
+            query.Margin <- margin
+            
+            let insideUnfold() =
+                insideQuery offset dss query
+                |> Option.map (fun r -> r, ())
+            
+            seq {
+                if this.QueryInside(offset = offset, maxResult = 1)
+                   |> Seq.isEmpty |> not then
+                    
+                    yield! () |> Seq.unfold insideUnfold
+            }
+            |> Seq.truncate maxResult
+        )
+        |> Option.defaultValue Seq.empty
         
 type PhysicsQueryShape2D with
 
@@ -231,6 +259,54 @@ type PhysicsQueryShape3D(node : CollisionObject3D, param : PhysicsQueryBasicPara
 type PhysicsShapeQuerier3D(parent : PhysicsQueryShape3D, shapes: (Shape3D * Transform3D) array) =
     
     let state = parent.State
+    
+    let insideQuery offset (dss : PhysicsDirectSpaceState3D) (query : PhysicsShapeQueryParameters3D) =
+        shapes
+        |> Array.tryPick (fun (s, gt) ->
+            query.Shape <- s
+            query.Transform <- gt |> Transform3D.withOrigin (gt.Origin + offset)
+            dss.GetRestInfo query
+            |> Option.ofObj
+            |> Option.map (fun r ->
+                let res = PhysicsQueryShapeResult3D.From r
+                query.Exclude <-
+                    let ex = query.Exclude
+                    ex.Add res.Rid
+                    ex
+                res
+            )
+        )
+        
+    let castQuery motion offset (dss : PhysicsDirectSpaceState3D) (query : PhysicsShapeQueryParameters3D) =
+        let s, gt, cast =
+            shapes
+            |> Array.map (fun (s, gt) ->
+                let gt = gt |> Transform3D.withOrigin (gt.Origin + offset)
+                query.Shape <- s
+                query.Transform <- gt
+                query.Motion <- motion
+                s, gt, dss.CastMotion query |> PhysicsQueryMotionResult.From
+            )
+            |> Array.minBy (fun (_, _, r) -> r.SafeFraction)
+        
+        if cast.SafeFraction >= 1f then None else
+        
+        let travel = min 1f (cast.UnsafeFraction + 1e-5f)
+        let gt = gt |> Transform3D.withOrigin (gt.Origin + motion * travel)
+        query.Shape <- s
+        query.Transform <- gt
+        query.Motion <- Vector3.Zero
+       
+        dss.GetRestInfo query
+        |> Option.ofObj
+        |> Option.map (fun r ->
+            let res = PhysicsQueryShapeResult3D.From r
+            query.Exclude <-
+                let ex = query.Exclude
+                ex.Add res.Rid
+                ex
+            cast, res
+        )
     
     interface IPhysicsQuery with
         member val Param = (parent :> IPhysicsQuery).Param with get, set
@@ -305,53 +381,13 @@ type PhysicsShapeQuerier3D(parent : PhysicsQueryShape3D, shapes: (Shape3D * Tran
             query |> (this :> IPhysicsQuery).Param.Attach
             query.Margin <- margin
             
-            let inline insideUnfold() =
-                shapes
-                |> Array.tryPick (fun (s, gt) ->
-                    query.Shape <- s
-                    query.Transform <- gt |> Transform3D.withOrigin (gt.Origin + offset)
-                    dss.GetRestInfo query
-                    |> Option.ofObj
-                    |> Option.map (fun r ->
-                        let res = PhysicsQueryShapeResult3D.From r
-                        query.Exclude <-
-                            let ex = query.Exclude
-                            ex.Add res.Rid
-                            ex
-                        (PhysicsQueryMotionResult.Zero, res), ()
-                    )
-                )
-                
-            let inline castUnfold() =
-                let s, gt, cast =
-                    shapes
-                    |> Array.map (fun (s, gt) ->
-                        let gt = gt |> Transform3D.withOrigin (gt.Origin + offset)
-                        query.Shape <- s
-                        query.Transform <- gt
-                        query.Motion <- motion
-                        s, gt, dss.CastMotion query |> PhysicsQueryMotionResult.From
-                    )
-                    |> Array.minBy (fun (_, _, r) -> r.SafeFraction)
-                
-                if cast.SafeFraction >= 1f then None else
-                
-                let travel = min 1f (cast.UnsafeFraction + 1e-5f)
-                let gt = gt |> Transform3D.withOrigin (gt.Origin + motion * travel)
-                query.Shape <- s
-                query.Transform <- gt
-                query.Motion <- Vector3.Zero
-               
-                dss.GetRestInfo query
-                |> Option.ofObj
-                |> Option.map (fun r ->
-                    let res = PhysicsQueryShapeResult3D.From r
-                    query.Exclude <-
-                        let ex = query.Exclude
-                        ex.Add res.Rid
-                        ex
-                    (cast, res), ()
-                )
+            let insideUnfold() =
+                insideQuery offset dss query
+                |> Option.map (fun r -> (PhysicsQueryMotionResult.Zero, r), ())
+            
+            let castUnfold() =
+                castQuery motion offset dss query
+                |> Option.map (fun r -> r, ())
             
             seq {
                 if hitFromInside &&
@@ -360,16 +396,36 @@ type PhysicsShapeQuerier3D(parent : PhysicsQueryShape3D, shapes: (Shape3D * Tran
                     
                     yield! () |> Seq.unfold insideUnfold
                 
-                yield!  () |> Seq.unfold castUnfold
+                yield! () |> Seq.unfold castUnfold
             }
             |> Seq.truncate maxResult
         )
         |> Option.defaultValue Seq.empty
     
-    /// Equivalent to CastAndQuery(motion = Vector3.Zero, ..., hitFromInside = true)
     member this.Query (?offset : Vector3, ?maxResult : int, ?margin : float32) =
-        this.CastAndQuery(Vector3.Zero, ?offset = offset, ?maxResult = maxResult, ?margin = margin, hitFromInside = true)
-        |> Seq.map snd
+        state.SpaceState
+        |> Option.map (fun dss ->
+            let offset = defaultArg offset Vector3.Zero
+            let maxResult = defaultArg maxResult parent.MaxResult
+            let margin = defaultArg margin parent.Margin
+            
+            let query = new PhysicsShapeQueryParameters3D()
+            query |> (this :> IPhysicsQuery).Param.Attach
+            query.Margin <- margin
+            
+            let insideUnfold() =
+                insideQuery offset dss query
+                |> Option.map (fun r -> r, ())
+            
+            seq {
+                if this.QueryInside(offset = offset, maxResult = 1)
+                   |> Seq.isEmpty |> not then
+                    
+                    yield! () |> Seq.unfold insideUnfold
+            }
+            |> Seq.truncate maxResult
+        )
+        |> Option.defaultValue Seq.empty
     
 type PhysicsQueryShape3D with
 
