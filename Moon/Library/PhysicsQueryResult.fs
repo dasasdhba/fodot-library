@@ -6,7 +6,7 @@ type IPhysicsQueryResult =
     abstract member Collider : GodotObject with get
     abstract member Rid : Rid with get
 
-type PhysicsQueryPointResult =
+type PhysicsQueryResult =
     {
         Collider : GodotObject
         Rid : Rid
@@ -126,6 +126,12 @@ type PhysicsQueryMotionResult =
         {
             SafeFraction = 1f
             UnsafeFraction = 1f
+        }
+    
+    static member Zero =
+        {
+            SafeFraction = 0f
+            UnsafeFraction = 0f
         }
     
     static member From (result: float32[]) =

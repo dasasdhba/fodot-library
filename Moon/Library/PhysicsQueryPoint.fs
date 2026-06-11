@@ -12,25 +12,26 @@ type PhysicsQueryPoint2D(node : CanvasItem, param : PhysicsQueryBasicParameters)
     interface IPhysicsQuery with
         member val Param = param with get, set
     
+    member val MaxResult = 32 with get, set
+    
     member this.QueryGlobal (position : Vector2, ?maxResult : int) =
         state.SpaceState
         |> Option.map (fun s ->
-            let maxResult = defaultArg maxResult 32
+            let maxResult = defaultArg maxResult this.MaxResult
             
             let query = new PhysicsPointQueryParameters2D()
             query |> (this :> IPhysicsQuery).Param.Attach
             query.Position <- position
             query.CanvasInstanceId <- node.GetInstanceId()
             
-            s.IntersectPoint (query, maxResult) |> PhysicsQueryPointResult.From
+            s.IntersectPoint (query, maxResult) |> PhysicsQueryResult.From
         )
         |> Option.defaultValue Seq.empty
     
     member this.Query (?offset : Vector2, ?maxResult : int) =
         let position = node |> CanvasItem.getGlobalPosition
         let position = position + (defaultArg offset Vector2.Zero)
-        let maxResult = defaultArg maxResult 32
-        this.QueryGlobal (position, maxResult)
+        this.QueryGlobal (position, ?maxResult = maxResult)
 
 type PhysicsQueryPoint3D(node : Node3D, param : PhysicsQueryBasicParameters) =
     
@@ -41,22 +42,23 @@ type PhysicsQueryPoint3D(node : Node3D, param : PhysicsQueryBasicParameters) =
     interface IPhysicsQuery with
         member val Param = param with get, set
     
+    member val MaxResult = 32 with get, set
+    
     member this.QueryGlobal (position : Vector3, ?maxResult : int) =
         state.SpaceState
         |> Option.map (fun s ->
-            let maxResult = defaultArg maxResult 32
+            let maxResult = defaultArg maxResult this.MaxResult
             
             let query = new PhysicsPointQueryParameters3D()
             query |> (this :> IPhysicsQuery).Param.Attach
             query.Position <- position
             
-            s.IntersectPoint (query, maxResult) |> PhysicsQueryPointResult.From
+            s.IntersectPoint (query, maxResult) |> PhysicsQueryResult.From
         )
         |> Option.defaultValue Seq.empty
     
     member this.Query (?offset : Vector3, ?maxResult : int) =
         let position = node.GlobalPosition
         let position = position + (defaultArg offset Vector3.Zero)
-        let maxResult = defaultArg maxResult 32
-        this.QueryGlobal (position, maxResult)
+        this.QueryGlobal (position, ?maxResult = maxResult)
         

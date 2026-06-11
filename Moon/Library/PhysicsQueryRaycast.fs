@@ -13,41 +13,41 @@ type PhysicsQueryRaycast2D(node : CanvasItem, param : PhysicsQueryBasicParameter
         member val Param = param with get, set
     
     member val HitFromInside = false with get, set
+    member val MaxResult = 32 with get, set
     
-    member this.QueryGlobal (from : Vector2, to' : Vector2, ?maxResult : int) =
+    member this.QueryGlobal (from : Vector2, to' : Vector2, ?maxResult : int, ?hitFromInside : bool) =
         state.SpaceState
         |> Option.map (fun dss ->
-            let maxResult = defaultArg maxResult 32
+            let maxResult = defaultArg maxResult this.MaxResult
+            let hitFromInside = defaultArg hitFromInside this.HitFromInside
         
             let query = new PhysicsRayQueryParameters2D()
             query |> (this :> IPhysicsQuery).Param.Attach
             query.From <- from
             query.To <- to'
-            query.HitFromInside <- this.HitFromInside
+            query.HitFromInside <- hitFromInside
             
-            query
-            |> Seq.unfold (fun q ->
-                dss.IntersectRay q
+            () |> Seq.unfold (fun _ ->
+                dss.IntersectRay query
                 |> Option.ofObj
                 |> Option.map (fun r ->
                     let res = PhysicsQueryRayResult2D.From r
-                    q.Exclude <-
-                        let ex = q.Exclude
+                    query.Exclude <-
+                        let ex = query.Exclude
                         ex.Add res.Rid
                         ex
-                    res, q
+                    res, ()
                 )
             )
             |> Seq.truncate maxResult
         )
         |> Option.defaultValue Seq.empty
     
-    member this.Query (target : Vector2, ?offset : Vector2, ?maxResult : int) =
+    member this.Query (target : Vector2, ?offset : Vector2, ?maxResult : int, ?hitFromInside : bool) =
         let from = node |> CanvasItem.getGlobalPosition
         let from = from + (defaultArg offset Vector2.Zero)
         let to' = from + target
-        let maxResult = defaultArg maxResult 32
-        this.QueryGlobal (from, to', maxResult)
+        this.QueryGlobal (from, to', ?maxResult = maxResult, ?hitFromInside = hitFromInside)
 
 type PhysicsQueryRaycast3D(node : Node3D, param : PhysicsQueryBasicParameters) =
     
@@ -60,39 +60,40 @@ type PhysicsQueryRaycast3D(node : Node3D, param : PhysicsQueryBasicParameters) =
     
     member val HitFromInside = false with get, set
     member val HitBackFaces = true with get, set
+    member val MaxResult = 32 with get, set
     
-    member this.QueryGlobal (from : Vector3, to' : Vector3, ?maxResult : int) =
+    member this.QueryGlobal (from : Vector3, to' : Vector3, ?maxResult : int, ?hitFromInside : bool, ?hitBackFaces : bool) =
         state.SpaceState
         |> Option.map (fun dss ->
-            let maxResult = defaultArg maxResult 32
+            let maxResult = defaultArg maxResult this.MaxResult
+            let hitFromInside = defaultArg hitFromInside this.HitFromInside
+            let hitBackFaces = defaultArg hitBackFaces this.HitBackFaces
         
             let query = new PhysicsRayQueryParameters3D()
             query |> (this :> IPhysicsQuery).Param.Attach
             query.From <- from
             query.To <- to'
-            query.HitFromInside <- this.HitFromInside
-            query.HitBackFaces <- this.HitBackFaces
+            query.HitFromInside <- hitFromInside
+            query.HitBackFaces <- hitBackFaces
             
-            query
-            |> Seq.unfold (fun q ->
-                dss.IntersectRay q
+            () |> Seq.unfold (fun _ ->
+                dss.IntersectRay query
                 |> Option.ofObj
                 |> Option.map (fun r ->
                     let res = PhysicsQueryRayResult3D.From r
-                    q.Exclude <-
-                        let ex = q.Exclude
+                    query.Exclude <-
+                        let ex = query.Exclude
                         ex.Add res.Rid
                         ex
-                    res, q
+                    res, ()
                 )
             )
             |> Seq.truncate maxResult
         )
         |> Option.defaultValue Seq.empty
     
-    member this.Query (target : Vector3, ?offset : Vector3, ?maxResult : int) =
+    member this.Query (target : Vector3, ?offset : Vector3, ?maxResult : int, ?hitFromInside : bool, ?hitBackFaces : bool) =
         let from = node.GlobalPosition
         let from = from + (defaultArg offset Vector3.Zero)
         let to' = from + target
-        let maxResult = defaultArg maxResult 32
-        this.QueryGlobal (from, to', maxResult)
+        this.QueryGlobal (from, to', ?maxResult = maxResult, ?hitFromInside = hitFromInside, ?hitBackFaces = hitBackFaces)
