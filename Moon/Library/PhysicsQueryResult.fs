@@ -1,27 +1,36 @@
 namespace Moon.Library
 
 open Godot
+open Moon.Interface
 
 type IPhysicsQueryResult =
     abstract member Collider : GodotObject with get
     abstract member Rid : Rid with get
+    abstract member Shape : int with get
 
 type PhysicsQueryResult =
     {
         Collider : GodotObject
         Rid : Rid
+        Shape : int
     }
     
     interface IPhysicsQueryResult with
         member this.Collider = this.Collider
         member this.Rid = this.Rid
+        member this.Shape = this.Shape
     
     static member From (result : PhysicsShapeQueryResults2D) =
         seq {
             for i in 0 .. result.GetCollisionCount() - 1 do
                 let col = result.GetCollider i
                 let rid = result.GetRid i
-                yield { Collider = col; Rid = rid }
+                let shape = result.GetShape i
+                yield {
+                    Collider = col
+                    Rid = rid
+                    Shape = shape
+                }
         }
         
     static member From (result : PhysicsShapeQueryResults3D) =
@@ -29,13 +38,19 @@ type PhysicsQueryResult =
             for i in 0 .. result.GetCollisionCount() - 1 do
                 let col = result.GetCollider i
                 let rid = result.GetRid i
-                yield { Collider = col; Rid = rid }
+                let shape = result.GetShape i
+                yield {
+                    Collider = col
+                    Rid = rid
+                    Shape = shape
+                }
         }
 
 type PhysicsQueryRayResult2D =
     {
         Collider : GodotObject
         Rid : Rid
+        Shape : int
         Position : Vector2
         Normal : Vector2
     }
@@ -43,11 +58,13 @@ type PhysicsQueryRayResult2D =
     interface IPhysicsQueryResult with
         member this.Collider = this.Collider
         member this.Rid = this.Rid
+        member this.Shape = this.Shape
     
     static member From (result : PhysicsRayQueryResult2D) =
         {
             Collider = result.GetCollider()
             Rid = result.GetRid()
+            Shape = result.GetShape()
             Position = result.GetPosition()
             Normal = result.GetNormal()
         }
@@ -56,6 +73,7 @@ type PhysicsQueryRayResult3D =
     {
         Collider : GodotObject
         Rid : Rid
+        Shape : int
         Position : Vector3
         Normal : Vector3
     }
@@ -63,11 +81,13 @@ type PhysicsQueryRayResult3D =
     interface IPhysicsQueryResult with
         member this.Collider = this.Collider
         member this.Rid = this.Rid
+        member this.Shape = this.Shape
     
     static member From (result : PhysicsRayQueryResult3D) =
         {
             Collider = result.GetCollider()
             Rid = result.GetRid()
+            Shape = result.GetShape()
             Position = result.GetPosition()
             Normal = result.GetNormal()
         }
@@ -76,6 +96,7 @@ type PhysicsQueryShapeResult2D =
     {
         Collider : GodotObject
         Rid : Rid
+        Shape : int
         Position : Vector2
         Normal : Vector2
         Velocity : Vector2
@@ -84,11 +105,13 @@ type PhysicsQueryShapeResult2D =
     interface IPhysicsQueryResult with
         member this.Collider = this.Collider
         member this.Rid = this.Rid
+        member this.Shape = this.Shape
     
     static member From (result : PhysicsShapeRestInfo2D) =
         {
             Collider = result.GetColliderId() |> GodotObject.InstanceFromId
             Rid = result.GetRid()
+            Shape = result.GetShape()
             Position = result.GetPoint()
             Normal = result.GetNormal()
             Velocity = result.GetLinearVelocity()
@@ -98,6 +121,7 @@ type PhysicsQueryShapeResult3D =
     {
         Collider : GodotObject
         Rid : Rid
+        Shape : int
         Position : Vector3
         Normal : Vector3
         Velocity : Vector3
@@ -106,11 +130,13 @@ type PhysicsQueryShapeResult3D =
     interface IPhysicsQueryResult with
         member this.Collider = this.Collider
         member this.Rid = this.Rid
+        member this.Shape = this.Shape
     
     static member From (result : PhysicsShapeRestInfo3D) =
         {
             Collider = result.GetColliderId() |> GodotObject.InstanceFromId
             Rid = result.GetRid()
+            Shape = result.GetShape()
             Position = result.GetPoint()
             Normal = result.GetNormal()
             Velocity = result.GetLinearVelocity()
@@ -142,6 +168,66 @@ type PhysicsQueryMotionResult =
 
 module PhysicsQueryResult =
     
+    let getOneWayMargin (r : IPhysicsQueryResult) =
+        match r.Collider with
+        | :? CollisionObject3D as col ->
+            let owner =
+                r.Shape
+                |> col.ShapeFindOwner
+                |> col.ShapeOwnerGetOwner
+            match owner :> obj with
+            | :? IPlatformShape as p when p.OneWayCollision ->
+                Some p.OneWayCollisionMargin
+            | _ ->
+                None
+        | :? CanvasItem ->
+            if PhysicsServer2D.BodyIsShapeSetAsOneWayCollision(r.Rid, r.Shape) &&
+               PhysicsServer2D.ShapeIsOneWayCollisionAllowed(
+                    PhysicsServer2D.BodyGetShape(r.Rid, r.Shape)
+               ) then
+                PhysicsServer2D.BodyGetShapeOneWayCollisionMargin(r.Rid, r.Shape) |> Some
+            else
+                None
+        | _ ->
+            None
+    
+    let getOneWayParameters2D (r : IPhysicsQueryResult) =
+        r
+        |> getOneWayMargin
+        |> Option.bind (fun m ->
+            match r.Collider with
+            | :? CanvasItem as c ->
+                let dir =
+                    Vector2.Down
+                    |> c.GetGlobalTransform().BasisXform
+                    |> _.Normalized()
+                Some (dir, m)
+            | _ -> None
+        )
+    
+    let getOneWayDirection2D (r : IPhysicsQueryResult) =
+        r
+        |> getOneWayParameters2D
+        |> Option.map fst
+    
+    let getOneWayParameters3D (r : IPhysicsQueryResult) =
+        r
+        |> getOneWayMargin
+        |> Option.bind (fun m ->
+            match r.Collider with
+            | :? Node3D as n ->
+                let dir =
+                    n.GetGlobalTransform().Basis * Vector3.Down
+                    |> _.Normalized()
+                Some (dir, m)
+            | _ -> None
+        )
+    
+    let getOneWayDirection3D (r : IPhysicsQueryResult) =
+        r
+        |> getOneWayParameters3D
+        |> Option.map fst
+        
     let chooseAndExclude<'a, 'b when 'a :> IPhysicsQueryResult>
         (query : IPhysicsQuery)
         (pattern : 'a -> 'b option)
