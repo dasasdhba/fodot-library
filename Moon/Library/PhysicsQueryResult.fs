@@ -160,6 +160,12 @@ type PhysicsQueryMotionResult =
             UnsafeFraction = 0f
         }
     
+    static member FromValue(safe, ?unsafe) =
+        {
+            SafeFraction = safe
+            UnsafeFraction = defaultArg unsafe safe
+        }
+    
     static member From (result: float32[]) =
         {
             SafeFraction = result[0]

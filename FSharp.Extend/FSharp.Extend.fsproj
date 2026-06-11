@@ -15,6 +15,7 @@
         <Compile Include="Extend\WeakMap.fs" />
         <Compile Include="Extend\Dict.fs" />
         <Compile Include="Extend\List.fs" />
+        <Compile Include="Extend\Seq.fs" />
         <Compile Include="Builder.fs" />
     </ItemGroup>
 
