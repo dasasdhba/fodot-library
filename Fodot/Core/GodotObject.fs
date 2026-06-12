@@ -47,13 +47,13 @@ let tryGetMeta (name : StringName) (obj : GodotObject) =
         | v -> Some v
     
 let tryGetMetaAs<'a> (name : StringName) (obj : GodotObject) =
-    obj |> tryGetMeta name |> Option.bind (fun r -> r |> Variant.toSome<'a>)
+    obj |> tryGetMeta name |> Option.bind Variant.toSome<'a>
     
 let tryGetMetaAsArray<'a> (name : StringName) (obj : GodotObject) =
-    obj |> tryGetMeta name |> Option.bind (fun r -> r |> Variant.toSomeArray<'a>)
+    obj |> tryGetMeta name |> Option.bind Variant.toSomeArray<'a>
 
 let tryGetMetaAsDictionary<'a, 'b> (name : StringName) (obj : GodotObject) =
-    obj |> tryGetMeta name |> Option.bind (fun r -> r |> Variant.toSomeDictionary<'a, 'b>)
+    obj |> tryGetMeta name |> Option.bind Variant.toSomeDictionary<'a, 'b>
 
 let removeMeta (name : StringName) (obj : GodotObject) =
     if obj |> hasMeta name then
@@ -117,13 +117,13 @@ let tryGet (prop : StringName) (obj : GodotObject) =
     | v -> Some v
     
 let tryGetAs<'a> (prop : StringName) (obj : GodotObject) =
-    obj |> tryGet prop |> Option.bind (fun r -> r |> Variant.toSome<'a>)
+    obj |> tryGet prop |> Option.bind Variant.toSome<'a>
     
 let tryGetAsArray<'a> (prop : StringName) (obj : GodotObject) =
-    obj |> tryGet prop |> Option.bind (fun r -> r |> Variant.toSomeArray<'a>)
+    obj |> tryGet prop |> Option.bind Variant.toSomeArray<'a>
     
 let tryGetAsDictionary<'a, 'b> (prop : StringName) (obj : GodotObject) =
-    obj |> tryGet prop |> Option.bind (fun r -> r |> Variant.toSomeDictionary<'a, 'b>)
+    obj |> tryGet prop |> Option.bind Variant.toSomeDictionary<'a, 'b>
 
 let set (prop : StringName) (value : 'a) (obj : GodotObject) =
     obj.Set(prop, value |> Variant.from)
@@ -155,13 +155,13 @@ let callAsDictionary<'a, 'b, 'c> (method : StringName) (args : 'a) (obj : GodotO
     obj |> call<'a> method args |> Variant.toDictionary<'b, 'c>
 
 let tryCallAs<'a, 'b> (method : StringName) (args : 'a) (obj : GodotObject) =
-    obj |> tryCall<'a> method args |> Option.bind (fun r -> r |> Variant.toSome<'b>)
+    obj |> tryCall<'a> method args |> Option.bind Variant.toSome<'b>
 
 let tryCallAsArray<'a, 'b> (method : StringName) (args : 'a) (obj : GodotObject) =
-    obj |> tryCall<'a> method args |> Option.bind (fun r -> r |> Variant.toSomeArray<'b>)
+    obj |> tryCall<'a> method args |> Option.bind Variant.toSomeArray<'b>
 
 let tryCallAsDictionary<'a, 'b, 'c> (method : StringName) (args : 'a) (obj : GodotObject) =
-    obj |> tryCall<'a> method args |> Option.bind (fun r -> r |> Variant.toSomeDictionary<'b, 'c>)
+    obj |> tryCall<'a> method args |> Option.bind Variant.toSomeDictionary<'b, 'c>
 
 let invoke (method : StringName) (obj : GodotObject) =
     obj |> call<unit> method ()

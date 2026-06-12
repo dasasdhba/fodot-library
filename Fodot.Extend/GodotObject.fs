@@ -10,20 +10,20 @@ let validate (obj : 'a) =
     |> Option.ofObj
     |> Option.filter GodotObject.IsInstanceValid
 
-// interface
+// script
 
-let tryGetInterface<'a> (obj : GodotObject) =
+let tryGetScript<'a> (obj : GodotObject) =
     try
         Some (obj :> obj :?> 'a)
     with
     | _ -> obj |> FScript.tryGet<'a>
         
-let getInterface<'a> (obj : GodotObject) =
+let getScript<'a> (obj : GodotObject) =
     obj
-    |> tryGetInterface<'a>
-    |> Option.defaultWith (fun () -> failwith $"Object {obj} does not implement interface {typeof<'a>}")
+    |> tryGetScript<'a>
+    |> Option.defaultWith (fun () -> failwith $"Object {obj} does not implement {typeof<'a>}")
     
-let getAllInterface<'a> (obj : GodotObject) = seq {
+let getAllScripts<'a> (obj : GodotObject) = seq {
     try
         yield obj :> obj :?> 'a
     with
@@ -89,13 +89,13 @@ let getData (name : StringName) (rid : Rid) (obj : GodotObject) =
     |> Option.defaultWith (fun () -> failwith $"{obj}: Data {name} not found.")
     
 let tryGetDataAs<'a> (name : StringName) (rid : Rid) (obj : GodotObject) =
-    obj |> tryGetData name rid |> Option.bind (fun v -> v |> Variant.toSome<'a>)
+    obj |> tryGetData name rid |> Option.bind Variant.toSome<'a>
     
 let tryGetDataAsArray<'a> (name : StringName) (rid : Rid) (obj : GodotObject) =
-    obj |> tryGetData name rid |> Option.bind (fun v -> v |> Variant.toSomeArray<'a>)
+    obj |> tryGetData name rid |> Option.bind Variant.toSomeArray<'a>
     
 let tryGetDataAsDictionary<'a, 'b> (name : StringName) (rid : Rid) (obj : GodotObject) =
-    obj |> tryGetData name rid |> Option.bind (fun v -> v |> Variant.toSomeDictionary<'a, 'b>)
+    obj |> tryGetData name rid |> Option.bind Variant.toSomeDictionary<'a, 'b>
     
 let getDataAs<'a> (name : StringName) (rid : Rid) (obj : GodotObject) =
     obj |> getData name rid |> Variant.toType<'a>

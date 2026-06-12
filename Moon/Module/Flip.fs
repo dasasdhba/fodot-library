@@ -8,11 +8,11 @@ open Moon.Interface
 let initH node =
     let selfInit obj =
         obj
-        |> GodotObject.tryGetInterface<IFlipHInit>
+        |> GodotObject.tryGetScript<IFlipHInit>
         |> Option.iter _.InitFlipH()
 
     node
-    |> GodotObject.tryGetInterface<IFlipHInit>
+    |> GodotObject.tryGetScript<IFlipHInit>
     |> Option.iter _.InitFlipH()
     
     node |> Node.getChildrenRecInternal |> Seq.iter selfInit
@@ -20,7 +20,7 @@ let initH node =
 let initV node =
     let selfInit obj =
         obj
-        |> GodotObject.tryGetInterface<IFlipVInit>
+        |> GodotObject.tryGetScript<IFlipVInit>
         |> Option.iter _.InitFlipV()
     
     node |> selfInit

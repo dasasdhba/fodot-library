@@ -233,13 +233,13 @@ let getNodeFs<'a> path (node : Node) =
     node |> Node.getNode path |> FScript.get<'a>
 
 let tryGetNodeFs<'a> path (node : Node) =
-    node |> Node.tryGetNode path |> Option.bind (fun n -> n |> FScript.tryGet<'a>)
+    node |> Node.tryGetNode path |> Option.bind FScript.tryGet<'a>
 
 let getParentFs<'a> (node : Node) =
     node |> Node.getParent |> FScript.get<'a>
 
 let tryGetParentFs<'a> (node : Node) =
-    node |> Node.tryGetParent |> Option.bind (fun p -> p |> FScript.tryGet<'a>)
+    node |> Node.tryGetParent |> Option.bind FScript.tryGet<'a>
 
 let getChildFsInternalOrNot idx inter (node : Node) =
     node.GetChild(idx, inter) |> FScript.get<'a>
@@ -251,26 +251,26 @@ let getChildInternalFs<'a> idx (node : Node) =
     node |> Node.getChildInternal idx |> FScript.get<'a>
 
 let tryGetChildFsInternalOrNot idx inter (node : Node) =
-    node |> Node.tryGetChildInternalOrNot idx inter |> Option.bind (fun c -> c |> FScript.tryGet<'a>)
+    node |> Node.tryGetChildInternalOrNot idx inter |> Option.bind FScript.tryGet<'a>
 
 let tryGetChildFs<'a> idx (node : Node) =
-    node |> Node.tryGetChild idx |> Option.bind (fun c -> c |> FScript.tryGet<'a>)
+    node |> Node.tryGetChild idx |> Option.bind FScript.tryGet<'a>
 
 let tryGetChildInternalFs<'a> idx (node : Node) =
-    node |> Node.tryGetChildInternal idx |> Option.bind (fun c -> c |> FScript.tryGet<'a>)
+    node |> Node.tryGetChildInternal idx |> Option.bind FScript.tryGet<'a>
 
 let findParentFs<'a> (node : Node) =
     node
-    |> chooseParent (fun p -> p |> FScript.tryGet<'a>)
+    |> chooseParent FScript.tryGet<'a>
 
 let findParentFsCached<'a> map (node : Node) =
     node
-    |> chooseParentCached map (fun p -> p |> FScript.tryGet<'a>)
+    |> chooseParentCached map FScript.tryGet<'a>
 
 let getChildrenFsInternalOrNot<'a> inter (node : Node) =
     node
     |> Node.getChildrenInternalOrNot inter
-    |> Seq.choose (fun c -> c |> FScript.tryGet<'a>)
+    |> Seq.choose FScript.tryGet<'a>
 
 let getChildrenFs<'a> (node : Node) =
     node |> getChildrenFsInternalOrNot<'a> false
@@ -281,7 +281,7 @@ let getChildrenInternalFs<'a> (node : Node) =
 let getChildrenFsRecInternalOrNot<'a> inter (node : Node) =
     node
     |> Node.getChildrenRecInternalOrNot inter
-    |> Seq.choose (fun c -> c |> FScript.tryGet<'a>)
+    |> Seq.choose FScript.tryGet<'a>
 
 let getChildrenFsRec<'a> (node : Node) =
     node |> getChildrenFsRecInternalOrNot<'a> false
@@ -291,7 +291,7 @@ let getChildrenInternalFsRec<'a> (node : Node) =
     
 let getChildrenFsCachedInternalOrNot<'a> map inter (node : Node) =
     node
-    |> chooseChildrenCachedInternalOrNot map inter (fun c -> c |> FScript.tryGet<'a>)
+    |> chooseChildrenCachedInternalOrNot map inter FScript.tryGet<'a>
 
 let getChildrenFsCached<'a> map (node : Node) =
     node |> getChildrenFsCachedInternalOrNot<'a> map false
@@ -301,10 +301,92 @@ let getChildrenInternalFsCached<'a> map (node : Node) =
 
 let getChildrenFsRecCachedInternalOrNot<'a> map inter (node : Node) =
     node
-    |> chooseChildrenRecCachedInternalOrNot map inter (fun c -> c |> FScript.tryGet<'a>)
+    |> chooseChildrenRecCachedInternalOrNot map inter FScript.tryGet<'a>
 
 let getChildrenFsRecCached<'a> map (node : Node) =
     node |> getChildrenFsRecCachedInternalOrNot<'a> map false
     
 let getChildrenInternalFsRecCached<'a> map (node : Node) =
     node |> getChildrenFsRecCachedInternalOrNot<'a> map true
+
+// scripts
+
+let getNodeScript<'a> path (node : Node) =
+    node |> Node.getNode path |> GodotObject.getScript<'a>
+
+let tryGetNodeScript<'a> path (node : Node) =
+    node |> Node.tryGetNode path |> Option.bind GodotObject.tryGetScript<'a>
+
+let getParentScript<'a> (node : Node) =
+    node |> Node.getParent |> GodotObject.getScript<'a>
+
+let tryGetParentScript<'a> (node : Node) =
+    node |> Node.tryGetParent |> Option.bind GodotObject.tryGetScript<'a>
+
+let getChildScriptInternalOrNot<'a> idx inter (node : Node) =
+    node.GetChild(idx, inter) |> GodotObject.getScript<'a>
+
+let getChildScript<'a> idx (node : Node) =
+    node |> Node.getChild idx |> GodotObject.getScript<'a>
+
+let getChildInternalScript<'a> idx (node : Node) =
+    node |> Node.getChildInternal idx |> GodotObject.getScript<'a>
+
+let tryGetChildScriptInternalOrNot<'a> idx inter (node : Node) =
+    node |> Node.tryGetChildInternalOrNot idx inter |> Option.bind GodotObject.tryGetScript<'a>
+
+let tryGetChildScript<'a> idx (node : Node) =
+    node |> Node.tryGetChild idx |> Option.bind GodotObject.tryGetScript<'a>
+
+let tryGetChildInternalScript<'a> idx (node : Node) =
+    node |> Node.tryGetChildInternal idx |> Option.bind GodotObject.tryGetScript<'a>
+
+let findParentScript<'a> (node : Node) =
+    node
+    |> chooseParent GodotObject.tryGetScript<'a>
+
+let findParentScriptCached<'a> map (node : Node) =
+    node
+    |> chooseParentCached map GodotObject.tryGetScript<'a>
+
+let getChildrenScriptInternalOrNot<'a> inter (node : Node) =
+    node
+    |> Node.getChildrenInternalOrNot inter
+    |> Seq.choose GodotObject.tryGetScript<'a>
+
+let getChildrenScript<'a> (node : Node) =
+    node |> getChildrenScriptInternalOrNot<'a> false
+
+let getChildrenInternalScript<'a> (node : Node) =
+    node |> getChildrenScriptInternalOrNot<'a> true
+
+let getChildrenScriptRecInternalOrNot<'a> inter (node : Node) =
+    node
+    |> Node.getChildrenRecInternalOrNot inter
+    |> Seq.choose GodotObject.tryGetScript<'a>
+
+let getChildrenScriptRec<'a> (node : Node) =
+    node |> getChildrenScriptRecInternalOrNot<'a> false
+    
+let getChildrenInternalScriptRec<'a> (node : Node) =
+    node |> getChildrenScriptRecInternalOrNot<'a> true
+    
+let getChildrenScriptCachedInternalOrNot<'a> map inter (node : Node) =
+    node
+    |> chooseChildrenCachedInternalOrNot map inter GodotObject.tryGetScript<'a>
+
+let getChildrenScriptCached<'a> map (node : Node) =
+    node |> getChildrenScriptCachedInternalOrNot<'a> map false
+
+let getChildrenInternalScriptCached<'a> map (node : Node) =
+    node |> getChildrenScriptCachedInternalOrNot<'a> map true
+
+let getChildrenScriptRecCachedInternalOrNot<'a> map inter (node : Node) =
+    node
+    |> chooseChildrenRecCachedInternalOrNot map inter GodotObject.tryGetScript<'a>
+
+let getChildrenScriptRecCached<'a> map (node : Node) =
+    node |> getChildrenScriptRecCachedInternalOrNot<'a> map false
+    
+let getChildrenInternalScriptRecCached<'a> map (node : Node) =
+    node |> getChildrenScriptRecCachedInternalOrNot<'a> map true

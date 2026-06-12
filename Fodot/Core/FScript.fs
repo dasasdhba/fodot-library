@@ -218,8 +218,11 @@ module FScript =
         |> tryGetScriptData
         |> Option.bind (fun data ->
             data.Scripts
-            |> Seq.tryFind (fun s -> s :? 'a)
-            |> Option.map (fun s -> s :?> 'a)
+            |> Seq.tryPick (fun s ->
+                match s with
+                | :? 'a as a -> Some a
+                | _ -> None
+            )
         )
     
     let get<'a> (obj: GodotObject) =

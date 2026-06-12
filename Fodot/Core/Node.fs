@@ -86,8 +86,11 @@ let getChildrenInternal<'a when 'a: not struct and 'a :> Node> (node : Node) =
     node |> getChildrenInternalOrNot<'a> true
 
 let rec getChildrenRecInternalOrNot<'a when 'a: not struct and 'a :> Node> inter (node: Node) = seq {
-    for n in node |> getChildrenInternalOrNot<'a> inter do
-        yield n
+    for n in node.GetChildren inter do
+        match n with
+        | :? 'a as a -> yield a
+        | _ -> ()
+        
         yield! n |> getChildrenRecInternalOrNot<'a> inter
 }
 
@@ -103,7 +106,7 @@ let reparent parent keep (node : Node) =
     let pSafe =
         node
         |> tryGetParent
-        |> Option.map (fun p -> p |> isAccessSafe)
+        |> Option.map isAccessSafe
         |> Option.defaultValue true
     
     if pSafe && parent |> isAccessSafe then
