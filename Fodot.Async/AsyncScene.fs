@@ -49,8 +49,7 @@ type AsyncScenePool() =
     
     member private this.RemoveWith count (scene : PackedScene) =
         let matching, remain =
-            queuedAdd |> List.filter (fun s -> s = scene),
-            queuedAdd |> List.filter (fun s -> s <> scene)
+            queuedAdd |> List.partition (fun s -> s = scene)
         
         if matching.Length >= count then
             queuedAdd <- matching[count..] @ remain
