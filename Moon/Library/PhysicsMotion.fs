@@ -103,9 +103,6 @@ type PhysicsShapeQuerier2D with
         )
         
         |> Seq.tryHead
-            
-    member this.Slide (motion : Vector2, ?offset : Vector2, ?maxResult : int, ?margin : float32) =
-        ()
 
 type PhysicsShapeQuerier3D with
 
