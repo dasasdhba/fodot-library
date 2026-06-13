@@ -1,11 +1,10 @@
 module Moon.Module.Action
 
-open System.Threading
-open Fodot.Async
+open System
 open Godot
 open Fodot.Core
 
-let repeat (interval : float) (action : unit -> unit) (physics: bool) (node : Node) =
+let repeat (interval : float) (physics: bool) (action : unit -> unit)  (node : Node) =
     let mutable timer = 0.0
     node
     |> Engine.addDeltaProcess physics (fun delta ->
@@ -16,29 +15,26 @@ let repeat (interval : float) (action : unit -> unit) (physics: bool) (node : No
     )
         
 let repeatIdle (interval : float) (action : unit -> unit) (node : Node) =
-    repeat interval action false node
+    repeat interval false action node
     
 let repeatPhysics (interval : float) (action : unit -> unit) (node : Node) =
-    repeat interval action true node
+    repeat interval true action node
     
-let delayWith ct (time : float) (action : unit -> unit) (physics: bool) (node : Node) =
-    let a = AsyncNode.New node physics ct
-    task {
-        do! a.Delay time
-        action ()
-    }
-    
-let delayIdleWith ct (time : float) (action : unit -> unit) (node : Node) =
-    delayWith ct time action false node
-    
-let delayPhysicsWith ct (time : float) (action : unit -> unit) (node : Node) =
-    delayWith ct time action true node
-    
-let delay (time : float) (action : unit -> unit) (physics: bool) (node : Node) =
-    delayWith CancellationToken.None time action physics node
+let delay (time : float) (physics: bool) (action : unit -> unit) (node : Node) =
+    let mutable timer = 0.0
+    let mutable proc = Guid.Empty
+    proc <-
+        node
+        |> Engine.addDeltaProcess physics (fun delta ->
+            timer <- timer + delta
+            if timer >= time then
+                action ()
+                node |> Engine.removeProcess proc |> ignore
+        )
+    proc
     
 let delayIdle (time : float) (action : unit -> unit) (node : Node) =
-    delay time action false node
+    delay time false action node
     
 let delayPhysics (time : float) (action : unit -> unit) (node : Node) =
-    delay time action true node
+    delay time true action node

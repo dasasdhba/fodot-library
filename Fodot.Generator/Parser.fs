@@ -345,7 +345,7 @@ type SafeRoot =
                     |> List.map (fun l -> $"\"{l}\"")
                     |> String.concat ", "
                 
-                $"func _get_fscripts():\n\treturn [{l}]"
+                $"static func _get_fscripts():\n\treturn [{l}]"
             
         [extends; className; exports; signals; fs] |> formatBlock
     

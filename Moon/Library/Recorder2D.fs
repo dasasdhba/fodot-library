@@ -1,5 +1,6 @@
 namespace Moon.Library
 
+open System
 open Fodot.Common
 open Fodot.Core
 open Fodot.Module
@@ -12,20 +13,17 @@ type Recorder2D(node : Node, target : CanvasItem) =
     let mutable motion = Vector2.Zero
     let mutable lastPosition = Vector2.Zero
     let mutable firstRecorded = false
+    let mutable disabled = false
     
-    new (node : CanvasItem) = Recorder2D(node, node)
+    let mutable proc = Guid.Empty
     
-    member val Disabled = false with get, set
-    member val LastVelocity = velocity with get
-    member val LastMotion = motion with get
-    member val LastPosition = lastPosition with get
-    
-    member private this.Process = node |> Engine.addPhysicsDelta32Process (fun delta ->
+    do proc <-
+        node |> Engine.addPhysicsDelta32Process (fun delta ->
         if GodotObject.IsInstanceValid target |> not then
             Logger.pushWarn $"Recorder2D with {node.GetPath()}: trying to record an invalid target."
-            node |> Engine.removePhysicsProcess this.Process |> ignore
+            node |> Engine.removePhysicsProcess proc |> ignore
         
-        elif this.Disabled then
+        elif disabled then
             velocity <- Vector2.Zero
             motion <- Vector2.Zero
             firstRecorded <- false
@@ -42,6 +40,15 @@ type Recorder2D(node : Node, target : CanvasItem) =
                 velocity <- motion / delta
                 lastPosition <- pos
     )
+    
+    new (node : CanvasItem) = Recorder2D(node, node)
+    
+    member this.Disabled
+        with get () = disabled
+        and set v = disabled <- v
+    member this.LastVelocity with get() = velocity
+    member this.LastMotion with get() = motion
+    member this.LastPosition with get() = lastPosition
             
 module Recorder2D =
     

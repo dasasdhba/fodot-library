@@ -1,5 +1,6 @@
 namespace Moon.Library
 
+open System
 open Fodot.Common
 open Fodot.Core
 open Godot
@@ -11,20 +12,17 @@ type Recorder3D(node : Node, target : Node3D) =
     let mutable motion = Vector3.Zero
     let mutable lastPosition = Vector3.Zero
     let mutable firstRecorded = false
+    let mutable disabled = false
     
-    new (node : Node3D) = Recorder3D(node, node)
+    let mutable proc = Guid.Empty
     
-    member val Disabled = false with get, set
-    member val LastVelocity = velocity with get
-    member val LastMotion = motion with get
-    member val LastPosition = lastPosition with get
-    
-    member private this.Process = node |> Engine.addPhysicsDelta32Process (fun delta ->
+    do proc <-
+        node |> Engine.addPhysicsDelta32Process (fun delta ->
         if GodotObject.IsInstanceValid target |> not then
             Logger.pushWarn $"Recorder3D with {node.GetPath()}: trying to record an invalid target."
-            node |> Engine.removePhysicsProcess this.Process |> ignore
+            node |> Engine.removePhysicsProcess proc |> ignore
         
-        elif this.Disabled then
+        elif disabled then
             velocity <- Vector3.Zero
             motion <- Vector3.Zero
             firstRecorded <- false
@@ -41,6 +39,15 @@ type Recorder3D(node : Node, target : Node3D) =
                 velocity <- motion / delta
                 lastPosition <- pos
     )
+    
+    new (node : Node3D) = Recorder3D(node, node)
+    
+    member this.Disabled
+        with get () = disabled
+        and set v = disabled <- v
+    member this.LastVelocity with get() = velocity
+    member this.LastMotion with get() = motion
+    member this.LastPosition with get() = lastPosition
             
 module Recorder3D =
     

@@ -16,6 +16,7 @@
         <Compile Include="Library\NodePool.fs" />
         <Compile Include="Library\Recorder2D.fs" />
         <Compile Include="Library\Recorder3D.fs" />
+        <Compile Include="Library\SmoothToggle.fs" />
         <Compile Include="Library\PhysicsQuery.fs" />
         <Compile Include="Library\PhysicsQueryResult.fs" />
         <Compile Include="Library\PhysicsState.fs" />
@@ -27,8 +28,8 @@
     </ItemGroup>
 
     <ItemGroup>
-      <ProjectReference Include="..\Fodot.Module\Fodot.Module.fsproj" />
       <ProjectReference Include="..\Fodot.Async\Fodot.Async.fsproj" />
+      <ProjectReference Include="..\Fodot.Module\Fodot.Module.fsproj" />
       <ProjectReference Include="..\Fodot.Extend\Fodot.Extend.fsproj" />
       <ProjectReference Include="..\Moon.Utils\Moon.Utils.fsproj" />
     </ItemGroup>
