@@ -24,6 +24,7 @@
         <Compile Include="Library\PhysicsQueryRaycast.fs" />
         <Compile Include="Library\PhysicsQueryShape.fs" />
         <Compile Include="Library\PhysicsMotion.fs" />
+        <Compile Include="Library\ProcessOption.fs" />
         <Compile Include="CSharp.fs" />
     </ItemGroup>
 

@@ -189,6 +189,15 @@ public static class Mathe
     /// min~max (inclusive)
     /// </summary>
     public static float RandfRange(float min, float max) => RNG.RandfRange(min, max);
+    
+    /// <summary>
+    /// -radius~radius (inclusive)
+    /// </summary>
+    public static float RandfRadius(float radius)
+    {
+        var rad = Math.Abs(radius);
+        return RandfRange(-rad, rad);
+    }
 
     /// <summary>
     /// 0~4294967295 (inclusive)
@@ -199,6 +208,15 @@ public static class Mathe
     /// min~max (inclusive)
     /// </summary>
     public static int RandiRange(int min, int max) => RNG.RandiRange(min, max);
+    
+    /// <summary>
+    /// -radius~radius (inclusive)
+    /// </summary>
+    public static int RandiRadius(int radius)
+    {
+        var rad = Math.Abs(radius);
+        return RandiRange(-rad, rad);
+    }
     
     /// <summary>
     /// Returns a random index with non-uniform weights.
@@ -219,6 +237,60 @@ public static class Mathe
         return new Vector2(
             RandfRange(rect.Position.X, rect.End.X),
             RandfRange(rect.Position.Y, rect.End.Y)
+        );
+    }
+
+    public static Vector2 Randomize(this Vector2 vec)
+    {
+        return new Vector2(
+            RandfRadius(vec.X),
+            RandfRadius(vec.Y)
+        );
+    }
+    
+    public static Vector3 Randomize(this Vector3 vec)
+    {
+        return new Vector3(
+            RandfRadius(vec.X),
+            RandfRadius(vec.Y),
+            RandfRadius(vec.Z)
+        );
+    }
+    
+    public static Vector4 Randomize(this Vector4 vec)
+    {
+        return new Vector4(
+            RandfRadius(vec.X),
+            RandfRadius(vec.Y),
+            RandfRadius(vec.Z),
+            RandfRadius(vec.W)
+        );
+    }
+
+    public static Vector2I Randomize(this Vector2I vec)
+    {
+        return new Vector2I(
+            RandiRadius(vec.X),
+            RandiRadius(vec.Y)
+        );
+    }
+    
+    public static Vector3I Randomize(this Vector3I vec)
+    {
+        return new Vector3I(
+            RandiRadius(vec.X),
+            RandiRadius(vec.Y),
+            RandiRadius(vec.Z)
+        );
+    }
+
+    public static Vector4I Randomize(this Vector4I vec)
+    {
+        return new Vector4I(
+            RandiRadius(vec.X),
+            RandiRadius(vec.Y),
+            RandiRadius(vec.Z),
+            RandiRadius(vec.W)
         );
     }
 }

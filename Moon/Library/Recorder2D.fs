@@ -55,4 +55,4 @@ module Recorder2D =
     let private map = WeakMeta<Recorder2D>()
     
     let get (item: CanvasItem)=
-        item |> Node.getSubBinding map (fun n -> Recorder2D(n, item))
+        item |> Node.getSubBindingFront map (fun n -> Recorder2D(n, item))

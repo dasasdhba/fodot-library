@@ -54,4 +54,4 @@ module Recorder3D =
     let private map = WeakMeta<Recorder3D>()
     
     let get (n3d : Node3D)=
-        n3d |> Node.getSubBinding map (fun n -> Recorder3D(n, n3d))
+        n3d |> Node.getSubBindingFront map (fun n -> Recorder3D(n, n3d))

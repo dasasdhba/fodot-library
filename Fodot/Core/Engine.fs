@@ -225,6 +225,12 @@ module Engine =
         
     let getTree () = tree.Value
     
+    let callGroup (group : StringName) (method : StringName) (args : 'a) =
+        getTree().CallGroup(group, method, args |> Variant.fromTuple)
+        
+    let invokeGroup (group : StringName) (method : StringName)=
+        getTree().CallGroup(group, method)
+    
 type ProcessConfig =
     {
         Process : ProcessUnit
