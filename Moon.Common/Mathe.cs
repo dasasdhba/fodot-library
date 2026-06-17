@@ -16,7 +16,21 @@ public static class Mathe
         origin -= dir * dir.Dot(origin);
         return origin + axis;
     }
-
+    
+    public static Vector3 WithAxis(this Vector3 origin, Vector3 axis)
+    {
+        var dir = axis.Normalized();
+        origin -= dir * dir.Dot(origin);
+        return origin + axis;
+    }
+    
+    public static Vector4 WithAxis(this Vector4 origin, Vector4 axis)
+    {
+        var dir = axis.Normalized();
+        origin -= dir * dir.Dot(origin);
+        return origin + axis;
+    }
+    
     public static Vector2 Flip(this Vector2 vec2, bool flipH, bool flipV = false)
     {
         var result = vec2;
@@ -24,7 +38,23 @@ public static class Mathe
         if (flipV) result.Y *= -1;
         return result;
     }
+    
+    public static float ConvToward(float current, float target, float rate)
+        => Mathf.MoveToward(current, target, Math.Abs(target - current) * rate);
+    
+    public static double ConvToward(double current, double target, double rate)
+        => Mathf.MoveToward(current, target, Math.Abs(target - current) * rate);
 
+    public static Vector2 ConvToward(this Vector2 vec, Vector2 target, float rate)
+    {
+        return vec.MoveToward(target, (target - vec).Length() * rate);
+    }
+    
+    public static Vector3 ConvToward(this Vector3 vec, Vector3 target, float rate)
+    {
+        return vec.MoveToward(target, (target - vec).Length() * rate);
+    }
+    
     /// <summary>
     /// the search function should be like: search(x) = false if x &lt; t
     /// where t &gt; 0, true otherwise. the function will start at 0 and max
@@ -67,7 +97,13 @@ public static class Mathe
     
     public static float Accelerate(float speed, float acc, float dec, float max, float delta)
         => Mathf.MoveToward(speed, max, speed < max ? acc * delta : dec * delta);
-
+    
+    public static float WrapAngle(float angle)
+        => Mathf.Wrap(angle, -float.Pi, float.Pi);
+    
+    public static double WrapAngle(double angle)
+        => Mathf.Wrap(angle, -double.Pi, double.Pi);
+    
     /// <summary>
     /// move to target in interval with closest direction
     /// </summary>

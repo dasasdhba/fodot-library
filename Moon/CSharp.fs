@@ -29,3 +29,19 @@ module FlipExtensions =
     [<Extension>]
     let TryGetFlipV (node : Node) =
         node |> Flip.getV
+        
+module CanvasItemExtensions =
+    
+    [<Extension>]
+    let TryGetTexture (item : CanvasItem) =
+        match item |> CanvasItem.tryGetTexture with
+        | Some t -> t
+        | None -> null
+    
+    [<Extension>]
+    let FadeIn (item : CanvasItem) time =
+        item |> CanvasItem.fadeIn time
+        
+    [<Extension>]
+    let FadeOut (item : CanvasItem) time =
+        item |> CanvasItem.fadeOut time

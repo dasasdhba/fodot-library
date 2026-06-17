@@ -3,9 +3,9 @@
 open System
 
 [<AttributeUsage(AttributeTargets.Class, AllowMultiple = false)>]
-type FScriptAttribute(name: string) =
+type FScriptAttribute(tag : obj) =
     inherit Attribute()
-    member this.Name = name
+    member this.Tag = tag
 
 [<AttributeUsage(AttributeTargets.Field, AllowMultiple = false)>]
 type GDProperty(name: string) =
