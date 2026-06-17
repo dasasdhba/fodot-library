@@ -1,4 +1,4 @@
-module Fodot.Generator.Parser
+module Fodot.GdYaml.Parser
 
 open System.Collections.Generic
 open System.IO

@@ -3,6 +3,7 @@
     <PropertyGroup>
         <OutputType>Exe</OutputType>
         <TargetFramework>$(TargetFrameworkVersion)</TargetFramework>
+        <RootNamespace>Fodot.Yaml.Generator</RootNamespace>
     </PropertyGroup>
 
     <ItemGroup>

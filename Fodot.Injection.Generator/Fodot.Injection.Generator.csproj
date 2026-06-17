@@ -7,6 +7,7 @@
         <NuGetAudit>false</NuGetAudit>
         <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
         <GenerateTargetFrameworkAttribute>false</GenerateTargetFrameworkAttribute>
+        <RootNamespace>Fodot.Injection.Generator</RootNamespace>
     </PropertyGroup>
 
     <ItemGroup>

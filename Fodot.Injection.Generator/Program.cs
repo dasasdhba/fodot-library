@@ -156,7 +156,7 @@ internal static class Program
 
             AttributeArgumentSyntax? firstArgument = attribute.ArgumentList?.Arguments.FirstOrDefault();
             if (firstArgument?.Expression is LiteralExpressionSyntax literal &&
-                literal.IsKind(Microsoft.CodeAnalysis.CSharp.SyntaxKind.StringLiteralExpression))
+                literal.IsKind(SyntaxKind.StringLiteralExpression))
                 return literal.Token.ValueText;
         }
 
@@ -167,10 +167,10 @@ internal static class Program
     {
         foreach (SyntaxToken modifier in classDeclaration.Modifiers)
         {
-            if (modifier.IsKind(Microsoft.CodeAnalysis.CSharp.SyntaxKind.PublicKeyword) ||
-                modifier.IsKind(Microsoft.CodeAnalysis.CSharp.SyntaxKind.InternalKeyword) ||
-                modifier.IsKind(Microsoft.CodeAnalysis.CSharp.SyntaxKind.PrivateKeyword) ||
-                modifier.IsKind(Microsoft.CodeAnalysis.CSharp.SyntaxKind.ProtectedKeyword))
+            if (modifier.IsKind(SyntaxKind.PublicKeyword) ||
+                modifier.IsKind(SyntaxKind.InternalKeyword) ||
+                modifier.IsKind(SyntaxKind.PrivateKeyword) ||
+                modifier.IsKind(SyntaxKind.ProtectedKeyword))
                 return modifier.Text;
         }
 
