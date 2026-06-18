@@ -113,8 +113,18 @@ internal static class Program
 
             foreach (ClassDeclarationSyntax classDeclaration in root.DescendantNodes().OfType<ClassDeclarationSyntax>())
             {
-                string? parentType = GetChildOfParentType(classDeclaration);
-                if (string.IsNullOrWhiteSpace(parentType))
+                string? parentTypeList = GetChildOfParentTypeList(classDeclaration);
+                if (string.IsNullOrWhiteSpace(parentTypeList))
+                    continue;
+
+                ImmutableArray<string> parentTypes = parentTypeList
+                    .Split(',')
+                    .Select(static parentType => parentType.Trim())
+                    .Where(static parentType => !string.IsNullOrEmpty(parentType))
+                    .Distinct(StringComparer.Ordinal)
+                    .ToImmutableArray();
+
+                if (parentTypes.IsEmpty)
                     continue;
 
                 string? namespaceName = classDeclaration.Ancestors()
@@ -138,13 +148,13 @@ internal static class Program
                     accessibility,
                     namespaceName ?? string.Empty,
                     containingTypes,
-                    parentType.Trim(),
+                    parentTypes,
                     hintName);
             }
         }
     }
 
-    private static string? GetChildOfParentType(ClassDeclarationSyntax classDeclaration)
+    private static string? GetChildOfParentTypeList(ClassDeclarationSyntax classDeclaration)
     {
         foreach (AttributeSyntax attribute in classDeclaration.AttributeLists.SelectMany(static list => list.Attributes))
         {
@@ -243,9 +253,20 @@ internal static class Program
         source.AppendLine();
         source.Append(indent).AppendLine("    public override string[] _GetConfigurationWarnings()");
         source.Append(indent).AppendLine("    {");
-        source.Append(indent).Append("        if (GetParentOrNull<").Append(target.ParentType).AppendLine(">() == null)");
-        source.Append(indent).Append("            return [\"").Append(EscapeString(target.TypeName)).Append(" must be a child of a ").Append(EscapeString(target.ParentType)).AppendLine("\"];");
-        source.Append(indent).AppendLine("        return [];");
+        source.Append(indent).AppendLine("        var p = GetParentOrNull<Node>();");
+        source.Append(indent).Append("        if (");
+
+        for (int i = 0; i < target.ParentTypes.Length; i++)
+        {
+            if (i > 0)
+                source.Append(" || ");
+
+            source.Append("p is ").Append(target.ParentTypes[i]);
+        }
+
+        source.AppendLine(")");
+        source.Append(indent).AppendLine("            return [];");
+        source.Append(indent).Append("        return [\"").Append(EscapeString(target.TypeName)).Append(" must be a child of a ").Append(EscapeString(string.Join(" or ", target.ParentTypes))).AppendLine("\"];");
         source.Append(indent).AppendLine("    }");
         source.Append(indent).AppendLine("}");
 
@@ -272,6 +293,6 @@ internal static class Program
         string Accessibility,
         string Namespace,
         ImmutableArray<ClassShell> ContainingTypes,
-        string ParentType,
+        ImmutableArray<string> ParentTypes,
         string HintName);
 }
