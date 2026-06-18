@@ -1,6 +1,7 @@
 namespace Fodot.Core
 
 open System
+open System.Collections.Concurrent
 open System.Collections.Frozen
 open System.Collections.Generic
 open System.Reflection
@@ -163,21 +164,50 @@ module FScript =
             else
                 None
         )
-        
+    
+    let private fsProcessIdle = new StringName "_fs_process"
+    let private fsProcessPhysics = new StringName "_fs_physics_process"
     let private fsCallbackGd = new StringName "_get_fscripts"
-    let private fsCallbackCs = new StringName "_GetFScripts"
         
-    let private getCallbackFScripts (obj : GodotObject) =
+    let private getCallbackFScripts (obj : GodotObject) : string seq =
         let getCallArrWith (name : StringName) =
             match obj |> GodotObject.tryInvokeAs<string[]> name with
             | Some arr -> arr
             | None -> [||]
         
-        seq {
-            yield! getCallArrWith fsCallbackGd
-            yield! getCallArrWith fsCallbackCs
+        let getGdCall () = seq {
+             yield! getCallArrWith fsCallbackGd
+             if obj.HasMethod fsProcessIdle then
+                 if obj.GetMethodArgumentCount fsProcessIdle = 0 then
+                     yield "fodot_hack_process"
+                 else
+                     yield "fodot_process"
+             if obj.HasMethod fsProcessPhysics then
+                 if obj.GetMethodArgumentCount fsProcessPhysics = 0 then
+                     yield "fodot_hack_physics_process"
+                 else
+                     yield "fodot_physics_process"
         }
-
+        
+        if obj :> obj :? IFScripts then
+            (obj :> obj :?> IFScripts).GetFScripts ()
+        elif obj.GetScript() |> Variant.toSome<GDScript> |> Option.isSome then
+            getGdCall ()
+        else
+            Seq.empty
+    
+    let private ancestorCache = ConcurrentDictionary<Type, obj array>()
+    
+    let private getAncestors (typ : Type) =
+        let rec get (t : Type) =
+            match t.BaseType with
+            | null -> t :> obj |> Seq.singleton
+            | b -> t :> obj |> Seq.singleton |> Seq.append (b |> get)
+        
+        ancestorCache.GetOrAdd(typ, fun t ->
+            get t |> Array.ofSeq
+        )
+    
     let update (obj : GodotObject) =
         let arr =
             obj
@@ -186,7 +216,7 @@ module FScript =
             |> Seq.distinct
             |> Seq.filter (fun s -> obj |> containsTag s |> not)
             |> Seq.map (fun s -> s :> obj)
-            |> Seq.append (obj.GetType() :> obj |> Seq.singleton)
+            |> Seq.append (obj.GetType() |> getAncestors)
         
         let (keys : obj list), objs =
             arr |> Seq.fold (fun (tags, objs) m ->

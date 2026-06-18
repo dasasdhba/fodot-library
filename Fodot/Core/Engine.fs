@@ -4,6 +4,7 @@ open System
 open System.Collections.Concurrent
 open System.Collections.Generic
 open FSharp.Extend
+open Fodot.Common
 open Godot
 
 type ProcessFunc<'a> =
@@ -259,3 +260,49 @@ type ProcessConfig =
         ProcessConfig.New true (Delta f)
     static member NewPhysics (f : float32 -> unit) =
         ProcessConfig.New true (Delta32 f)
+        
+// gds process binding
+
+[<FScript("fodot_process")>]
+type private GdProcess(node : Node) =
+    static let method = new StringName "_fs_process"
+    do
+        node |> Engine.addIdleDeltaProcess (fun delta ->
+            node |> GodotObject.call method delta |> ignore
+        ) |> ignore
+        
+    static member Method = method
+        
+[<FScript("fodot_physics_process")>]
+type private GdPhysicsProcess(node : Node) =
+    static let method = new StringName "_fs_physics_process"
+    do
+        node |> Engine.addPhysicsDeltaProcess (fun delta ->
+            node |> GodotObject.call method delta |> ignore
+        ) |> ignore
+        
+    static member Method = method
+    
+[<FScript("fodot_hack_process")>]
+type private GdHackProcess(node : Node) =
+    do node.add_Ready (fun _ ->
+        node
+        |> GodotObject.tryInvokeAs<Callable> GdProcess.Method
+        |> Option.iter (fun c ->
+            node |> Engine.addIdleDeltaProcess (fun d ->
+                c |> Callable.call d |> ignore
+            ) |> ignore
+        )
+    )
+    
+[<FScript("fodot_hack_physics_process")>]
+type private GdHackPhysicsProcess(node : Node) =
+    do node.add_Ready (fun _ ->
+        node
+        |> GodotObject.tryInvokeAs<Callable> GdPhysicsProcess.Method
+        |> Option.iter (fun c ->
+            node |> Engine.addPhysicsDeltaProcess (fun d ->
+                c |> Callable.call d |> ignore
+            ) |> ignore
+        )
+    )

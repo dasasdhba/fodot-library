@@ -13,6 +13,7 @@
 
     <ItemGroup>
         <Compile Include="Common\Attribute.fs" />
+        <Compile Include="Common\Interface.fs" />
         <Compile Include="Common\Logger.fs" />
         <Compile Include="Common\Singleton.fs" />
         <Compile Include="Core\GDThread.fs" />
