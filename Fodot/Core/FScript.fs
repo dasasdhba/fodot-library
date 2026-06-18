@@ -144,18 +144,17 @@ module FScript =
         obj
         |> tryGetScriptData
         |> Option.map (fun data ->
-            data.Tags |> Seq.contains tag
+            data.Tags |> List.contains tag
         )
         |> Option.defaultValue false
 
     let private getMetaAndGroupList (obj : GodotObject) =
-        obj |> GodotObject.getMetaList
-
-        |> Seq.append (
+        seq {
+            yield! obj |> GodotObject.getMetaList
             match obj with
-            | :? Node as n -> n.GetGroups () |> List.ofSeq
-            | _ -> []
-        )
+                | :? Node as n -> yield! n.GetGroups ()
+                | _ -> ()
+        }
 
         |> Seq.choose (fun m ->
             let s = m |> string
@@ -173,7 +172,7 @@ module FScript =
         let getCallArrWith (name : StringName) =
             match obj |> GodotObject.tryInvokeAs<string[]> name with
             | Some arr -> arr
-            | None -> [||]
+            | None -> Array.empty
         
         let getGdCall () = seq {
              yield! getCallArrWith fsCallbackGd
@@ -214,10 +213,11 @@ module FScript =
             |> getMetaAndGroupList
             |> Seq.append (obj |> getCallbackFScripts)
             |> Seq.distinct
-            |> Seq.filter (fun s -> obj |> containsTag s |> not)
             |> Seq.map (fun s -> s :> obj)
             |> Seq.append (obj.GetType() |> getAncestors)
+            |> Seq.filter (fun s -> obj |> containsTag s |> not)
         
+        let data = getScriptData obj
         let (keys : obj list), objs =
             arr |> Seq.fold (fun (tags, objs) m ->
                 match create m [|obj|] with
@@ -227,9 +227,8 @@ module FScript =
                     if m :? string then
                         Logger.pushError $"{obj}: fscript {m} not found"
                     tags, objs
-            ) ([], [])
+            ) (data.Tags, data.Scripts)
             
-        let data = getScriptData obj
         data.Tags <- keys
         data.Scripts <- objs
             
@@ -272,16 +271,18 @@ module FScript =
     let contains<'a> (obj: GodotObject) =
         obj |> tryGet<'a> |> Option.isSome
         
-    /// This can be only used to attach FScript bind with string.
+    /// This can be only used to attach FScript.
     /// It will check existing scripts first.
     /// Warning: you should not call this until init.
     let attach<'a> (obj : GodotObject) =
         let attr = getAttribute<'a> ()
         
         if obj |> containsTag attr |> not then
-            if attr :? string |> not then
-                failwith $"{typeof<'a>} is not a FScript binding with string."
-            obj |> GodotObject.setMeta (new StringName $"fs_{attr}") true
-            obj |> update
+            create attr [|obj|]
+            |> Option.iter (fun s ->
+                let data = getScriptData obj
+                data.Tags <- attr :: data.Tags
+                data.Scripts <- s @ data.Scripts
+            )
         
         obj |> get<'a>
