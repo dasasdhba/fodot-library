@@ -8,7 +8,7 @@
 
     <ItemGroup>
         <Compile Include="Interface\IFlipInit.fs" />
-        <Compile Include="Interface\IPlatformShape.fs" />
+        <Compile Include="Interface\IPlatformShape3D.fs" />
         <Compile Include="Module\Flip.fs" />
         <Compile Include="Module\Action.fs" />
         <Compile Include="Module\Node.fs" />

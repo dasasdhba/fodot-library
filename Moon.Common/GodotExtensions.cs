@@ -14,6 +14,14 @@ public static class GodotExtensions
         node.TreeExited += () => arr.Remove(node);
         if (node.IsInsideTree()) arr.Add(node);
     }
+    
+    public static void AddWithNode<T>(this ICollection<T> arr, T data, Func<T, Node> nodeGetter)
+    {
+        var node = nodeGetter(data);
+        node.TreeEntered += () => arr.Add(data);
+        node.TreeExited += () => arr.Remove(data);
+        if (node.IsInsideTree()) arr.Add(data);
+    }
 
     #endregion
     

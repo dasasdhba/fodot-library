@@ -173,43 +173,24 @@ type PhysicsQueryMotionResult =
         }
 
 module PhysicsQueryResult =
-    
-    let getOneWayMargin (r : IPhysicsQueryResult) =
+
+    let getOneWayParameters2D (r : IPhysicsQueryResult) =
         match r.Collider with
-        | :? CollisionObject3D as col ->
-            let owner =
-                r.Shape
-                |> col.ShapeFindOwner
-                |> col.ShapeOwnerGetOwner
-            match owner :> obj with
-            | :? IPlatformShape as p when p.OneWayCollision ->
-                Some p.OneWayCollisionMargin
-            | _ ->
-                None
-        | :? CanvasItem ->
+        | :? CanvasItem as c ->
             if PhysicsServer2D.BodyIsShapeSetAsOneWayCollision(r.Rid, r.Shape) &&
                PhysicsServer2D.ShapeIsOneWayCollisionAllowed(
                     PhysicsServer2D.BodyGetShape(r.Rid, r.Shape)
                ) then
-                PhysicsServer2D.BodyGetShapeOneWayCollisionMargin(r.Rid, r.Shape) |> Some
-            else
-                None
-        | _ ->
-            None
-    
-    let getOneWayParameters2D (r : IPhysicsQueryResult) =
-        r
-        |> getOneWayMargin
-        |> Option.bind (fun m ->
-            match r.Collider with
-            | :? CanvasItem as c ->
+                let margin = PhysicsServer2D.BodyGetShapeOneWayCollisionMargin(r.Rid, r.Shape)
+                let dir = PhysicsServer2D.BodyGetShapeOneWayCollisionDirection(r.Rid, r.Shape)
                 let dir =
-                    Vector2.Down
+                    dir
                     |> c.GetGlobalTransform().BasisXform
                     |> _.Normalized()
-                Some (dir, m)
-            | _ -> None
-        )
+                Some (dir, margin)
+            else
+                None
+        | _ -> None
     
     let getOneWayDirection2D (r : IPhysicsQueryResult) =
         r
@@ -217,17 +198,23 @@ module PhysicsQueryResult =
         |> Option.map fst
     
     let getOneWayParameters3D (r : IPhysicsQueryResult) =
-        r
-        |> getOneWayMargin
-        |> Option.bind (fun m ->
-            match r.Collider with
-            | :? Node3D as n ->
+        match r.Collider with
+        | :? CollisionObject3D as col ->
+            let owner =
+                r.Shape
+                |> col.ShapeFindOwner
+                |> col.ShapeOwnerGetOwner
+            match owner :> obj with
+            | :? IPlatformShape3D as p when p.OneWayCollision ->
+                let margin = p.OneWayCollisionMargin
+                let dir = p.OneWayCollisionDirection.Normalized ()
                 let dir =
-                    n.GetGlobalTransform().Basis * Vector3.Down
+                    col.GetGlobalTransform().Basis * dir
                     |> _.Normalized()
-                Some (dir, m)
-            | _ -> None
-        )
+                Some (dir, margin)
+            | _ ->
+                None
+        | _ -> None
     
     let getOneWayDirection3D (r : IPhysicsQueryResult) =
         r

@@ -44,16 +44,16 @@ type PhysicsShapeQuerier2D with
         let travelPlatform () =
             if motion = Vector2.Zero then None else
             
+            let dir = motion.Normalized()
             platforms
             |> Seq.choose (fun (r, o) ->
                 o
                 |> Option.bind (function
-                    | _, m when m > 0f -> Some (r, m)
+                    | v, m when v.Dot dir >= 0f && m > 0f -> Some (r, m)
                     | _ -> None
                 )
             )
             |> Seq.map (fun (r, m) ->
-                let dir = motion.Normalized()
                 let shift = defaultArg offset Vector2.Zero - (dir * m)
                 this.QueryInside(shift, ?maxResult = maxResult, ?margin = margin)
                 |> Seq.tryFind (fun i -> i.Rid = r.Rid)
@@ -145,16 +145,16 @@ type PhysicsShapeQuerier3D with
         let travelPlatform () =
             if motion = Vector3.Zero then None else
             
+            let dir = motion.Normalized()
             platforms
             |> Seq.choose (fun (r, o) ->
                 o
                 |> Option.bind (function
-                    | _, m when m > 0f -> Some (r, m)
+                    | v, m when v.Dot dir >= 0f && m > 0f -> Some (r, m)
                     | _ -> None
                 )
             )
             |> Seq.map (fun (r, m) ->
-                let dir = motion.Normalized()
                 let shift = defaultArg offset Vector3.Zero - (dir * m)
                 this.QueryInside(shift, ?maxResult = maxResult, ?margin = margin)
                 |> Seq.tryFind (fun i -> i.Rid = r.Rid)
