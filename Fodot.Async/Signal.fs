@@ -2,7 +2,7 @@ module Fodot.Async.Signal
 
 open System.Threading
 open Fodot.Async.GD
-open Fodot.Core
+open Fodot
 
 // godot signal
 

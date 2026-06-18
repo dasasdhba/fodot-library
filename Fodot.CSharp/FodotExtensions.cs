@@ -8,37 +8,37 @@ public static class FodotExtensions
 {
     public static T InstantiateSafely<T>(this PackedScene scene) where T : Node
     {
-        return Core.PackedScene.instantiateTo<T>(scene);
+        return PackedSceneModule.instantiateTo<T>(scene);
     }
 
     public static void AddChildSafely(this Node node, Node child, Node.InternalMode internalMode = Node.InternalMode.Disabled)
     {
-        Core.Node.addChildInternal(child, internalMode, node);
+        NodeModule.addChildInternal(child, internalMode, node);
     }
     
     public static void AddSiblingSafely(this Node node, Node sibling)
     {
-        Core.Node.addSibling(sibling, node);
+        NodeModule.addSibling(sibling, node);
     }
 
     public static void MoveChildSafely(this Node node, Node child, int index)
     {
-        Core.Node.moveChild(child, index, node);
+        NodeModule.moveChild(child, index, node);
     }
     
     public static void RemoveChildSafely(this Node node, Node child)
     {
-        Core.Node.removeChild(child, node);
+        NodeModule.removeChild(child, node);
     }
 
     public static void ReparentSafely(this Node node, Node parent, bool keepTransform = true)
     {
-        Core.Node.reparent(parent, keepTransform, node);
+        NodeModule.reparent(parent, keepTransform, node);
     }
 
     public static void BindChild(this Node node, Node child)
     {
-        Core.Node.bindChild(child, node);
+        NodeModule.bindChild(child, node);
     }
     
     public static T FindParent<T>(this Node node, Func<T, bool> filter = null) where T : Node
@@ -49,11 +49,11 @@ public static class FodotExtensions
     
     public static IEnumerable<T> GetChildren<T>(this Node node, bool includeInternal = false) where T : Node
     {
-        return Core.Node.getChildrenInternalOrNot<T>(includeInternal, node);
+        return NodeModule.getChildrenInternalOrNot<T>(includeInternal, node);
     }
     
     public static IEnumerable<T> GetChildrenRec<T>(this Node node, bool includeInternal = false) where T : Node
     {
-        return Core.Node.getChildrenRecInternalOrNot<T>(includeInternal, node);
+        return NodeModule.getChildrenRecInternalOrNot<T>(includeInternal, node);
     }
 }

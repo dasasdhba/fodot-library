@@ -1,8 +1,7 @@
 namespace Fodot.Async
 
 open FSharp.Concurrent
-open Fodot.Common
-open Fodot.Core
+open Fodot
 open System
 open System.Collections.Concurrent
 open System.Threading.Tasks

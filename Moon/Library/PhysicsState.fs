@@ -1,6 +1,6 @@
 namespace Moon.Library
 
-open Fodot.Core
+open Fodot
 open Godot
 
 type PhysicsState2D(node : Node) =

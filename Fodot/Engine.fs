@@ -1,10 +1,9 @@
-namespace Fodot.Core
+namespace Fodot
 
 open System
 open System.Collections.Concurrent
 open System.Collections.Generic
 open FSharp.Extend
-open Fodot.Common
 open Godot
 
 type ProcessFunc<'a> =
@@ -20,6 +19,7 @@ type ProcessFunc<'a> =
 
 type ProcessUnit = ProcessFunc<unit>
     
+[<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
 module Engine =
     
     type private ProcessData() =

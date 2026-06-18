@@ -1,8 +1,8 @@
-module Fodot.Core.Node
+[<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
+module Fodot.Node
 
 open System
 open Fodot.Bridge
-open Fodot.Core
 open Godot
 
 // node access

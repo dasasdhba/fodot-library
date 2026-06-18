@@ -2,7 +2,7 @@ namespace Moon.Library
 
 open System.Threading
 open Fodot.Async
-open Fodot.Core
+open Fodot
 open Godot
 
 type SmoothToggle(node : Node, ?flag : bool, ?time : float, ?physics: bool) =

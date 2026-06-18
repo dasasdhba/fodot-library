@@ -1,4 +1,4 @@
-namespace Fodot.Core
+namespace Fodot
 
 open FSharp.Extend
 open Godot

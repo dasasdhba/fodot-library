@@ -3,7 +3,7 @@
 module Fodot.Extend.GodotObject
 
 open Godot
-open Fodot.Core
+open Fodot
 
 let validate (obj : 'a) =
     obj

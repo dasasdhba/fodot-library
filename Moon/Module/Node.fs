@@ -1,7 +1,7 @@
 module Moon.Module.Node
 
 open Godot
-open Fodot.Core
+open Fodot
 
 let getSubBindingInternal (map : WeakMeta<'a>) inter (creator : Node -> 'a) (node : Node)=
     map |> WeakMeta.getOrAdd node (lazy (

@@ -1,9 +1,8 @@
-namespace Fodot.Core
+namespace Fodot
 
 open System
 open System.Collections.Concurrent
 open FSharp.Concurrent
-open Fodot.Common
 open Godot
 open Godot.Collections
 
@@ -177,6 +176,7 @@ type GDSignal<'a> =
                     disconnect call
             }
         
+[<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
 module GD =
     
     let private loadLock = obj()

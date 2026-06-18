@@ -3,7 +3,7 @@ module Fodot.Extend.Node
 open System.Collections.Generic
 open FSharp.Extend
 open Godot
-open Fodot.Core
+open Fodot
 
 // scene owner
 

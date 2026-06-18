@@ -1,7 +1,8 @@
-module Fodot.Core.PackedScene
+[<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
+module Fodot.PackedScene
 
 open Godot
-open Fodot.Core.Node
+open Fodot.Node
 
 let private instantiateLock = obj()
 

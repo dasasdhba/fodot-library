@@ -1,4 +1,4 @@
-namespace Fodot.Core
+namespace Fodot
 
 open System
 open System.Collections.Concurrent
@@ -7,7 +7,6 @@ open System.Collections.Generic
 open System.Reflection
 open FSharp.Builder
 open FSharp.Extend
-open Fodot.Common
 open Godot
     
 module FScript =

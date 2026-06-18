@@ -1,6 +1,6 @@
 module Fodot.Module.CanvasItem
 
-open Fodot.Core
+open Fodot
 open Godot
 
 // shader

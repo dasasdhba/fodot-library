@@ -1,8 +1,8 @@
-module Fodot.Core.GodotObject
+[<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
+module Fodot.GodotObject
 
 open System
 open System.Collections.Concurrent
-open Fodot.Common
 open Godot
 open Microsoft.FSharp.Reflection
 

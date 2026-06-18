@@ -6,21 +6,21 @@ public static class FD
 {
     public static void Print(string what)
     {
-        Common.Logger.push(what);
+        Logger.push(what);
     }
 
     public static void PushWarning(string what)
     {
-        Common.Logger.pushWarn(what);
+        Logger.pushWarn(what);
     }
     
     public static void PushError(string what)
     {
-        Common.Logger.pushError(what);
+        Logger.pushError(what);
     }
 
     public static T Load<T>(string path) where T : Resource
     {
-        return Core.GD.loadAs<T>(path);
+        return GDModule.loadAs<T>(path);
     }
 }

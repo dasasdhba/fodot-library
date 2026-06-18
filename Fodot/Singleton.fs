@@ -1,4 +1,4 @@
-module Fodot.Common.Singleton
+module Fodot.Singleton
 
 let attach (node : 'a) (instance : byref<'a>) =
     match instance with

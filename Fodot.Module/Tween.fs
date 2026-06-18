@@ -1,6 +1,6 @@
 namespace Fodot.Module
 
-open Fodot.Core
+open Fodot
 open Godot
 
 type TweenConfig =

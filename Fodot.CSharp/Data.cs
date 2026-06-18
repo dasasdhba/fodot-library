@@ -19,12 +19,12 @@ public static class Data
     
     public static bool HasData(this GodotObject obj, StringName tag)
     {
-        return Core.GodotObject.hasMeta(tag, obj);
+        return GodotObjectModule.hasMeta(tag, obj);
     }
 
     public static bool RemoveData(this GodotObject obj, StringName tag)
     {
-        return Core.GodotObject.removeMeta(tag, obj);
+        return GodotObjectModule.removeMeta(tag, obj);
     }
     
     public static bool HasCustomData(this TileSet tileset, string tag)
@@ -57,7 +57,7 @@ public static class Data
 
     public static T GetData<[MustBeVariant] T>(this GodotObject obj, StringName tag, T defaultValue = default)
     {
-        return Core.GodotObject.getMetaWithDefaultAs(tag, new Lazy<T>(() => defaultValue), obj);
+        return GodotObjectModule.getMetaWithDefaultAs(tag, new Lazy<T>(() => defaultValue), obj);
     }
     
     public static T GetData<[MustBeVariant] T>(this GodotObject obj, Rid rid, StringName tag, T defaultValue = default)

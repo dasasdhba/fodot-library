@@ -2,7 +2,7 @@ module Moon.Module.Action
 
 open System
 open Godot
-open Fodot.Core
+open Fodot
 
 let repeat (interval : float) (physics: bool) (action : unit -> unit)  (node : Node) =
     let mutable timer = 0.0

@@ -12,21 +12,21 @@
     </ItemGroup>
 
     <ItemGroup>
-        <Compile Include="Common\Attribute.fs" />
-        <Compile Include="Common\Interface.fs" />
-        <Compile Include="Common\Logger.fs" />
-        <Compile Include="Common\Singleton.fs" />
-        <Compile Include="Core\GDThread.fs" />
-        <Compile Include="Core\WeakMeta.fs" />
-        <Compile Include="Core\Variant.fs" />
-        <Compile Include="Core\Callable.fs" />
-        <Compile Include="Core\GodotObject.fs" />
-        <Compile Include="Core\GD.fs" />
-        <Compile Include="Core\FScript.fs" />
-        <Compile Include="Core\Node.fs" />
-        <Compile Include="Core\PackedScene.fs" />
-        <Compile Include="Core\Library.fs" />
-        <Compile Include="Core\Engine.fs" />
+        <Compile Include="Attribute.fs" />
+        <Compile Include="Interface.fs" />
+        <Compile Include="Logger.fs" />
+        <Compile Include="Singleton.fs" />
+        <Compile Include="GDThread.fs" />
+        <Compile Include="WeakMeta.fs" />
+        <Compile Include="Variant.fs" />
+        <Compile Include="Callable.fs" />
+        <Compile Include="GodotObject.fs" />
+        <Compile Include="GD.fs" />
+        <Compile Include="FScript.fs" />
+        <Compile Include="Node.fs" />
+        <Compile Include="PackedScene.fs" />
+        <Compile Include="Library.fs" />
+        <Compile Include="Engine.fs" />
     </ItemGroup>
 
 </Project>

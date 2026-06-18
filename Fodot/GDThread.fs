@@ -1,4 +1,4 @@
-module Fodot.Core.GDThread
+module Fodot.GDThread
 
 open Godot
 

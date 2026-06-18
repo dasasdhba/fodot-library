@@ -1,4 +1,4 @@
-﻿namespace Fodot.Common
+namespace Fodot
 
 open System
 

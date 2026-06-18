@@ -511,7 +511,7 @@ let createFsBinding (inputDir : string)=
                 let name = Path.GetFileNameWithoutExtension(fsproj)
                 let fullCode = 
                     $"namespace {name}.Bind\n\n" +
-                    "open Fodot.Core\n" +
+                    "open Fodot\n" +
                     "open Godot\n\n" +
                     (codes |> String.concat "\n\n")
                 

@@ -1,7 +1,7 @@
 module Fodot.Async.GD
 
 open System.Threading
-open Fodot.Core
+open Fodot
 
 type GDSignal<'a> with
     member this.AsTask ?cancellationToken =

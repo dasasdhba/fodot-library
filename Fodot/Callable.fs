@@ -1,4 +1,5 @@
-module Fodot.Core.Callable
+[<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
+module Fodot.Callable
 
 open Godot
 open System

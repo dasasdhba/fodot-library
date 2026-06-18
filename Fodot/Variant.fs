@@ -1,4 +1,5 @@
-module Fodot.Core.Variant
+[<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
+module Fodot.Variant
 
 open Godot
 open System

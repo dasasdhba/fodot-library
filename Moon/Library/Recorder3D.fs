@@ -1,8 +1,7 @@
 namespace Moon.Library
 
 open System
-open Fodot.Common
-open Fodot.Core
+open Fodot
 open Godot
 open Moon.Module
 

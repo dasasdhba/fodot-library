@@ -1,6 +1,6 @@
 module Moon.Module.Flip
 
-open Fodot.Core
+open Fodot
 open Fodot.Extend
 open Godot
 open Moon.Interface

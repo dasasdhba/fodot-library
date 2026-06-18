@@ -2,7 +2,7 @@ namespace Fodot.Async
 
 open System.Threading
 open System.Threading.Tasks
-open Fodot.Core
+open Fodot
 open Godot
 
 type AsyncNode =
