@@ -268,7 +268,7 @@ type private GdProcess(node : Node) =
     static let method = new StringName "_fs_process"
     do
         node |> Engine.addIdleDeltaProcess (fun delta ->
-            node |> GodotObject.call method delta |> ignore
+            node.Call(method, delta) |> ignore
         ) |> ignore
         
     static member Method = method
@@ -278,7 +278,7 @@ type private GdPhysicsProcess(node : Node) =
     static let method = new StringName "_fs_physics_process"
     do
         node |> Engine.addPhysicsDeltaProcess (fun delta ->
-            node |> GodotObject.call method delta |> ignore
+            node.Call(method, delta) |> ignore
         ) |> ignore
         
     static member Method = method
@@ -287,10 +287,10 @@ type private GdPhysicsProcess(node : Node) =
 type private GdHackProcess(node : Node) =
     do node.add_Ready (fun _ ->
         node
-        |> GodotObject.tryInvokeAs<Callable> GdProcess.Method
+        |> GodotObject.tryInvokeAs<StringName> GdProcess.Method
         |> Option.iter (fun c ->
-            node |> Engine.addIdleDeltaProcess (fun d ->
-                c |> Callable.call d |> ignore
+            node |> Engine.addIdleDeltaProcess (fun delta ->
+                node.Call(c, delta) |> ignore
             ) |> ignore
         )
     )
@@ -299,10 +299,10 @@ type private GdHackProcess(node : Node) =
 type private GdHackPhysicsProcess(node : Node) =
     do node.add_Ready (fun _ ->
         node
-        |> GodotObject.tryInvokeAs<Callable> GdPhysicsProcess.Method
+        |> GodotObject.tryInvokeAs<StringName> GdPhysicsProcess.Method
         |> Option.iter (fun c ->
-            node |> Engine.addPhysicsDeltaProcess (fun d ->
-                c |> Callable.call d |> ignore
+            node |> Engine.addPhysicsDeltaProcess (fun delta ->
+               node.Call(c, delta) |> ignore
             ) |> ignore
         )
     )
