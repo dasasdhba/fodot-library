@@ -25,12 +25,6 @@ let addChildInternalFront (child : Node) (node : Node) =
 let addChildInternalBack (child : Node) (node : Node) =
     node |> addChildInternal child Node.InternalMode.Back
 
-let addSibling (sibling : Node) (node : Node) =
-    if node |> isAccessSafe then
-        node.AddSibling(sibling)
-    else
-        node |> GDThread.postBy _.AddSibling(sibling)
-
 let moveChild (child: Node) (idx : int) (node : Node) =
     if node |> isAccessSafe then
         node.MoveChild(child, idx)
@@ -100,16 +94,22 @@ let getChildrenRec<'a when 'a: not struct and 'a :> Node> (node: Node) =
 let getChildrenRecInternal<'a when 'a: not struct and 'a :> Node> (node: Node) =
     node |> getChildrenRecInternalOrNot<'a> true
 
-// reparent
+// parent access
+
+let isParentAccessSafe node =
+    node
+    |> tryGetParent
+    |> Option.map isAccessSafe
+    |> Option.defaultValue true
+
+let addSibling (sibling : Node) (node : Node) =
+    if node |> isParentAccessSafe then
+        node.AddSibling(sibling)
+    else
+        node |> GDThread.postBy _.AddSibling(sibling)
 
 let reparent parent keep (node : Node) =
-    let pSafe =
-        node
-        |> tryGetParent
-        |> Option.map isAccessSafe
-        |> Option.defaultValue true
-    
-    if pSafe && parent |> isAccessSafe then
+    if node |> isParentAccessSafe && parent |> isAccessSafe then
         node.Reparent(parent, keep)
     else
         node |> GDThread.postBy _.Reparent(parent, keep)
