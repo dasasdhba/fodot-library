@@ -13,6 +13,7 @@
         <Compile Include="Transform.fs" />
         <Compile Include="CanvasItem.fs" />
         <Compile Include="Tween.fs" />
+        <Compile Include="PhysicsServer.fs" />
         <Compile Include="CSharp.fs" />
     </ItemGroup>
 

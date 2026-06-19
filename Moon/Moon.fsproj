@@ -8,7 +8,6 @@
 
     <ItemGroup>
         <Compile Include="Interface\IFlipInit.fs" />
-        <Compile Include="Interface\IPlatformShape3D.fs" />
         <Compile Include="Module\Flip.fs" />
         <Compile Include="Module\Action.fs" />
         <Compile Include="Module\Node.fs" />
@@ -17,13 +16,6 @@
         <Compile Include="Library\Recorder2D.fs" />
         <Compile Include="Library\Recorder3D.fs" />
         <Compile Include="Library\SmoothToggle.fs" />
-        <Compile Include="Library\PhysicsQuery.fs" />
-        <Compile Include="Library\PhysicsQueryResult.fs" />
-        <Compile Include="Library\PhysicsState.fs" />
-        <Compile Include="Library\PhysicsQueryPoint.fs" />
-        <Compile Include="Library\PhysicsQueryRaycast.fs" />
-        <Compile Include="Library\PhysicsQueryShape.fs" />
-        <Compile Include="Library\PhysicsMotion.fs" />
         <Compile Include="Library\ProcessOption.fs" />
         <Compile Include="CSharp.fs" />
     </ItemGroup>
@@ -32,7 +24,6 @@
       <ProjectReference Include="..\Fodot.Async\Fodot.Async.fsproj" />
       <ProjectReference Include="..\Fodot.Module\Fodot.Module.fsproj" />
       <ProjectReference Include="..\Fodot.Extend\Fodot.Extend.fsproj" />
-      <ProjectReference Include="..\Moon.Utils\Moon.Utils.fsproj" />
     </ItemGroup>
 
 </Project>

@@ -16,6 +16,10 @@ type TweenConfig =
 
 module Tween =
     
+    let await (obj : GodotObject) (signal : StringName) (tween : Tween) =
+        let signal = Signal(obj, signal)
+        tween.TweenAwait signal 
+    
     let getLoopsLeft (tween : Tween) =
         tween.GetLoopsLeft()
     
@@ -87,7 +91,12 @@ module Tween =
     let createPhysicsWith (node : Node) =
         let tween = createWith node
         tween.SetProcessMode Tween.TweenProcessMode.Physics
-        
+
+module AwaitTweener =
+    
+    let setTimeout (timeout : float) (tween : AwaitTweener) =
+        tween.SetTimeout timeout
+
 module CallbackTweener =
     
     let setDelay (delay : float) (tween : CallbackTweener) =
