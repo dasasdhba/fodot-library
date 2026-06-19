@@ -10,6 +10,20 @@ namespace Moon;
 /// </summary>
 public static class Mathe
 {
+    public static bool ParallelTo(this Vector2 origin, Vector2 vec)
+    {
+        return 
+            Mathf.IsZeroApprox(origin.AngleTo(vec)) ||
+            Mathf.IsZeroApprox(origin.AngleTo(-vec));
+    }
+
+    public static bool ParallelTo(this Vector3 origin, Vector3 vec)
+    {
+        return 
+            Mathf.IsZeroApprox(origin.AngleTo(vec)) ||
+            Mathf.IsZeroApprox(origin.AngleTo(-vec));
+    }
+
     public static Vector2 WithAxis(this Vector2 origin, Vector2 axis)
     {
         var dir = axis.Normalized();
