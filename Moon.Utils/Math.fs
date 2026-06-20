@@ -1,5 +1,24 @@
 module Moon.Utils.Math
 
+/// returns inside(check = true), outside(check = false)
+let binarySearch maxStep check =
+    let mutable inside = 0f
+    let mutable outside = 1f
+
+    while check outside do
+        inside <- outside
+        outside <- outside * 2f
+    
+    for _ in 1 .. maxStep do
+        let mid = inside * 0.5f + outside * 0.5f
+        
+        if check mid then
+            inside <- mid
+        else
+            outside <- mid
+    
+    inside, outside
+
 /// Generate a quad crossing with (0,0), (center, maxHeight), (1, finalHeight)
 let inline unitQuad (maxHeight: ^a) (finalHeight : ^a) (center : ^a) =
     let zero = LanguagePrimitives.GenericZero< ^a>
