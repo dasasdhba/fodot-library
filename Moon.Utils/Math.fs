@@ -1,26 +1,32 @@
 module Moon.Utils.Math
 
-/// check(0) is expected to be true, while check(1) = false is also expected
-/// but not necessary. returns inside(check = true), outside(check = false)
-let binarySearch maxStep eps check =
+/// pick(0) is expected to be Some, while pick(1) = None is also expected
+/// but not necessary. returns inside(pick = Some), outside(pick = None), pickedValue
+let binarySearchAndPick maxStep eps pick =
     let mutable inside = 0f
     let mutable outside = 1f
-
-    while check outside do
+    let mutable lastPick = None
+    
+    let mutable value = pick outside
+    while value |> Option.isSome do
         inside <- outside
         outside <- outside * 2f
+        lastPick <- value
+        value <- pick outside
     
     let mutable lastInside = false
     let mutable mid = inside * 0.5f + outside * 0.5f
     let rec update step =
-        let isInside = check mid
+        let value = pick mid
+        let isInside = value |> Option.isSome
         if isInside then
             inside <- mid
+            lastPick <- value
         else
             outside <- mid
         
         if step >= maxStep || outside - inside <= eps then
-            inside, outside
+            (inside, outside), lastPick
         else
         
         if isInside = lastInside then
@@ -35,6 +41,12 @@ let binarySearch maxStep eps check =
         update (step + 1)
     
     update 0
+
+/// check(0) is expected to be true, while check(1) = false is also expected
+/// but not necessary. returns inside(check = true), outside(check = false)
+let binarySearch maxStep eps check =
+    binarySearchAndPick maxStep eps (fun x -> if check x then Some () else None)
+    |> fst
 
 /// Generate a quad crossing with (0,0), (center, maxHeight), (1, finalHeight)
 let inline unitQuad (maxHeight: ^a) (finalHeight : ^a) (center : ^a) =
