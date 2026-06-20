@@ -1,7 +1,8 @@
 module Moon.Utils.Math
 
-/// returns inside(check = true), outside(check = false)
-let binarySearch maxStep check =
+/// check(0) is expected to be true, while check(1) = false is also expected
+/// but not necessary. returns inside(check = true), outside(check = false)
+let binarySearch maxStep eps check =
     let mutable inside = 0f
     let mutable outside = 1f
 
@@ -9,15 +10,31 @@ let binarySearch maxStep check =
         inside <- outside
         outside <- outside * 2f
     
-    for _ in 1 .. maxStep do
-        let mid = inside * 0.5f + outside * 0.5f
-        
-        if check mid then
+    let mutable lastInside = false
+    let mutable mid = inside * 0.5f + outside * 0.5f
+    let rec update step =
+        let isInside = check mid
+        if isInside then
             inside <- mid
         else
             outside <- mid
+        
+        if step >= maxStep || outside - inside <= eps then
+            inside, outside
+        else
+        
+        if isInside = lastInside then
+            mid <-
+                if isInside then
+                    inside * 0.25f + outside * 0.75f
+                else
+                    inside * 0.75f + outside * 0.25f
+        else
+            mid <- inside * 0.5f + outside * 0.5f
+        lastInside <- isInside
+        update (step + 1)
     
-    inside, outside
+    update 0
 
 /// Generate a quad crossing with (0,0), (center, maxHeight), (1, finalHeight)
 let inline unitQuad (maxHeight: ^a) (finalHeight : ^a) (center : ^a) =
