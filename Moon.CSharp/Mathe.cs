@@ -10,6 +10,16 @@ namespace Moon;
 /// </summary>
 public static class Mathe
 {
+    public static bool OrientedTo(this Vector2 origin, Vector2 vec)
+    {
+        return Mathf.IsZeroApprox(origin.AngleTo(vec));
+    }
+
+    public static bool OrientedTo(this Vector3 origin, Vector3 vec)
+    {
+        return Mathf.IsZeroApprox(origin.AngleTo(vec));
+    }
+
     public static bool ParallelTo(this Vector2 origin, Vector2 vec)
     {
         return 
