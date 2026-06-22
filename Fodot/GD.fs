@@ -152,11 +152,11 @@ type GDSignal<'a> =
     
     interface IEvent<'a> with
         member this.AddHandler handler =
-            if this.Handlers |> Dict.tryAdd handler (lazy (
+            if this.Handlers |> Dict.tryAdd handler (fun () ->
                 let call = Callable.from(fun a -> handler.Invoke(null, a))
                 this.Connect call |> ignore
                 call
-            )) |> not then
+            ) |> not then
                 Logger.pushWarn $"{this.Object}.{this.SignalName}: Handler {handler} already exists!"
         
         member this.RemoveHandler handler =

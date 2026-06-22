@@ -158,7 +158,7 @@ type private CachedEvent () =
 let private cachedTable = WeakMeta<CachedEvent>()
     
 let private getCachedEventWith getter setter creator node =
-    let cache = cachedTable |> WeakMeta.getOrAdd node (lazy CachedEvent ())
+    let cache = cachedTable |> WeakMeta.getOrAdd node (fun () -> CachedEvent ())
     match getter cache with
     | Some event -> event
     | None ->

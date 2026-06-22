@@ -8,11 +8,11 @@ let update key value (dict : ConcurrentDictionary<'a, 'b>) =
 let containsKey key (dict : ConcurrentDictionary<'a, 'b>) =
     dict.ContainsKey key
 
-let tryAdd key (value : Lazy<'b>) (dict : ConcurrentDictionary<'a, 'b>) =
+let tryAdd key (valueFunc : unit -> 'b) (dict : ConcurrentDictionary<'a, 'b>) =
     if dict.ContainsKey key then
         false
     else
-        dict.TryAdd(key, value.Value)
+        dict.TryAdd(key, valueFunc ())
 
 let tryGetValue key (dict : ConcurrentDictionary<'a, 'b>) =
     match dict.TryGetValue key with

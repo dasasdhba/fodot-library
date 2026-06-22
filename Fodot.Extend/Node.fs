@@ -181,20 +181,16 @@ let chooseChildrenRecCachedInternalOrNot (map : ChildrenRecCache<'a>) inter pred
                 |> Option.map (fun r -> r.Value |> snd)
                 |> Option.defaultWith (fun () -> HashSet<Node>())
             
-            let nodes =
+            let list =
                 node
                 |> Node.getChildrenRecInternalOrNot<Node> inter
-            
-            let list =
-                nodes
                 |> Seq.choose (fun c ->
-                    if last.Contains c |> not then
+                    if last.Add c then
                         c |> setChildrenCacheMonitor re
                     c |> predictor
                 )
                 |> List.ofSeq
                 
-            nodes |> Seq.iter (fun n -> last.Add n |> ignore)
             list, last
         )
         

@@ -12,17 +12,18 @@ module WeakMap =
     let update key value (map: WeakMap<'a, 'b>) =
         map.AddOrUpdate(key, value)
     
-    let addOrUpdate key (value : Lazy<'b>) (updateFunc : 'b -> 'b) (map: WeakMap<'a, 'b>) =
+    let addOrUpdate key (valueFunc: unit -> 'b) (updateFunc : 'b -> 'b) (map: WeakMap<'a, 'b>) =
         match map.TryGetValue key with
         | true, v -> map |> update key (updateFunc v)
-        | _ -> map |> update key value.Value
+        | _ -> map |> update key (valueFunc ())
     
-    let getOrAdd key (value : Lazy<'b>) (map: WeakMap<'a, 'b>) =
+    let getOrAdd key (valueFunc: unit -> 'b) (map: WeakMap<'a, 'b>) =
         match map.TryGetValue key with
         | true, value -> value
         | _ ->
-            map.Add(key, value.Value)
-            value.Value
+            let value = valueFunc ()
+            map.Add(key, value)
+            value
             
     let tryGetValue key (map: WeakMap<'a, 'b>) =
         match map.TryGetValue key with
@@ -39,8 +40,8 @@ module WeakMap =
         |> tryGetValue key
         |> Option.isSome
         
-    let tryAdd key (value : Lazy<'b>) (map: WeakMap<'a, 'b>) =
+    let tryAdd key (valueFunc : unit -> 'b) (map: WeakMap<'a, 'b>) =
         if map |> containsKey key then
             false
         else
-            map.TryAdd(key, value.Value) 
+            map.TryAdd(key, valueFunc ())

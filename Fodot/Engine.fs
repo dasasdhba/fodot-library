@@ -59,12 +59,12 @@ module Engine =
 
     let private getProcessData physics (node: Node) =
         let map = getProcessDataMap physics
-        map |> WeakMeta.getOrAdd node (lazy (
+        map |> WeakMeta.getOrAdd node (fun () ->
             node.add_TreeEntered (fun () -> node |> updateProcessCache physics)
             node.add_TreeExited (fun () -> node |> updateRemoveCache physics)
             
             ProcessData()
-        ))
+        )
         
     let hasProcess physics (node: Node) =
         let map = getProcessDataMap physics

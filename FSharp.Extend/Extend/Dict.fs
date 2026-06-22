@@ -1,6 +1,5 @@
 module FSharp.Extend.Dict
 
-open System
 open System.Collections.Generic
 
 let remove (key: 'a) (dict : IDictionary<'a, 'b>) =
@@ -9,17 +8,18 @@ let remove (key: 'a) (dict : IDictionary<'a, 'b>) =
 let update key (value : 'b) (dict: IDictionary<'a, 'b>) =
     dict[key] <- value
 
-let addOrUpdate key (value : Lazy<'b>) (updateFunc: 'b -> 'b) (dict: IDictionary<'a, 'b>) =
+let addOrUpdate key (valueFunc: unit -> 'b) (updateFunc: 'b -> 'b) (dict: IDictionary<'a, 'b>) =
     match dict.TryGetValue key with
     | true, v -> dict |> update key (updateFunc v)
-    | _ -> dict |> update key value.Value
+    | _ -> dict |> update key (valueFunc ())
 
-let getOrAdd key (value : Lazy<'b>) (dict: IDictionary<'a, 'b>) =
+let getOrAdd key (valueFunc : unit -> 'b) (dict: IDictionary<'a, 'b>) =
     match dict.TryGetValue key with
     | true, v -> v
     | _ ->
-        dict.Add(key, value.Value)
-        value.Value
+        let value = valueFunc ()
+        dict.Add(key, value)
+        value
         
 let tryGetValue key (dict: IDictionary<'a, 'b>) =
     match dict.TryGetValue key with
@@ -32,8 +32,8 @@ let getValue key (dict: IDictionary<'a, 'b>) =
 let containsKey key (dict: IDictionary<'a, 'b>) =
     dict.ContainsKey key
     
-let tryAdd key (value: Lazy<'b>) (dict: IDictionary<'a, 'b>) =
+let tryAdd key (valueFunc: unit -> 'b) (dict: IDictionary<'a, 'b>) =
     if dict.ContainsKey key then
         false
     else
-        dict.TryAdd(key, value.Value)
+        dict.TryAdd(key, valueFunc ())

@@ -52,14 +52,24 @@ public static class Data
     {
         return Extend.GodotObject.removeData(tag, obj);
     }
+    
+    public static T GetData<[MustBeVariant] T>(this GodotObject obj, StringName tag, Func<T> defaultFunc)
+    {
+        return GodotObjectModule.getMetaWithDefaultAs(tag, defaultFunc.AsFSharpFunc(), obj);
+    }
+    
+    public static T GetData<[MustBeVariant] T>(this GodotObject obj, Rid rid, StringName tag, Func<T> defaultFunc)
+    {
+        return Extend.GodotObject.getDataWithDefaultAs(tag, defaultFunc.AsFSharpFunc(), rid, obj);
+    }
 
     public static T GetData<[MustBeVariant] T>(this GodotObject obj, StringName tag, T defaultValue = default)
     {
-        return GodotObjectModule.getMetaWithDefaultAs(tag, new Lazy<T>(() => defaultValue), obj);
+        return obj.GetData(tag, () => defaultValue);
     }
     
     public static T GetData<[MustBeVariant] T>(this GodotObject obj, Rid rid, StringName tag, T defaultValue = default)
     {
-        return Extend.GodotObject.getDataWithDefaultAs(tag, new Lazy<T>(() => defaultValue), rid, obj);
+        return obj.GetData(rid, tag, () => defaultValue);
     }
 }

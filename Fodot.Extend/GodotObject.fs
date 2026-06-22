@@ -106,19 +106,20 @@ let getDataAsArray<'a> (name : StringName) (rid : Rid) (obj : GodotObject) =
 let getDataAsDictionary<'a, 'b> (name : StringName) (rid : Rid) (obj : GodotObject) =
     obj |> getData name rid |> Variant.toDictionary<'a, 'b>
    
-let private getDefaultDataWith<'a> getter (name : StringName) (def : Lazy<'a>) (rid: Rid) (obj : GodotObject) =
+let private getDefaultDataWith<'a> getter (name : StringName) (defFunc : unit -> 'a) (rid: Rid) (obj : GodotObject) =
     (rid, obj)
     ||> getter name
     |> Option.defaultWith (fun () ->
-        (rid, obj) ||> setData name def.Value
-        def.Value
+        let value = defFunc ()
+        (rid, obj) ||> setData name value
+        value
     )
     
-let getDataWithDefaultAs<'a> (name : StringName) (def : Lazy<'a>) (rid: Rid) (obj : GodotObject) =
-    (rid, obj) ||> getDefaultDataWith tryGetDataAs name def
+let getDataWithDefaultAs<'a> (name : StringName) (defFunc : unit -> 'a) (rid: Rid) (obj : GodotObject) =
+    (rid, obj) ||> getDefaultDataWith tryGetDataAs name defFunc
         
-let getDataWithDefaultAsArray<'a> (name : StringName) (def : Lazy<Collections.Array<'a>>) (rid: Rid) (obj : GodotObject) =
-    (rid, obj) ||> getDefaultDataWith tryGetDataAsArray name def
+let getDataWithDefaultAsArray<'a> (name : StringName) (defFunc : unit -> Collections.Array<'a>) (rid: Rid) (obj : GodotObject) =
+    (rid, obj) ||> getDefaultDataWith tryGetDataAsArray name defFunc
         
-let getDataWithDefaultAsDictionary<'a, 'b> (name : StringName) (def : Lazy<Collections.Dictionary<'a, 'b>>) (rid: Rid) (obj : GodotObject) =
-    (rid, obj) ||> getDefaultDataWith tryGetDataAsDictionary name def
+let getDataWithDefaultAsDictionary<'a, 'b> (name : StringName) (defFunc : unit -> Collections.Dictionary<'a, 'b>) (rid: Rid) (obj : GodotObject) =
+    (rid, obj) ||> getDefaultDataWith tryGetDataAsDictionary name defFunc

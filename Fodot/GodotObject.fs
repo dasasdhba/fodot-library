@@ -65,22 +65,23 @@ let removeMeta (name : StringName) (obj : GodotObject) =
 let getMetaList (obj : GodotObject) =
     obj.GetMetaList()
     
-let private getDefaultMetaWith<'a> getter (name : StringName) (def : Lazy<'a>) (obj : GodotObject) =
+let private getDefaultMetaWith<'a> getter (name : StringName) (defFunc : unit -> 'a) (obj : GodotObject) =
     obj
     |> getter name
     |> Option.defaultWith (fun () ->
-        obj |> setMeta name def.Value
-        def.Value
+        let value = defFunc ()
+        obj |> setMeta name value
+        value
     )
     
-let getMetaWithDefaultAs<'a> (name : StringName) (def : Lazy<'a>) (obj : GodotObject) =
-    obj |> getDefaultMetaWith tryGetMetaAs name def
+let getMetaWithDefaultAs<'a> (name : StringName) (defFunc : unit -> 'a) (obj : GodotObject) =
+    obj |> getDefaultMetaWith tryGetMetaAs name defFunc
         
-let getMetaWithDefaultAsArray<'a> (name : StringName) (def : Lazy<Collections.Array<'a>>) (obj : GodotObject) =
-    obj |> getDefaultMetaWith tryGetMetaAsArray name def
+let getMetaWithDefaultAsArray<'a> (name : StringName) (defFunc : unit -> Collections.Array<'a>) (obj : GodotObject) =
+    obj |> getDefaultMetaWith tryGetMetaAsArray name defFunc
         
-let getMetaWithDefaultAsDictionary<'a, 'b> (name : StringName) (def : Lazy<Collections.Dictionary<'a, 'b>>) (obj : GodotObject) =
-    obj |> getDefaultMetaWith tryGetMetaAsDictionary name def
+let getMetaWithDefaultAsDictionary<'a, 'b> (name : StringName) (defFunc : unit -> Collections.Dictionary<'a, 'b>) (obj : GodotObject) =
+    obj |> getDefaultMetaWith tryGetMetaAsDictionary name defFunc
     
 // property get set
 
@@ -93,7 +94,7 @@ let private createPropertyList (obj : GodotObject) =
 let private propMeta = new StringName "_fs_GodotObject_prop_list"
 
 let getPropertyList (obj : GodotObject) =
-    obj |> getMetaWithDefaultAs propMeta (lazy createPropertyList obj)
+    obj |> getMetaWithDefaultAs propMeta (fun () -> createPropertyList obj)
 
 let hasProperty (prop : StringName) (obj : GodotObject) =
     obj |> getPropertyList |> Array.contains prop

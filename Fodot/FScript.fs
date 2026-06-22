@@ -131,7 +131,7 @@ module FScript =
     let private fScriptTable = WeakMeta<FScriptData>()
     
     let private getScriptData (obj : GodotObject) =
-        fScriptTable |> WeakMeta.getOrAdd obj (lazy FScriptData())
+        fScriptTable |> WeakMeta.getOrAdd obj (fun () -> FScriptData())
     
     let private tryGetScriptData (obj : GodotObject) =
         fScriptTable |> WeakMeta.tryGet obj
