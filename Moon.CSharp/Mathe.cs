@@ -10,6 +10,19 @@ namespace Moon;
 /// </summary>
 public static class Mathe
 {
+    public static Vector2 Transpose(this Vector2 vec)
+    {
+        return new Vector2(vec.Y, vec.X);
+    }
+    
+    public static Vector2 Flip(this Vector2 vec2, bool flipH, bool flipV = false)
+    {
+        var result = vec2;
+        if (flipH) result.X *= -1;
+        if (flipV) result.Y *= -1;
+        return result;
+    }
+
     public static bool OrientedTo(this Vector2 origin, Vector2 vec)
     {
         return Mathf.IsZeroApprox(origin.AngleTo(vec));
@@ -55,14 +68,6 @@ public static class Mathe
         return origin + axis;
     }
     
-    public static Vector2 Flip(this Vector2 vec2, bool flipH, bool flipV = false)
-    {
-        var result = vec2;
-        if (flipH) result.X *= -1;
-        if (flipV) result.Y *= -1;
-        return result;
-    }
-    
     public static float ConvToward(float current, float target, float rate)
         => Mathf.MoveToward(current, target, Math.Abs(target - current) * rate);
     
@@ -77,43 +82,6 @@ public static class Mathe
     public static Vector3 ConvToward(this Vector3 vec, Vector3 target, float rate)
     {
         return vec.MoveToward(target, (target - vec).Length() * rate);
-    }
-    
-    /// <summary>
-    /// the search function should be like: search(x) = false if x &lt; t
-    /// where t &gt; 0, true otherwise. the function will start at 0 and max
-    /// to find the smallest x such that search(x) is true.
-    /// </summary>
-    public static float BinarySearch(Func<float, bool> search, float max = 256f, 
-        float eps = 1f, int maxIter = 100)
-    {
-        if (search(0)) return 0;
-        if (!search(max)) return max;
-        
-        var a = 0f;
-        var b = max;
-        
-        var iter = 0;
-        while (b - a > eps)
-        {
-            var c = (a + b) / 2f;
-            if (search(c)) b = c;
-            else a = c;
-
-            if (maxIter > 0)
-            {
-                iter++;
-                if (iter >= maxIter)
-                {
-                #if DEBUG
-                    GD.PushWarning("Binary Search failed...");
-                #endif                
-                    break;
-                }
-            }
-        }
-
-        return b;
     }
     
     public static double Accelerate(double speed, double acc, double dec, double max, double delta)
