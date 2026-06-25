@@ -44,11 +44,14 @@ type YamlSignalArg = {
 [<CLIMutable>]
 type YamlRoot = {
     
-    [<YamlMember(Alias = "fscript")>]
-    FScript : string list
+    [<YamlMember(Alias = "fscripts")>]
+    FScripts: string list
     
     [<YamlMember(Alias = "extends")>]
     Extends : string
+    
+    [<YamlMember(Alias = "inherits")>]
+    Inherits : string
     
     [<YamlMember(Alias = "class_name")>]
     ClassName : string
@@ -141,7 +144,9 @@ let private toPascalCase (s: string) =
     |> Array.map (fun part -> 
         if part.Length > 0 && System.Char.IsLower(part[0]) then
             System.Char.ToUpper(part[0]).ToString() + part[1..]
-        else part)
+        else
+            part
+    )
     
     |> String.concat ""
 
@@ -288,16 +293,18 @@ let private formatBlock (list : string list) =
 
 type SafeRoot =
     {
-        FScript : string list
+        FScripts: string list
         Extends : string option
+        Inherits: string option
         ClassName : string option
         Property : Dictionary<string, YamlProperty>
         Signal : Dictionary<string, YamlSignalArg list>
     }
     
     static member From (yaml : YamlRoot) = {
-        FScript = if yaml.FScript :> obj = null then [] else yaml.FScript
+        FScripts = if yaml.FScripts :> obj = null then [] else yaml.FScripts
         Extends = Option.ofObj yaml.Extends
+        Inherits = Option.ofObj yaml.Inherits
         ClassName = Option.ofObj yaml.ClassName
         Property = if yaml.Property :> obj = null then Dictionary() else yaml.Property
         Signal = if yaml.Signal :> obj = null then Dictionary() else yaml.Signal
@@ -305,9 +312,13 @@ type SafeRoot =
     
     member this.AsGd () =
         let extends =
-            match this.Extends with
-            | Some name -> $"extends {name}"
-            | None -> ""
+            match this.Inherits with
+            | Some s when s.EndsWith ".gd" -> $"extends \"{s}\""
+            | Some s -> $"extends {s}"
+            | None ->
+                match this.Extends with
+                    | Some name -> $"extends {name}"
+                    | None -> ""
         
         let className =
             match this.ClassName with
@@ -336,12 +347,12 @@ type SafeRoot =
             |> String.concat "\n"
             
         let fs =
-            if this.FScript.IsEmpty then
+            if this.FScripts.IsEmpty then
                 ""
             else
                 let l =
-                    this.FScript
-                    
+                    this.FScripts
+
                     |> List.map (fun l -> $"\"{l}\"")
                     |> String.concat ", "
                 

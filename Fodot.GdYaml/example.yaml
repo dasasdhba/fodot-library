@@ -1,6 +1,7 @@
 extends: Node
-#class_name : MyYamlClass
-fscript : [ "my_script" ]
+inherits: some_script.gd
+class_name : MyYamlClass
+fscripts : [ "my_script" ]
 
 property:
 
