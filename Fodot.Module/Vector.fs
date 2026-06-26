@@ -14,6 +14,9 @@ module Vector2 =
         r.Y <- y
         r
         
+    let from (v : Vector2I) =
+        Vector2(v.X |> float32, v.Y |> float32)
+        
 module Vector2I =
     
     let withX (x : int) (v : Vector2I) =
@@ -25,6 +28,9 @@ module Vector2I =
         let mutable r = v
         r.Y <- y
         r
+        
+    let from (v : Vector2) =
+        Vector2I(v.X |> int, v.Y |> int)
         
 module Vector3 =
     
@@ -43,6 +49,9 @@ module Vector3 =
         r.Z <- z
         r
         
+    let from (v : Vector3I) =
+        Vector3(v.X |> float32, v.Y |> float32, v.Z |> float32)
+        
 module Vector3I =
     
     let withX (x : int) (v : Vector3I) =
@@ -59,6 +68,9 @@ module Vector3I =
         let mutable r = v
         r.Z <- z
         r
+    
+    let from (v : Vector3) =
+        Vector3I(v.X |> int, v.Y |> int, v.Z |> int)
         
 module Vector4 =
     
@@ -82,6 +94,9 @@ module Vector4 =
         r.W <- w
         r
         
+    let from (v : Vector4I) =
+        Vector4(v.X |> float32, v.Y |> float32, v.Z |> float32, v.W |> float32)
+        
 module Vector4I =
     
     let withX (x : int) (v : Vector4I) =
@@ -103,3 +118,6 @@ module Vector4I =
         let mutable r = v
         r.W <- w
         r
+        
+    let from (v : Vector4) =
+        Vector4I(v.X |> int, v.Y |> int, v.Z |> int, v.W |> int)
