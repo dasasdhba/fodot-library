@@ -13,10 +13,11 @@ let validate (obj : 'a) =
 // script
 
 let tryGetScript<'a> (obj : GodotObject) =
-    try
-        Some (obj :> obj :?> 'a)
-    with
-    | _ -> obj |> FScript.tryGet<'a>
+    obj
+    |> tryUnbox<'a>
+    |> Option.orElseWith (fun _ ->
+        obj |> FScript.tryGet<'a>
+    )
         
 let getScript<'a> (obj : GodotObject) =
     obj
@@ -24,9 +25,8 @@ let getScript<'a> (obj : GodotObject) =
     |> Option.defaultWith (fun () -> failwith $"Object {obj} does not implement {typeof<'a>}")
     
 let getAllScripts<'a> (obj : GodotObject) = seq {
-    try
-        yield obj :> obj :?> 'a
-    with
+    match obj :> obj with
+    | :? 'a as a -> yield a
     | _ -> ()
 
     yield! obj |> FScript.getAll<'a>
