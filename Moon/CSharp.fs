@@ -45,3 +45,7 @@ module CanvasItemExtensions =
     [<Extension>]
     let FadeOut (item : CanvasItem) time =
         item |> CanvasItem.fadeOut time
+        
+    [<Extension>]
+    let GetGlobalTransformWithViewport (item : CanvasItem) =
+        item |> CanvasItem.getGlobalTransformWithViewport

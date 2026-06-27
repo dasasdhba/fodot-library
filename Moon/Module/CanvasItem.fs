@@ -1,6 +1,7 @@
 module Moon.Module.CanvasItem
 
 open Fodot
+open Fodot.Extend
 open Fodot.Module
 open Godot
 
@@ -31,8 +32,11 @@ let fadeOut time (item: CanvasItem) =
     |> ignore
     
     tween
-    
-let getStageTransform (item: CanvasItem) =
+
+/// The viewport is assumed to be a child of either Sprite2D or SubViewportContainer
+/// (where the Sprite2D is assumed not using Region),
+/// otherwise it only returns a transform relative to the viewport origin.
+let getGlobalTransformWithViewport (item: CanvasItem) =
     let viewport = item.GetViewport()
     let gt = item.GetGlobalTransformWithCanvas()
     let gt =
@@ -44,11 +48,20 @@ let getStageTransform (item: CanvasItem) =
             let scale = (Vector2.from sub.Size) / (Vector2.from sub.Size2DOverride)
             gt.Scaled scale
         | _ -> gt
-
+    
+    let getParentTransform (size : Vector2) (parent : Node) =
+        match parent with
+        | :? Sprite2D as spr ->
+            let offset =
+                if spr.Centered then spr.Offset + size / 2f else spr.Offset
+            spr.GlobalTransform.TranslatedLocal offset
+            |> Some
+        | :? SubViewportContainer as c ->
+            c.GetGlobalTransform() |> Some
+        | _ -> None
+    
     viewport
-    |> Option.ofObj
-    |> Option.bind Node.tryGetParent<CanvasItem>
-    |> Option.map (fun container ->
-        container.GetGlobalTransform() * gt
-    )
+    |> GodotObject.validate
+    |> Option.bind Node.tryGetParent<Node>
+    |> Option.bind (getParentTransform (viewport.GetVisibleRect().Size))
     |> Option.defaultValue gt
