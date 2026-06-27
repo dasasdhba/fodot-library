@@ -64,4 +64,5 @@ let getGlobalTransformWithViewport (item: CanvasItem) =
     |> GodotObject.validate
     |> Option.bind Node.tryGetParent<Node>
     |> Option.bind (getParentTransform (viewport.GetVisibleRect().Size))
+    |> Option.map (fun pt -> pt * gt)
     |> Option.defaultValue gt

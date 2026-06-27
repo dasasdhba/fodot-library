@@ -43,8 +43,8 @@ public static class FodotExtensions
     
     public static T FindParent<T>(this Node node, Func<T, bool> filter = null) where T : Node
     {
-        if (filter == null) return Extend.Node.findParent<T>(node).Value;
-        return Extend.Node.findParentWith(filter.AsFSharpFunc(), node).Value;
+        if (filter == null) return Extend.Node.findParent<T>(node).AsObj();
+        return Extend.Node.findParentWith(filter.AsFSharpFunc(), node).AsObj();
     }
     
     public static IEnumerable<T> GetChildren<T>(this Node node, bool includeInternal = false) where T : Node
@@ -55,5 +55,52 @@ public static class FodotExtensions
     public static IEnumerable<T> GetChildrenRec<T>(this Node node, bool includeInternal = false) where T : Node
     {
         return NodeModule.getChildrenRecInternalOrNot<T>(includeInternal, node);
+    }
+
+    public static void Post(this Node node, Action<Node> action)
+    {
+        GDThread.postBy(action.AsFSharpFunc(), node);
+    }
+    
+    public static void Send(this Node node, Action<Node> action)
+    {
+        GDThread.sendBy(action.AsFSharpFunc(), node);
+    }
+    
+    // fodot process
+
+    public static Guid AddProcess(this Node node, Action<double> proc, bool physics)
+    {
+        return EngineModule.addDeltaProcess(physics, proc.AsFSharpFunc(), node);
+    }
+
+    public static Guid AddProcess(this Node node, Action proc, bool physics)
+    {
+        return EngineModule.addProcess(physics, proc.AsFSharpFunc(), node);
+    }
+
+    public static Guid AddIdleProcess(this Node node, Action<double> proc)
+    {
+        return node.AddProcess(proc, false);
+    }
+    
+    public static Guid AddIdleProcess(this Node node, Action proc)
+    {
+        return node.AddProcess(proc, false);
+    }
+    
+    public static Guid AddPhysicsProcess(this Node node, Action<double> proc)
+    {
+        return node.AddProcess(proc, true);
+    }
+    
+    public static Guid AddPhysicsProcess(this Node node, Action proc)
+    {
+        return node.AddProcess(proc, true);
+    }
+
+    public static bool RemoveProcess(this Node node, Guid id)
+    {
+        return EngineModule.removeProcess(id, node);
     }
 }
