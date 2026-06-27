@@ -26,6 +26,7 @@
         <Compile Include="Node.fs" />
         <Compile Include="PackedScene.fs" />
         <Compile Include="Library.fs" />
+        <Compile Include="FlushPool.fs" />
         <Compile Include="Engine.fs" />
     </ItemGroup>
 

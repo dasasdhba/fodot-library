@@ -2,6 +2,7 @@
 module Fodot.Node
 
 open System
+open System.Collections.Generic
 open Fodot.Bridge
 open Godot
 
@@ -214,3 +215,34 @@ let duplicateWith (flag : Node.DuplicateFlags) (node: Node) =
     
 let duplicate (node: Node) =
     node |> duplicateWith Node.DuplicateFlags.Default
+
+// comparer
+
+let private nodeComparer physics (x: Node) (y: Node) =
+    let vx = GodotObject.IsInstanceValid x |> Convert.ToInt32
+    let vy = GodotObject.IsInstanceValid y |> Convert.ToInt32
+    if vx + vy < 2 then
+        vx - vy
+    else
+        let result =
+            if physics then
+                x.ProcessPhysicsPriority - y.ProcessPhysicsPriority
+            else
+                x.ProcessPriority - y.ProcessPriority
+        match result with
+        | 0 -> if x.IsGreaterThan y then 1 else -1
+        | v -> v
+
+let idleComparer =
+    {
+        new IComparer<Node> with
+            member this.Compare (x, y) =
+                nodeComparer false x y
+    }
+    
+let physicsComparer =
+    {
+        new IComparer<Node> with
+            member this.Compare (x, y) =
+                nodeComparer true x y
+    }

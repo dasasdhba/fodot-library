@@ -1,8 +1,6 @@
 namespace Fodot
 
 open System
-open System.Collections.Concurrent
-open System.Collections.Generic
 open FSharp.Extend
 open Godot
 
@@ -33,23 +31,18 @@ module Engine =
 
     let private idleMap = WeakMeta<ProcessData>()
     let private physicsMap = WeakMeta<ProcessData>()
+    
+    let private idleFlush =
+        SortedFlushIdleNodes<Node, ProcessData>()
 
-    let private cachedIdleUpdate = ConcurrentQueue<Node>()
-    let private cachedPhysicsUpdate = ConcurrentQueue<Node>()
-    let private cachedIdleRemove = ConcurrentQueue<Node>()
-    let private cachedPhysicsRemove = ConcurrentQueue<Node>()
+    let private physicsFlush =
+        SortedFlushPhysicsNodes<Node, ProcessData>()
 
-    let private updateProcessCache physics node =
+    let private trackFlush physics (node: Node, data : ProcessData) =
         if physics then
-            cachedPhysicsUpdate.Enqueue node
+            physicsFlush.Track(node, data)
         else
-            cachedIdleUpdate.Enqueue node
-            
-    let private updateRemoveCache physics node =
-        if physics then
-            cachedPhysicsRemove.Enqueue node
-        else
-            cachedIdleRemove.Enqueue node
+            idleFlush.Track(node, data)
 
     let private getProcessDataMap physics =
         if physics then
@@ -60,10 +53,9 @@ module Engine =
     let private getProcessData physics (node: Node) =
         let map = getProcessDataMap physics
         map |> WeakMeta.getOrAdd node (fun () ->
-            node.add_TreeEntered (fun () -> node |> updateProcessCache physics)
-            node.add_TreeExited (fun () -> node |> updateRemoveCache physics)
-            
-            ProcessData()
+            let data = ProcessData()
+            (node, data) |> trackFlush physics
+            data
         )
         
     let hasProcess physics (node: Node) =
@@ -78,8 +70,6 @@ module Engine =
 
     let addProcessType (physics : bool) (f : ProcessUnit) (node: Node) =
         let data = node |> getProcessData physics
-        if node.IsInsideTree () && data.HasProcess () |> not then
-            node |> updateProcessCache physics
         let id = Guid.NewGuid ()
         data.Process <- data.Process @ [id, f]
         id
@@ -131,82 +121,20 @@ module Engine =
         node |> removeIdleProcess id || node |> removePhysicsProcess id
 
     // node process logic
-    
-    let private nodeComparer physics (x: Node) (y: Node) =
-        let vx = GodotObject.IsInstanceValid x |> Convert.ToInt32
-        let vy = GodotObject.IsInstanceValid y |> Convert.ToInt32
-        if vx + vy < 2 then
-            vx - vy
-        else
-            let result =
-                if physics then
-                    x.ProcessPhysicsPriority - y.ProcessPhysicsPriority
-                else
-                    x.ProcessPriority - y.ProcessPriority
-            match result with
-            | 0 -> if x.IsGreaterThan y then 1 else -1
-            | v -> v
-
-    let processComparer =
-        {
-            new IComparer<Node> with
-                member this.Compare (x, y) =
-                    nodeComparer false x y
-        }
-        
-    let processPhysicsComparer =
-        {
-            new IComparer<Node> with
-                member this.Compare (x, y) =
-                    nodeComparer true x y
-        }
-
-    let private cachedProcessNodes = SortedList<Node, ProcessData>(processComparer)
-    let private cachedPhysicsProcessNodes = SortedList<Node, ProcessData>(processPhysicsComparer)
-
-    let private treeUpdateProcessCache physics=
-        let queue, cache =
-            if physics then
-                cachedPhysicsUpdate, cachedPhysicsProcessNodes
-            else
-                cachedIdleUpdate, cachedProcessNodes
-        
-        let mutable n = null
-        while queue.TryDequeue(&n) do
-            cache.Add(n, n |> getProcessData physics)
-
-    let private treeUpdateRemoveCache physics =
-        let remove, cache =
-            if physics then
-                cachedPhysicsRemove, cachedPhysicsProcessNodes
-            else
-                cachedIdleRemove, cachedProcessNodes
-                
-        let mutable n = null
-        while remove.TryDequeue(&n) do
-            cache.Remove n |> ignore
-
-    let treeUpdateCache () =
-        treeUpdateRemoveCache true
-        treeUpdateRemoveCache false
-        treeUpdateProcessCache true
-        treeUpdateProcessCache false
 
     let private treeDoProcess physics (tree : SceneTree) =
-        treeUpdateRemoveCache physics
-        treeUpdateProcessCache physics
-        let nodes, delta =
+        let (nodes : SortedFlushNodes<Node, ProcessData>), delta =
             if physics then
-                cachedPhysicsProcessNodes,
+                idleFlush,
                 tree.GetCurrentScene().GetPhysicsProcessDeltaTime()
             else
-                cachedProcessNodes,
+                physicsFlush,
                 tree.GetCurrentScene().GetProcessDeltaTime()
-        nodes |> Seq.iter (fun kv ->
-            let n, d = kv.Key, kv.Value
-            if GodotObject.IsInstanceValid n && n.CanProcess () then
-                d.DoProcess delta
-        )
+        
+        nodes.Flush ()
+        nodes.Iter ()
+        |> Seq.filter (_.Key >> _.CanProcess())
+        |> Seq.iter (_.Value >> _.DoProcess(delta))
 
     // entry point
 
