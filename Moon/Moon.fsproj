@@ -11,7 +11,9 @@
         <Compile Include="Module\Flip.fs" />
         <Compile Include="Module\Action.fs" />
         <Compile Include="Module\Node.fs" />
+        <Compile Include="Module\Viewport.fs" />
         <Compile Include="Module\CanvasItem.fs" />
+        <Compile Include="Module\Node3D.fs" />
         <Compile Include="Library\NodePool.fs" />
         <Compile Include="Library\Recorder2D.fs" />
         <Compile Include="Library\Recorder3D.fs" />
