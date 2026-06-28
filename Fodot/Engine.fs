@@ -125,10 +125,10 @@ module Engine =
     let private treeDoProcess physics (tree : SceneTree) =
         let (nodes : SortedFlushNodes<Node, ProcessData>), delta =
             if physics then
-                idleFlush,
+                physicsFlush,
                 tree.GetCurrentScene().GetPhysicsProcessDeltaTime()
             else
-                physicsFlush,
+                idleFlush,
                 tree.GetCurrentScene().GetProcessDeltaTime()
         
         nodes.Flush ()

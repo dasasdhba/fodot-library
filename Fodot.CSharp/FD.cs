@@ -5,17 +5,17 @@ namespace Fodot.CSharp;
 
 public static class FD
 {
-    public static void Print(string what)
+    public static void Print(object what)
     {
         Logger.push(what);
     }
 
-    public static void PushWarning(string what)
+    public static void PushWarning(object what)
     {
         Logger.pushWarn(what);
     }
     
-    public static void PushError(string what)
+    public static void PushError(object what)
     {
         Logger.pushError(what);
     }
