@@ -37,7 +37,7 @@ type Recorder3D(node : Node, target : Node3D) =
                 motion <- pos - lastPosition
                 velocity <- motion / delta
                 lastPosition <- pos
-    )
+        )
     
     new (node : Node3D) = Recorder3D(node, node)
     

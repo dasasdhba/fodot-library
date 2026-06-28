@@ -38,7 +38,7 @@ type Recorder2D(node : Node, target : CanvasItem) =
                 motion <- pos - lastPosition
                 velocity <- motion / delta
                 lastPosition <- pos
-    )
+        )
     
     new (node : CanvasItem) = Recorder2D(node, node)
     
