@@ -223,6 +223,8 @@ let private nodeComparer physics (x: Node) (y: Node) =
     let vy = GodotObject.IsInstanceValid y |> Convert.ToInt32
     if vx + vy < 2 then
         vx - vy
+    elif x = y then
+        0
     else
         let result =
             if physics then
