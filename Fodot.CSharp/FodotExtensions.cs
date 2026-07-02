@@ -41,12 +41,6 @@ public static class FodotExtensions
         NodeModule.bindChild(child, node);
     }
     
-    public static T FindParent<T>(this Node node, Func<T, bool> filter = null) where T : Node
-    {
-        if (filter == null) return Extend.Node.findParent<T>(node).AsObj();
-        return Extend.Node.findParentWith(filter.AsFSharpFunc(), node).AsObj();
-    }
-    
     public static IEnumerable<T> GetChildren<T>(this Node node, bool includeInternal = false) where T : Node
     {
         return NodeModule.getChildrenInternalOrNot<T>(includeInternal, node);
@@ -55,6 +49,17 @@ public static class FodotExtensions
     public static IEnumerable<T> GetChildrenRec<T>(this Node node, bool includeInternal = false) where T : Node
     {
         return NodeModule.getChildrenRecInternalOrNot<T>(includeInternal, node);
+    }
+    
+    public static T FindParent<T>(this Node node, Func<T, bool> filter = null) where T : Node
+    {
+        if (filter == null) return Extend.Node.findParent<T>(node).AsObj();
+        return Extend.Node.findParentWith(filter.AsFSharpFunc(), node).AsObj();
+    }
+
+    public static Node GetOwnerOrSelf(this Node node)
+    {
+        return Extend.Node.getOwnerOrSelf(node);
     }
 
     public static void Post(this Node node, Action<Node> action)

@@ -10,6 +10,7 @@
         <Compile Include="Interface\IFlipInit.fs" />
         <Compile Include="Module\Flip.fs" />
         <Compile Include="Module\Action.fs" />
+        <Compile Include="Module\Resource.fs" />
         <Compile Include="Module\Node.fs" />
         <Compile Include="Module\Viewport.fs" />
         <Compile Include="Module\CanvasItem.fs" />
@@ -26,6 +27,7 @@
       <ProjectReference Include="..\Fodot.Async\Fodot.Async.fsproj" />
       <ProjectReference Include="..\Fodot.Module\Fodot.Module.fsproj" />
       <ProjectReference Include="..\Fodot.Extend\Fodot.Extend.fsproj" />
+      <ProjectReference Include="..\Moon.CSharp\Moon.CSharp.csproj" />
     </ItemGroup>
 
 </Project>

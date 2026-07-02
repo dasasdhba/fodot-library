@@ -14,6 +14,8 @@
         <Compile Include="Extend\ReLazy.fs" />
         <Compile Include="Extend\WeakMap.fs" />
         <Compile Include="Extend\Dict.fs" />
+        <Compile Include="Extend\Queue.fs" />
+        <Compile Include="Extend\Stack.fs" />
         <Compile Include="Extend\List.fs" />
         <Compile Include="Extend\Seq.fs" />
         <Compile Include="Builder.fs" />
