@@ -65,7 +65,7 @@ type AsyncScenePool() =
                 
                 match queue |> Queue.tryDequeue with
                 | Some n ->
-                    n.QueueFree ()
+                    GDThread.post n.QueueFree
                     free (c - 1)
                 | _ -> ()
             

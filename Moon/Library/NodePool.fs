@@ -43,7 +43,9 @@ type NodePool (scene : PackedScene) =
     interface IDisposable with
         member this.Dispose() =
             disposed <- true
-            pool |> Seq.iter _.QueueFree()
+            pool |> Seq.iter (fun n ->
+                GDThread.post n.QueueFree
+            )
             pool.Clear ()
             
 module NodePool =

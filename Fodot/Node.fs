@@ -196,7 +196,7 @@ let bindDisposable (dispose : IDisposable) (node: Node) =
 
 let bindNode (another : Node) (node: Node) =
     let del = node |> getDeleteEvent
-    del.Add (fun () -> another.QueueFree ())
+    del.Add (fun () -> GDThread.post another.QueueFree)
 
 // init
     
