@@ -49,7 +49,7 @@ let binarySearch maxStep eps check =
     |> fst
 
 /// Generate a quad crossing with (0,0), (center, maxHeight), (1, finalHeight)
-let inline unitQuad (maxHeight: ^a) (finalHeight : ^a) (center : ^a) =
+let inline createUnitQuad (maxHeight: ^a) (finalHeight : ^a) (center : ^a) =
     let zero = LanguagePrimitives.GenericZero< ^a>
     let one = LanguagePrimitives.GenericOne< ^a>
     if center < zero || center > one then
@@ -71,6 +71,9 @@ let inline unitQuad (maxHeight: ^a) (finalHeight : ^a) (center : ^a) =
     let y = (bc * c - a) / cm1c;
     
     fun (p : ^a) -> p * p * x + p * y
+
+let unitQuad = createUnitQuad 1.0 0.0 0.5
+let unitQuadf = createUnitQuad 1.0f 0.0f 0.5f
 
 let inline flip (flag: bool) (value : ^a) =
     if flag then
