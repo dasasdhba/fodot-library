@@ -6,6 +6,7 @@
         <RootNamespace>Fodot.CSharp</RootNamespace>
     </PropertyGroup>
     <ItemGroup>
+      <ProjectReference Include="..\Fodot.Async\Fodot.Async.fsproj" />
       <ProjectReference Include="..\Fodot.Extend\Fodot.Extend.fsproj" />
       <ProjectReference Include="..\Fodot.Module\Fodot.Module.fsproj" />
     </ItemGroup>
