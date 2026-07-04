@@ -10,6 +10,7 @@
         <Compile Include="TileSet.fs" />
         <Compile Include="GodotObject.fs" />
         <Compile Include="Node.fs" />
+        <Compile Include="CSharp.fs" />
     </ItemGroup>
 
     <ItemGroup>

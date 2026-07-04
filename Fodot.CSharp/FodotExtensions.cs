@@ -57,11 +57,6 @@ public static class FodotExtensions
         return Extend.Node.findParentWith(filter.AsFSharpFunc(), node).AsObj();
     }
 
-    public static Node GetOwnerOrSelf(this Node node)
-    {
-        return Extend.Node.getOwnerOrSelf(node);
-    }
-
     public static void Post(this Node node, Action<Node> action)
     {
         GDThread.postBy(action.AsFSharpFunc(), node);

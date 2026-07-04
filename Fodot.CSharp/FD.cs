@@ -24,6 +24,11 @@ public static class FD
     {
         return GDModule.loadAs<T>(path);
     }
+    
+    public static T LoadOrNull<T>(string path) where T : Resource
+    {
+        return GDModule.tryLoadAs<T>(path).AsObj();
+    }
 
     public static void Post(Action action)
     {
