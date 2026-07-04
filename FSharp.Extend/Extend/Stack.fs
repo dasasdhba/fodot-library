@@ -1,4 +1,4 @@
-module FSharp.Concurrent.Stack
+module FSharp.Extend.Stack
 
 open System.Collections.Generic
 
