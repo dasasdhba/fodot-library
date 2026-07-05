@@ -3,11 +3,9 @@ module Fodot.PackedScene
 
 open Godot
 
-let private instantiateLock = obj()
-
 let instantiateWith gen (packedScene: PackedScene) =
     let node = 
-        lock instantiateLock (fun () ->
+        lock GD.loadLock (fun () ->
             packedScene.Instantiate(gen)
         )
     node |> Node.initScripts
@@ -15,7 +13,7 @@ let instantiateWith gen (packedScene: PackedScene) =
     
 let instantiate (packedScene: PackedScene)  =
     let node = 
-        lock instantiateLock (fun () ->
+        lock GD.loadLock (fun () ->
             packedScene.Instantiate()
         )
     node |> Node.initScripts

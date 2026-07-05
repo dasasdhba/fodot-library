@@ -179,7 +179,7 @@ type GDSignal<'a> =
 [<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
 module GD =
     
-    let private loadLock = obj()
+    let loadLock = obj()
     
     let tryLoad path =
         lock loadLock (fun () ->
