@@ -43,13 +43,13 @@ let removeChild (child : Node) (node : Node) =
 let getNode<'a when 'a: not struct and 'a :> Node> (path : NodePath) (node : Node) =
     node.GetNode<'a>(path)
 
-let tryGetNode<'a when 'a: null and 'a :> Node> (path : NodePath) (node : Node) =
+let tryGetNode<'a when 'a: null and 'a: not struct and 'a :> Node> (path : NodePath) (node : Node) =
     node.GetNodeOrNull<'a> path |> Option.ofObj
 
 let getParent<'a when 'a: not struct and 'a :> Node> (node : Node) =
     node.GetParent<'a>()
 
-let tryGetParent<'a when 'a : null and 'a :> Node> (node : Node) =
+let tryGetParent<'a when 'a : null and 'a: not struct and 'a :> Node> (node : Node) =
     node.GetParentOrNull<'a>() |> Option.ofObj
 
 let getChild<'a when 'a: not struct and 'a :> Node> (idx : int) (node : Node) =
@@ -58,13 +58,13 @@ let getChild<'a when 'a: not struct and 'a :> Node> (idx : int) (node : Node) =
 let getChildInternal<'a when 'a: not struct and 'a :> Node> (idx : int) (node : Node) =
     node.GetChild<'a>(idx, true)
 
-let tryGetChildInternalOrNot<'a when 'a : null and 'a :> Node> (idx : int) inter (node : Node) =
+let tryGetChildInternalOrNot<'a when 'a : null and 'a: not struct and 'a :> Node> (idx : int) inter (node : Node) =
     node.GetChildOrNull<'a>(idx, inter) |> Option.ofObj
 
-let tryGetChild<'a when 'a : null and 'a :> Node> (idx : int) (node : Node) =
+let tryGetChild<'a when 'a : null and 'a: not struct and 'a :> Node> (idx : int) (node : Node) =
     node.GetChildOrNull<'a>(idx) |> Option.ofObj
 
-let tryGetChildInternal<'a when 'a : null and 'a :> Node> (idx : int) (node : Node) =
+let tryGetChildInternal<'a when 'a : null and 'a: not struct and 'a :> Node> (idx : int) (node : Node) =
     node.GetChildOrNull<'a>(idx, true) |> Option.ofObj
 
 let getChildrenInternalOrNot<'a when 'a: not struct and 'a :> Node> inter (node : Node) = seq {

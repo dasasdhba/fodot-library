@@ -1,6 +1,6 @@
-#nowarn "44"
-
 module Fodot.Extend.GodotObject
+
+#nowarn "44"
 
 open Godot
 open Fodot
