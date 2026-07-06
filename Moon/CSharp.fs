@@ -1,6 +1,7 @@
 namespace Moon.CSharp
 
 open System.Runtime.CompilerServices
+open FSharp
 open Godot
 open Moon.Module
 
@@ -34,9 +35,7 @@ module CanvasItemExtensions =
     
     [<Extension>]
     let TryGetTexture (item : CanvasItem) =
-        match item |> CanvasItem.tryGetTexture with
-        | Some t -> t
-        | None -> null
+        item |> CanvasItem.tryGetTexture |> Option.asObj
     
     [<Extension>]
     let FadeIn (item : CanvasItem) time =

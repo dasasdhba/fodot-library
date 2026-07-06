@@ -1,4 +1,4 @@
-module Fodot.Async.Event
+module FSharp.Threading.Event
 
 open System.Threading
 open System.Threading.Tasks

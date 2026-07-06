@@ -1,4 +1,4 @@
-module FSharp.Extend.Dict
+module FSharp.Generic.Dict
 
 open System.Collections.Generic
 

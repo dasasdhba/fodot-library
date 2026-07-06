@@ -1,7 +1,7 @@
 namespace Fodot
 
 open System
-open FSharp.Extend
+open FSharp.Generic
 open Godot
 
 type ProcessFunc<'a> =
@@ -26,7 +26,10 @@ module Engine =
             this.Process |> List.isEmpty |> not
         member this.DoProcess delta =
             this.Process |> List.iter (fun (_, f) ->
-                f.Invoke delta
+                try
+                    f.Invoke delta
+                with
+                | ex -> Logger.pushError ex
             )
 
     let private idleMap = WeakMeta<ProcessData>()

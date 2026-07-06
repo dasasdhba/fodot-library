@@ -1,6 +1,7 @@
 using System;
 using System.Threading;
 using System.Threading.Tasks;
+using FSharp;
 using Godot;
 using Microsoft.FSharp.Core;
 
@@ -31,12 +32,6 @@ public static class AsyncExtensions
 
     private static ProcessFunc<bool> Predicate(Func<double, bool> action)
         => ProcessFunc<bool>.NewDelta(action.AsFSharpFunc());
-
-    private static async Task<Unit> AsUnitTask(Task task)
-    {
-        await task;
-        return null;
-    }
 
     public static Task Await(this Node node, double time, bool physics = false)
         => node.CompletedIfInvalid(() => node.NewAsyncNode(physics).Delay(time));
@@ -123,10 +118,10 @@ public static class AsyncExtensions
         => node.AwaitFrame(1, ct, true);
 
     public static Task Await(this Node node, Task task, bool physics = false)
-        => node.CompletedIfInvalid(() => node.NewAsyncNode(physics).Wait(AsUnitTask(task)));
+        => node.CompletedIfInvalid(() => node.NewAsyncNode(physics).Wait(task.AsUnit()));
 
     public static Task Await(this Node node, Task task, CancellationToken ct, bool physics = false)
-        => node.CompletedIfInvalid(() => node.NewAsyncNode(physics, ct).Wait(AsUnitTask(task)));
+        => node.CompletedIfInvalid(() => node.NewAsyncNode(physics, ct).Wait(task.AsUnit()));
 
     public static Task<T> Await<T>(this Node node, Task<T> task, bool physics = false)
         => node.CompletedIfInvalid(() => node.NewAsyncNode(physics).Wait(task));
@@ -147,10 +142,10 @@ public static class AsyncExtensions
         => node.Await(task, ct, true);
 
     public static Task AwaitProcess(this Node node, Task task, Action<double> process, bool physics = false)
-        => node.CompletedIfInvalid(() => node.NewAsyncNode(physics).WaitWith(Proc(process), AsUnitTask(task)));
+        => node.CompletedIfInvalid(() => node.NewAsyncNode(physics).WaitWith(Proc(process), task.AsUnit()));
 
     public static Task AwaitProcess(this Node node, Task task, Action<double> process, CancellationToken ct, bool physics = false)
-        => node.CompletedIfInvalid(() => node.NewAsyncNode(physics, ct).WaitWith(Proc(process), AsUnitTask(task)));
+        => node.CompletedIfInvalid(() => node.NewAsyncNode(physics, ct).WaitWith(Proc(process), task.AsUnit()));
 
     public static Task<T> AwaitProcess<T>(this Node node, Task<T> task, Action<double> process, bool physics = false)
         => node.CompletedIfInvalid(() => node.NewAsyncNode(physics).WaitWith(Proc(process), task));
@@ -171,10 +166,10 @@ public static class AsyncExtensions
         => node.AwaitProcess(task, process, ct, true);
 
     public static Task AwaitProcess(this Node node, Task task, Action process, bool physics = false)
-        => node.CompletedIfInvalid(() => node.NewAsyncNode(physics).WaitWith(Proc(process), AsUnitTask(task)));
+        => node.CompletedIfInvalid(() => node.NewAsyncNode(physics).WaitWith(Proc(process), task.AsUnit()));
 
     public static Task AwaitProcess(this Node node, Task task, Action process, CancellationToken ct, bool physics = false)
-        => node.CompletedIfInvalid(() => node.NewAsyncNode(physics, ct).WaitWith(Proc(process), AsUnitTask(task)));
+        => node.CompletedIfInvalid(() => node.NewAsyncNode(physics, ct).WaitWith(Proc(process), task.AsUnit()));
 
     public static Task<T> AwaitProcess<T>(this Node node, Task<T> task, Action process, bool physics = false)
         => node.CompletedIfInvalid(() => node.NewAsyncNode(physics).WaitWith(Proc(process), task));
@@ -195,10 +190,10 @@ public static class AsyncExtensions
         => node.AwaitProcess(task, process, ct, true);
 
     public static Task Await(this Node node, GodotObject obj, StringName signal, bool physics = false)
-        => node.CompletedIfInvalid(() => AsUnitTask(node.NewAsyncNode(physics).WaitSignal<Unit>(obj, signal)));
+        => node.CompletedIfInvalid(() => node.NewAsyncNode(physics).WaitSignal<Unit>(obj, signal).AsUnit());
 
     public static Task Await(this Node node, GodotObject obj, StringName signal, CancellationToken ct, bool physics = false)
-        => node.CompletedIfInvalid(() => AsUnitTask(node.NewAsyncNode(physics, ct).WaitSignal<Unit>(obj, signal)));
+        => node.CompletedIfInvalid(() => node.NewAsyncNode(physics, ct).WaitSignal<Unit>(obj, signal).AsUnit());
 
     public static Task<T> Await<T>(this Node node, GodotObject obj, StringName signal, bool physics = false)
         => node.CompletedIfInvalid(() => node.NewAsyncNode(physics).WaitSignal<T>(obj, signal));
@@ -219,10 +214,10 @@ public static class AsyncExtensions
         => node.Await<T>(obj, signal, ct, true);
 
     public static Task AwaitProcess(this Node node, GodotObject obj, StringName signal, Action<double> process, bool physics = false)
-        => node.CompletedIfInvalid(() => AsUnitTask(node.NewAsyncNode(physics).WaitSignalWith<Unit>(Proc(process), obj, signal)));
+        => node.CompletedIfInvalid(() => node.NewAsyncNode(physics).WaitSignalWith<Unit>(Proc(process), obj, signal).AsUnit());
 
     public static Task AwaitProcess(this Node node, GodotObject obj, StringName signal, Action<double> process, CancellationToken ct, bool physics = false)
-        => node.CompletedIfInvalid(() => AsUnitTask(node.NewAsyncNode(physics, ct).WaitSignalWith<Unit>(Proc(process), obj, signal)));
+        => node.CompletedIfInvalid(() => node.NewAsyncNode(physics, ct).WaitSignalWith<Unit>(Proc(process), obj, signal).AsUnit());
 
     public static Task<T> AwaitProcess<T>(this Node node, GodotObject obj, StringName signal, Action<double> process, bool physics = false)
         => node.CompletedIfInvalid(() => node.NewAsyncNode(physics).WaitSignalWith<T>(Proc(process), obj, signal));
@@ -243,10 +238,10 @@ public static class AsyncExtensions
         => node.AwaitProcess<T>(obj, signal, process, ct, true);
 
     public static Task AwaitProcess(this Node node, GodotObject obj, StringName signal, Action process, bool physics = false)
-        => node.CompletedIfInvalid(() => AsUnitTask(node.NewAsyncNode(physics).WaitSignalWith<Unit>(Proc(process), obj, signal)));
+        => node.CompletedIfInvalid(() => node.NewAsyncNode(physics).WaitSignalWith<Unit>(Proc(process), obj, signal).AsUnit());
 
     public static Task AwaitProcess(this Node node, GodotObject obj, StringName signal, Action process, CancellationToken ct, bool physics = false)
-        => node.CompletedIfInvalid(() => AsUnitTask(node.NewAsyncNode(physics, ct).WaitSignalWith<Unit>(Proc(process), obj, signal)));
+        => node.CompletedIfInvalid(() => node.NewAsyncNode(physics, ct).WaitSignalWith<Unit>(Proc(process), obj, signal).AsUnit());
 
     public static Task<T> AwaitProcess<T>(this Node node, GodotObject obj, StringName signal, Action process, bool physics = false)
         => node.CompletedIfInvalid(() => node.NewAsyncNode(physics).WaitSignalWith<T>(Proc(process), obj, signal));

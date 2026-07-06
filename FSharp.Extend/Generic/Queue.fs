@@ -1,4 +1,4 @@
-module FSharp.Extend.Queue
+module FSharp.Generic.Queue
 
 open System.Collections.Generic
 

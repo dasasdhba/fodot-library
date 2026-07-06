@@ -1,4 +1,4 @@
-module FSharp.Extend.List
+module FSharp.Generic.List
 
 /// return the first removed list if the pattern is found, otherwise return None.
 /// Useful when you need to know whether the remove success. Otherwise, use List.filter instead.

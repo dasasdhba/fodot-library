@@ -1,6 +1,7 @@
 namespace Fodot.Async
 
 open FSharp.Concurrent
+open FSharp.Threading
 open Fodot
 open System
 open System.Collections.Concurrent
@@ -13,7 +14,7 @@ type AsyncScenePool() =
     let mutable queuedRemove : PackedScene list = []
     let pool =
         ConcurrentDictionary<PackedScene, ConcurrentQueue<Node>> ()
-    let mutable addTask : Task option = None
+    let mutable addTask : Task<unit> option = None
     
     member this.Update (scene : PackedScene) =
         let node = PackedScene.instantiate scene
@@ -79,7 +80,7 @@ type AsyncScenePool() =
         queuedRemove <- []
     
     member private this.CreateAddTask () =
-        Task.Run(fun () ->
+        Task.run(fun () ->
             while queuedAdd.Length > 0 do
                 lock queueLock (fun () ->
                     let scene = queuedAdd.Head
@@ -89,7 +90,7 @@ type AsyncScenePool() =
         )
     
     member private this.CreateRemoveTask () =
-        Task.Run(fun () ->
+        Task.run(fun () ->
             lock queueLock (fun () ->
                 this.Remove ()
             )
@@ -114,7 +115,7 @@ type AsyncScenePool() =
             queuedRemove <- queuedRemove @ scene
         )
         
-        this.CreateRemoveTask () |> ignore
+        this.CreateRemoveTask () |> Task.forget
         
     member this.RemoveMultiple (count : int) (scene : PackedScene) =
         this.RemoveList [for _ in 1..count -> scene]

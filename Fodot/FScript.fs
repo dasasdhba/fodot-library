@@ -6,7 +6,7 @@ open System.Collections.Frozen
 open System.Collections.Generic
 open System.Reflection
 open FSharp.Builder
-open FSharp.Extend
+open FSharp.Generic
 open Godot
     
 module FScript =

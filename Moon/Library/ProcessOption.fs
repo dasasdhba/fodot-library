@@ -10,11 +10,16 @@ module ProcessOption =
     
     let bind (node : Node) (proc : ProcessOption<'a>) : ProcessOption<'a> =
         Delta (fun delta ->
-            node
-            |> GodotObject.validate
-            |> Option.filter _.IsInsideTree()
-            |> Option.bind (fun _ ->
-                proc.Invoke delta
-            )
+            try
+                node
+                |> GodotObject.validate
+                |> Option.filter _.IsInsideTree()
+                |> Option.bind (fun _ ->
+                    proc.Invoke delta
+                )
+            with
+            | ex ->
+                Logger.pushError ex
+                None
         )
 

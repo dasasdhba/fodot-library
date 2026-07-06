@@ -1,4 +1,4 @@
-module FSharp.Extend.Seq
+module FSharp.Generic.Seq
 
 let partition predicate source =
     let yes = ResizeArray<'a>()

@@ -1,7 +1,7 @@
 namespace Moon.Library
 
 open System.Threading
-open Fodot.Async
+open FSharp.Threading
 open Fodot
 open Godot
 

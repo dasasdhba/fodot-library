@@ -11,14 +11,18 @@
         <Compile Include="Concurrent\Queue.fs" />
         <Compile Include="Concurrent\Stack.fs" />
         <Compile Include="Concurrent\Bag.fs" />
+        <Compile Include="Generic\Dict.fs" />
+        <Compile Include="Generic\Queue.fs" />
+        <Compile Include="Generic\Stack.fs" />
+        <Compile Include="Generic\List.fs" />
+        <Compile Include="Generic\Seq.fs" />
         <Compile Include="Extend\ReLazy.fs" />
         <Compile Include="Extend\WeakMap.fs" />
-        <Compile Include="Extend\Dict.fs" />
-        <Compile Include="Extend\Queue.fs" />
-        <Compile Include="Extend\Stack.fs" />
-        <Compile Include="Extend\List.fs" />
-        <Compile Include="Extend\Seq.fs" />
+        <Compile Include="Threading\Task.fs" />
+        <Compile Include="Threading\Event.fs" />
+        <Compile Include="Option.fs" />
         <Compile Include="Builder.fs" />
+        <Compile Include="CSharp.fs" />
     </ItemGroup>
 
 </Project>

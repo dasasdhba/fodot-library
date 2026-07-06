@@ -1,3 +1,4 @@
+[<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
 module Fodot.Async.Signal
 
 open System.Threading

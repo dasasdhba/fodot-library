@@ -2,6 +2,7 @@ namespace Fodot.Async
 
 open System.Threading
 open System.Threading.Tasks
+open FSharp.Threading
 open Fodot
 open Godot
 
@@ -77,13 +78,15 @@ module AsyncNode =
     let delayFrame (frame : uint) (anode : AsyncNode) =
         anode |> delayFrameWithSome None frame
     
-    let private waitWithSome<'a> (proc : ProcessUnit option) (waitTask : Task<'a>) (anode : AsyncNode) = task {
-        do! anode |> until (Delta (fun delta ->
-            if proc.IsSome then proc.Value.Invoke delta
-            waitTask.IsCompleted
-        ))
-        return waitTask.Result
-    }
+    let private waitWithSome<'a> (proc : ProcessUnit option) (waitTask : Task<'a>) (anode : AsyncNode) =
+        let log = waitTask |> Task.log
+        task {
+            do! anode |> until (Delta (fun delta ->
+                if proc.IsSome then proc.Value.Invoke delta
+                log.IsCompleted
+            ))
+            return log.Result
+        }
     
     let waitWith<'a> (proc : ProcessUnit) (waitTask : Task<'a>) (anode : AsyncNode) =
         anode |> waitWithSome (Some proc) waitTask
