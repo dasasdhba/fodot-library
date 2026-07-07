@@ -7,9 +7,9 @@ namespace Fodot.CSharp;
 
 public static class FodotExtensions
 {
-    public static T InstantiateSafely<T>(this PackedScene scene) where T : Node
+    public static T InstantiateSafely<T>(this PackedScene scene, PackedScene.GenEditState editState = PackedScene.GenEditState.Disabled) where T : Node
     {
-        return PackedSceneModule.instantiateTo<T>(scene);
+        return PackedSceneModule.instantiateToWith<T>(editState, scene);
     }
 
     public static void AddChildSafely(this Node node, Node child, Node.InternalMode internalMode = Node.InternalMode.Disabled)

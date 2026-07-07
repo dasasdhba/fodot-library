@@ -11,6 +11,30 @@ module OptionExt =
     let AsObj (o : 'a option) =
         o |> Option.asObj
 
+module ObservableExt =
+    
+    [<Extension>]
+    let Subscribe (o : IObservable<'a>) (f : Action<'a>) =
+        o.Subscribe f.Invoke
+
+module UnitObservableExt =
+    
+    [<Extension>]
+    let Subscribe (o : IObservable<unit>) (f : Action) =
+        o.Subscribe f.Invoke
+
+module EventExt =
+    
+    [<Extension>]
+    let Add (e : IEvent<'a>) (f : Action<'a>) =
+        e.Add f.Invoke
+    
+module UnitEventExt =
+    
+    [<Extension>]
+    let Add (e : IEvent<unit>) (f : Action) =
+        e.Add f.Invoke
+
 module FuncExt =
     
     [<Extension>]

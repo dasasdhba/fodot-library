@@ -11,10 +11,7 @@ let initH node =
         |> GodotObject.tryGetScript<IFlipHInit>
         |> Option.iter _.InitFlipH()
 
-    node
-    |> GodotObject.tryGetScript<IFlipHInit>
-    |> Option.iter _.InitFlipH()
-    
+    node |> selfInit
     node |> Node.getChildrenRecInternal |> Seq.iter selfInit
     
 let initV node =
