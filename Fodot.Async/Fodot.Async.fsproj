@@ -10,7 +10,6 @@
         <Compile Include="Task.fs" />
         <Compile Include="GD.fs" />
         <Compile Include="Signal.fs" />
-        <Compile Include="Tween.fs" />
         <Compile Include="AsyncScene.fs" />
         <Compile Include="AsyncNode.fs" />
         <Compile Include="CSharp.fs" />

@@ -79,7 +79,7 @@ module AsyncNode =
         anode |> delayFrameWithSome None frame
     
     let private waitWithSome<'a> (proc : ProcessUnit option) (waitTask : Task<'a>) (anode : AsyncNode) =
-        let log = waitTask |> Task.log
+        let log = waitTask |> Task.logWith anode.Ct
         task {
             do! anode |> until (Delta (fun delta ->
                 if proc.IsSome then proc.Value.Invoke delta
@@ -105,8 +105,19 @@ module AsyncNode =
         anode |> waitSignalWithSome<'a> None obj signal
     
     let private waitTweenWithSome (proc : ProcessUnit option) (tween : Tween) (anode : AsyncNode) =
-        let task = tween |> Tween.asTaskWith anode.Ct
-        anode |> waitWithSome proc task
+        tween.Pause ()
+        let predictor =
+            Delta (fun delta ->
+                let result = tween.CustomStep delta
+                if result && proc.IsSome then proc.Value.Invoke delta
+                result |> not
+            )
+        task {
+            try
+                do! anode |> until predictor
+            finally
+                tween.Kill ()
+        }
     
     let waitTweenWith (proc : ProcessUnit) (tween : Tween) (anode : AsyncNode) =
         anode |> waitTweenWithSome (Some proc) tween

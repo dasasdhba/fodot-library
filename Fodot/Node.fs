@@ -219,21 +219,14 @@ let duplicate (node: Node) =
 // comparer
 
 let private nodeComparer physics (x: Node) (y: Node) =
-    let vx = GodotObject.IsInstanceValid x |> Convert.ToInt32
-    let vy = GodotObject.IsInstanceValid y |> Convert.ToInt32
-    if vx + vy < 2 then
-        vx - vy
-    elif x = y then
-        0
-    else
-        let result =
-            if physics then
-                x.ProcessPhysicsPriority - y.ProcessPhysicsPriority
-            else
-                x.ProcessPriority - y.ProcessPriority
-        match result with
-        | 0 -> if x.IsGreaterThan y then 1 else -1
-        | v -> v
+    let result =
+        if physics then
+            x.ProcessPhysicsPriority - y.ProcessPhysicsPriority
+        else
+            x.ProcessPriority - y.ProcessPriority
+    match result with
+    | 0 -> if x.IsGreaterThan y then 1 else -1
+    | v -> v
 
 let idleComparer =
     {

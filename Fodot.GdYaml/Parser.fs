@@ -409,11 +409,13 @@ type SafeRoot =
             |> List.map signalToFsMember
             |> String.concat "\n"
         
+        let staticLet =
+            $"    static let _bind_map = WeakMeta<{typName}>()"
+        
         let constructor =
-            $"    static member private _bind_map = WeakMeta<{typName}>()\n" +
-            $"    static member From o = {typName}._bind_map |> WeakMeta.getOrAdd o (fun () -> {typName} o)"
+            $"    static member From o = _bind_map |> WeakMeta.getOrAdd o (fun () -> {typName} o)"
             
-        [typ; backProp; backSignal; memberProp; memberSignal; constructor] |> formatBlock
+        [typ; staticLet; backProp; backSignal; memberProp; memberSignal; constructor] |> formatBlock
         
 // main builder
 

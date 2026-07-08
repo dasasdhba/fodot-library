@@ -59,7 +59,7 @@ module FScript =
                 s
             ) (Dictionary<obj, Type list>())
     
-    #if DEBUG
+(*    #if DEBUG
         
         let allScripts =
             dict.Keys
@@ -79,7 +79,7 @@ module FScript =
         Logger.push $"Loaded scripts: \n{allScripts}"
         
     #endif
-        
+*)
         dict.ToFrozenDictionary ()
     )
     

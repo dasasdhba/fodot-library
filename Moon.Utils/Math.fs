@@ -8,11 +8,17 @@ let binarySearchAndPick maxStep eps pick =
     let mutable lastPick = None
     
     let mutable value = pick outside
-    while value |> Option.isSome do
+    
+    let rec search step =
+        if step >= maxStep || value |> Option.isNone then () else
+        
         inside <- outside
         outside <- outside * 2f
         lastPick <- value
         value <- pick outside
+        search (step + 1)
+    
+    search 0
     
     let mutable lastInside = false
     let mutable mid = inside * 0.5f + outside * 0.5f

@@ -36,10 +36,10 @@ module Engine =
     let private physicsMap = WeakMeta<ProcessData>()
     
     let private idleFlush =
-        SortedFlushIdleNodes<Node, ProcessData>()
+        SortedFlushIdlePool<Node * ProcessData>(fst)
 
     let private physicsFlush =
-        SortedFlushPhysicsNodes<Node, ProcessData>()
+        SortedFlushPhysicsPool<Node * ProcessData>(fst)
 
     let private trackFlush physics (node: Node, data : ProcessData) =
         if physics then
@@ -126,7 +126,7 @@ module Engine =
     // node process logic
 
     let private treeDoProcess physics (tree : SceneTree) =
-        let (nodes : SortedFlushNodes<Node, ProcessData>), delta =
+        let (nodes : SortedFlushPool<Node * ProcessData>), delta =
             if physics then
                 physicsFlush,
                 tree.GetCurrentScene().GetPhysicsProcessDeltaTime()
@@ -136,8 +136,8 @@ module Engine =
         
         nodes.Flush ()
         nodes.Iter ()
-        |> Seq.filter (_.Key >> _.CanProcess())
-        |> Seq.iter (_.Value >> _.DoProcess(delta))
+        |> Seq.filter (fst >> _.CanProcess())
+        |> Seq.iter (snd >> _.DoProcess(delta))
 
     // entry point
 

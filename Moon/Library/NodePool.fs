@@ -7,10 +7,12 @@ open Fodot
 
 type NodePool (scene : PackedScene) =
     
+    static let poolTable = WeakMeta<NodePool>()
+    
     let pool = ConcurrentQueue<Node>()
     let mutable disposed = false
     
-    static member PoolTable = WeakMeta<NodePool>()
+    static member PoolTable = poolTable
     member this.Disposed = disposed
         
     member this.Store count =
