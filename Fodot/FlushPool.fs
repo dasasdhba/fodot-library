@@ -46,6 +46,9 @@ type SortedFlushPool<'a>(getter: 'a -> Node, ?comparer : IComparer<Node>) =
                 if index < 0 then ~~~index else index
             items.Insert(index, x)
         )
+        
+    member private this.QueueRemove (x: 'a) =
+        pending.Enqueue(fun _ -> items.Remove x |> ignore)
     
     /// One should make sure this is called once only
     member this.Track(x: 'a) =
@@ -54,6 +57,7 @@ type SortedFlushPool<'a>(getter: 'a -> Node, ?comparer : IComparer<Node>) =
             this.QueueAdd x
 
         node.add_TreeEntered (fun _ -> this.QueueAdd x)
+        node.add_TreeExited (fun _ -> this.QueueRemove x)
 
 type SortedFlushIdlePool<'a>(getter) =
     inherit SortedFlushPool<'a>(getter, Node.idleComparer)
@@ -92,6 +96,9 @@ type FlushPool<'a>(getter : 'a -> Node) =
             if GodotObject.IsInstanceValid n && n.IsInsideTree() then
                 items.Add x
         )
+
+    member private this.QueueRemove (x: 'a) =
+        pending.Enqueue(fun _ -> items.Remove x |> ignore)
     
     /// One should make sure this is called once only
     member this.Track(x: 'a) =
@@ -100,6 +107,7 @@ type FlushPool<'a>(getter : 'a -> Node) =
             this.QueueAdd x
 
         node.add_TreeEntered (fun _ -> this.QueueAdd x)
+        node.add_TreeExited (fun _ -> this.QueueRemove x)
         
 type FlushNodes<'a when 'a :> Node>() =
     inherit FlushPool<'a>(fun a -> a :> Node)
