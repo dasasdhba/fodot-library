@@ -14,7 +14,7 @@ public static class GodotExtensions
         node.TreeExited += () => arr.Remove(node);
         if (node.IsInsideTree()) arr.Add(node);
     }
-    
+
     public static void AddWithNode<T>(this ICollection<T> arr, T data, Func<T, Node> nodeGetter)
     {
         var node = nodeGetter(data);
@@ -24,7 +24,7 @@ public static class GodotExtensions
     }
 
     #endregion
-    
+
     #region DirAccess
 
     public static IEnumerable<string> GetFilePaths(this DirAccess dir, Func<string, bool> filter = null)
@@ -36,7 +36,7 @@ public static class GodotExtensions
             yield return root + "/" + file;
         }
     }
-    
+
     public static IEnumerable<string> GetFilePathsRecursively(this DirAccess dir, Func<string, bool> filter = null)
     {
         var root = dir.GetCurrentDir();
@@ -47,7 +47,29 @@ public static class GodotExtensions
             foreach (var file in subDir.GetFilePathsRecursively(filter)) yield return file;
         }
     }
-    
+
+    public static IEnumerable<string> GetResourcePaths(this DirAccess dir, Func<string, bool> filter = null)
+    {
+        var root = dir.GetCurrentDir();
+        foreach (var file in ResourceLoader.ListDirectory(root))
+        {
+            if (file.EndsWith('/')) continue;
+            if (filter != null && !filter(file)) continue;
+            yield return root + "/" + file;
+        }
+    }
+
+    public static IEnumerable<string> GetResourcePathsRecursively(this DirAccess dir, Func<string, bool> filter = null)
+    {
+        var root = dir.GetCurrentDir();
+        foreach (var file in dir.GetResourcePaths(filter)) yield return file;
+        foreach (var sub in dir.GetDirectories())
+        {
+            using var subDir = DirAccess.Open(root + "/" + sub);
+            foreach (var file in subDir.GetResourcePathsRecursively(filter)) yield return file;
+        }
+    }
+
     #endregion
 
     #region ConfigFile
@@ -56,7 +78,7 @@ public static class GodotExtensions
     {
         var result = new Dictionary<string, Variant>();
         if (!config.HasSection(section)) return result;
-        
+
         foreach (var key in config.GetSectionKeys(section))
         {
             result[key] = config.GetValue(section, key);
@@ -73,7 +95,7 @@ public static class GodotExtensions
     }
 
     #endregion
-    
+
     #region CanvasItem
 
     /// <summary>
@@ -83,10 +105,10 @@ public static class GodotExtensions
         Rect2 rect, Color? modulate = null)
     {
         var size = texture.GetSize();
-        item.DrawTextureRectRegionTiled(texture, rect, 
+        item.DrawTextureRectRegionTiled(texture, rect,
             new(Vector2.Zero, size), modulate);
     }
-    
+
     /// <summary>
     /// Useful to draw atlas texture with tiled mode
     /// </summary>
@@ -97,13 +119,13 @@ public static class GodotExtensions
         var flipV = rect.Size.Y * srcRect.Size.Y < 0f;
         rect = new Rect2(rect.Position, rect.Size.Abs());
         srcRect = new Rect2(srcRect.Position, srcRect.Size.Abs());
-        
+
         var rx = rect.Size.X;
         var ry = rect.Size.Y;
         var ux = srcRect.Size.X;
         var uy = srcRect.Size.Y;
         if (ux <= 0f || uy <= 0f) return;
-        
+
         var px = 0f;
         while (px < rx)
         {
@@ -114,7 +136,7 @@ public static class GodotExtensions
                 var h = Math.Min(uy, ry - py);
                 var x = flipH ? ux - w : 0f;
                 var y = flipV ? uy - h : 0f;
-                var sRect = new Rect2(x, y ,w ,h);
+                var sRect = new Rect2(x, y, w, h);
                 if (flipH) w *= -1f;
                 if (flipV) h *= -1f;
                 var rRect = new Rect2(rect.Position + new Vector2(px, py), w, h);
@@ -124,6 +146,6 @@ public static class GodotExtensions
             px += ux;
         }
     }
-    
+
     #endregion
 }
