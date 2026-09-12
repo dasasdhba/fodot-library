@@ -1,4 +1,4 @@
-module Moon.Math
+module Moon.Mathm
 
 /// pick(0) is expected to be Some, while pick(1) = None is also expected
 /// but not necessary. returns inside(pick = Some), outside(pick = None), pickedValue
