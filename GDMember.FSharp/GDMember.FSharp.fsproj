@@ -1,0 +1,14 @@
+<Project Sdk="Microsoft.NET.Sdk">
+    <PropertyGroup>
+        <!-- Myriad 0.85 runs on net9.0 and loads generator plugins in-process. -->
+        <TargetFramework>net9.0</TargetFramework>
+        <GenerateDocumentationFile>$(DocumentationFileFlag)</GenerateDocumentationFile>
+        <RootNamespace>GDMember.FSharp</RootNamespace>
+        <GenerateProgramFile>false</GenerateProgramFile>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <Compile Include="Generator.fs" />
+        <PackageReference Include="Myriad.Core" Version="0.85.0" />
+    </ItemGroup>
+</Project>
