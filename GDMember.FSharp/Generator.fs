@@ -30,6 +30,9 @@ module private SourceGenerator =
     let private modulePattern =
         Regex("(?m)^\\s*module\\s+(?<name>[A-Za-z_][A-Za-z0-9_.]*)", RegexOptions.Compiled)
 
+    let private openPattern =
+        Regex("(?m)^\\s*open\\s+[^\\r\\n]+", RegexOptions.Compiled)
+
     let private splitTupleArguments (arguments: string) =
         if String.IsNullOrWhiteSpace(arguments) then
             []
@@ -74,6 +77,8 @@ module private SourceGenerator =
     let private isUnitExpression (expression: string) =
         Regex.IsMatch(expression, "^\\(\\s*\\)$")
         || Regex.IsMatch(expression, "^[A-Za-z_][A-Za-z0-9_'.]*\\s*\\(\\s*\\)$")
+        || Regex.IsMatch(expression, "(?s)\\|>\\s*Task\\.forget(?:With)?\\s*$")
+        || Regex.IsMatch(expression, "(?s)\\|>\\s*ignore\\s*$")
 
     let private parseMembers (body: string) =
         [ for item in memberPattern.Matches(body) do
@@ -100,23 +105,38 @@ module private SourceGenerator =
                   if not members.IsEmpty then
                       yield item, members ]
 
-        let namespaceName =
+        let namespaceName, scriptTypePrefix =
             if typesWithMembers.IsEmpty then
-                "namespace GDMember.Generated"
+                "namespace GDMember.Generated", None
             else
                 let matchResult = namespacePattern.Match(source)
                 if matchResult.Success then
                     let name = matchResult.Groups["name"].Value
-                    $"namespace {name}"
+                    $"namespace {name}", Some name
                 else
                     let moduleResult = modulePattern.Match(source)
                     if moduleResult.Success then
                         let name = moduleResult.Groups["name"].Value
-                        $"module {name}"
+                        let lastDot = name.LastIndexOf('.')
+                        let parent =
+                            if lastDot > 0 then
+                                name.Substring(0, lastDot)
+                            else
+                                "GDMember.Generated"
+                        $"namespace {parent}", Some name
                     else
-                        "namespace GDMember.Generated"
+                        "namespace GDMember.Generated", None
+
+        let opens =
+            openPattern.Matches(source)
+            |> Seq.cast<Match>
+            |> Seq.map (fun item -> item.Value.Trim())
+            |> Seq.distinct
+            |> Seq.toList
 
         builder.AppendLine(namespaceName) |> ignore
+        for openDeclaration in opens do
+            builder.AppendLine(openDeclaration) |> ignore
         builder.AppendLine() |> ignore
 
         for item, members in typesWithMembers do
@@ -124,10 +144,14 @@ module private SourceGenerator =
             let name = item.Groups["name"].Value
             let node = item.Groups["node"].Value
             let nodeType = item.Groups["nodeType"].Value.Trim()
+            let scriptType =
+                match scriptTypePrefix with
+                | Some prefix -> $"{prefix}.{name}"
+                | None -> name
 
             builder.AppendLine($"[<FScript({tag})>]") |> ignore
             builder.AppendLine($"type private {name}Generated({node}: {nodeType}) =") |> ignore
-            builder.AppendLine($"    let script = lazy ({node} |> FScript.get<{name}>)") |> ignore
+            builder.AppendLine($"    let script = lazy ({node} |> FScript.get<{scriptType}>)") |> ignore
 
             for memberInfo in members do
                 let invocationArguments = String.Join(", ", memberInfo.Arguments)
