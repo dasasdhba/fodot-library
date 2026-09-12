@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using Godot;
@@ -14,7 +14,7 @@ public static class Mathe
     {
         return new Vector2(vec.Y, vec.X);
     }
-    
+
     public static Vector2 Flip(this Vector2 vec2, bool flipH, bool flipV = false)
     {
         var result = vec2;
@@ -35,14 +35,14 @@ public static class Mathe
 
     public static bool ParallelTo(this Vector2 origin, Vector2 vec)
     {
-        return 
+        return
             Mathf.IsZeroApprox(origin.AngleTo(vec)) ||
             Mathf.IsZeroApprox(origin.AngleTo(-vec));
     }
 
     public static bool ParallelTo(this Vector3 origin, Vector3 vec)
     {
-        return 
+        return
             Mathf.IsZeroApprox(origin.AngleTo(vec)) ||
             Mathf.IsZeroApprox(origin.AngleTo(-vec));
     }
@@ -53,24 +53,24 @@ public static class Mathe
         origin -= dir * dir.Dot(origin);
         return origin + axis;
     }
-    
+
     public static Vector3 WithAxis(this Vector3 origin, Vector3 axis)
     {
         var dir = axis.Normalized();
         origin -= dir * dir.Dot(origin);
         return origin + axis;
     }
-    
+
     public static Vector4 WithAxis(this Vector4 origin, Vector4 axis)
     {
         var dir = axis.Normalized();
         origin -= dir * dir.Dot(origin);
         return origin + axis;
     }
-    
+
     public static float ConvToward(float current, float target, float rate)
         => Mathf.MoveToward(current, target, Math.Abs(target - current) * rate);
-    
+
     public static double ConvToward(double current, double target, double rate)
         => Mathf.MoveToward(current, target, Math.Abs(target - current) * rate);
 
@@ -78,24 +78,24 @@ public static class Mathe
     {
         return vec.MoveToward(target, (target - vec).Length() * rate);
     }
-    
+
     public static Vector3 ConvToward(this Vector3 vec, Vector3 target, float rate)
     {
         return vec.MoveToward(target, (target - vec).Length() * rate);
     }
-    
+
     public static double Accelerate(double speed, double acc, double dec, double max, double delta)
         => Mathf.MoveToward(speed, max, speed < max ? acc * delta : dec * delta);
-    
+
     public static float Accelerate(float speed, float acc, float dec, float max, float delta)
         => Mathf.MoveToward(speed, max, speed < max ? acc * delta : dec * delta);
-    
+
     public static float WrapAngle(float angle)
         => Mathf.Wrap(angle, -float.Pi, float.Pi);
-    
+
     public static double WrapAngle(double angle)
         => Mathf.Wrap(angle, -double.Pi, double.Pi);
-    
+
     /// <summary>
     /// move to target in interval with closest direction
     /// </summary>
@@ -106,7 +106,7 @@ public static class Mathe
         var diff = Mathf.Wrap(current - target, -half, half);
         return Mathf.MoveToward(current, current - diff, delta);
     }
-    
+
     /// <summary>
     /// <inheritdoc cref="MoveTowardWrap(double,double,double,double,double)"/>>
     /// </summary>
@@ -117,19 +117,19 @@ public static class Mathe
         var diff = Mathf.Wrap(current - target, -half, half);
         return Mathf.MoveToward(current, current - diff, delta);
     }
-    
+
     /// <summary>
     /// move an angle towards another one in closest direction
     /// </summary>
     public static double MoveTowardAngle(double current, double target, double delta)
         => MoveTowardWrap(current, target, -double.Pi, double.Pi, delta);
-    
+
     /// <summary>
     /// <inheritdoc cref="MoveTowardAngle(double,double,double)"/>>
     /// </summary>
     public static float MoveTowardAngle(float current, float target, float delta)
         => MoveTowardWrap(current, target, -float.Pi, float.Pi, delta);
-    
+
     /// <summary>
     /// move a direction vector towards another one by angle
     /// </summary>
@@ -139,16 +139,16 @@ public static class Mathe
         var t = target.Angle();
         return Vector2.Right.Rotated((float)MoveTowardAngle(o, t, delta));
     }
-    
+
     /// <summary>
     /// Moves this vector toward to x by the fixed delta amount.
     /// </summary>
     public static Vector2 MoveTowardX(this Vector2 origin, float x, float delta)
         => origin.MoveToward(origin with { X = x }, delta);
-        
+
     public static Vector2 MoveTowardY(this Vector2 origin, float y, float delta)
         => origin.MoveToward(origin with { Y = y }, delta);
-    
+
     /// <summary>
     /// clamp a value in center ± spread range
     /// </summary>
@@ -164,7 +164,7 @@ public static class Mathe
         var result = Math.Abs(dmin) < Math.Abs(dmax) ? smin : smax;
         return Mathf.Wrap(result, min, max);
     }
-    
+
     /// <summary>
     /// <inheritdoc cref="ClampWrap(double,double,double,double,double)"/>>
     /// </summary>
@@ -180,19 +180,19 @@ public static class Mathe
         var result = Math.Abs(dmin) < Math.Abs(dmax) ? smin : smax;
         return Mathf.Wrap(result, min, max);
     }
-    
+
     /// <summary>
     /// clamp an angle in center ± spread range
     /// </summary>
     public static double ClampAngle(double angle, double center, double spread)
         => ClampWrap(angle, center, spread, -double.Pi, double.Pi);
-    
+
     /// <summary>
     /// <inheritdoc cref="ClampAngle(double,double,double)"/>>
     /// </summary>
     public static float ClampAngle(float angle, float center, float spread)
         => ClampWrap(angle, center, spread, -float.Pi, float.Pi);
-    
+
     /// <summary>
     /// clamp a direction vector in normal.Rotate(±spread) range
     /// </summary>
@@ -201,10 +201,10 @@ public static class Mathe
 
     public static T Max<T>(params T[] values) where T : IComparable<T>
         => values.Max();
-    
+
     public static T Min<T>(params T[] values) where T : IComparable<T>
         => values.Min();
-    
+
     // random
     private static RandomNumberGenerator RNG = new();
 
@@ -217,7 +217,7 @@ public static class Mathe
     /// min~max (inclusive)
     /// </summary>
     public static float RandfRange(float min, float max) => RNG.RandfRange(min, max);
-    
+
     /// <summary>
     /// -radius~radius (inclusive)
     /// </summary>
@@ -236,7 +236,7 @@ public static class Mathe
     /// min~max (inclusive)
     /// </summary>
     public static int RandiRange(int min, int max) => RNG.RandiRange(min, max);
-    
+
     /// <summary>
     /// -radius~radius (inclusive)
     /// </summary>
@@ -245,18 +245,18 @@ public static class Mathe
         var rad = Math.Abs(radius);
         return RandiRange(-rad, rad);
     }
-    
+
     /// <summary>
     /// Returns a random index with non-uniform weights.
     /// Prints an error and returns -1 if the array is empty.
     /// </summary>
     public static int RandWeighted(float[] weights) => (int)RNG.RandWeighted(weights);
-    
+
     /// <summary>
     /// <inheritdoc cref="RandWeighted(float[])"/>
     /// </summary>
     public static int RandWeighted(IEnumerable<float> weights) => RandWeighted(weights.ToArray());
-    
+
     /// <summary>
     /// Returns a random point within the given rect.
     /// </summary>
@@ -275,7 +275,7 @@ public static class Mathe
             RandfRadius(vec.Y)
         );
     }
-    
+
     public static Vector3 Randomize(this Vector3 vec)
     {
         return new Vector3(
@@ -284,7 +284,7 @@ public static class Mathe
             RandfRadius(vec.Z)
         );
     }
-    
+
     public static Vector4 Randomize(this Vector4 vec)
     {
         return new Vector4(
@@ -302,7 +302,7 @@ public static class Mathe
             RandiRadius(vec.Y)
         );
     }
-    
+
     public static Vector3I Randomize(this Vector3I vec)
     {
         return new Vector3I(

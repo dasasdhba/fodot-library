@@ -1,4 +1,5 @@
-module FSharp.Threading.Task
+[<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
+module FSharp.Task
 
 open System.Threading.Tasks
 

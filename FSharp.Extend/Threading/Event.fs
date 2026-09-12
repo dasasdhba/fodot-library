@@ -1,4 +1,4 @@
-module FSharp.Threading.Event
+module FSharp.Event
 
 open System.Threading
 open System.Threading.Tasks
@@ -7,12 +7,12 @@ open System.Threading.Tasks
 
 let awaitWith (ct: CancellationToken) (event: IEvent<'Delegate, 'Args>) =
     let tcs = TaskCompletionSource<'Args>()
-    
-    let subscription = event.Subscribe(fun args -> 
+
+    let subscription = event.Subscribe(fun args ->
         tcs.TrySetResult(args) |> ignore
     )
 
-    let registration = ct.Register(fun () -> 
+    let registration = ct.Register(fun () ->
         tcs.TrySetCanceled() |> ignore
     )
 
@@ -23,6 +23,6 @@ let awaitWith (ct: CancellationToken) (event: IEvent<'Delegate, 'Args>) =
             subscription.Dispose()
             registration.Dispose()
     }
-    
+
 let await (event: IEvent<'Delegate, 'Args>) =
     awaitWith CancellationToken.None event

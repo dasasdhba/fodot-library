@@ -1,4 +1,4 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
 
     <PropertyGroup>
         <TargetFramework>$(TargetFrameworkVersion)</TargetFramework>
@@ -7,8 +7,14 @@
     </PropertyGroup>
 
     <ItemGroup>
-        <Compile Include="BitFlag.fs" />
-        <Compile Include="Math.fs" />
+        <Compile Include="TileSet.fs" />
+        <Compile Include="GodotObject.fs" />
+        <Compile Include="Node.fs" />
+        <Compile Include="CSharp.fs" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <ProjectReference Include="..\Moon\Moon.fsproj" />
     </ItemGroup>
 
 </Project>

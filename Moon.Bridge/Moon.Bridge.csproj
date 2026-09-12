@@ -1,0 +1,9 @@
+<Project Sdk="Godot.NET.Sdk">
+    <PropertyGroup>
+        <TargetFramework>$(TargetFrameworkVersion)</TargetFramework>
+        <TargetFramework Condition=" '$(GodotTargetPlatform)' == 'android' ">$(AndroidFrameworkVersion)</TargetFramework>
+        <EnableDynamicLoading>true</EnableDynamicLoading>
+        <RootNamespace>Moon.Bridge</RootNamespace>
+    </PropertyGroup>
+</Project>
+

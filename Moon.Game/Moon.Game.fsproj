@@ -1,0 +1,33 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <TargetFramework>$(TargetFrameworkVersion)</TargetFramework>
+        <GenerateDocumentationFile>$(DocumentationFileFlag)</GenerateDocumentationFile>
+        <RootNamespace>Moon</RootNamespace>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <Compile Include="Interface\IFlipInit.fs" />
+        <Compile Include="Module\Flip.fs" />
+        <Compile Include="Module\Action.fs" />
+        <Compile Include="Module\Resource.fs" />
+        <Compile Include="Module\Node.fs" />
+        <Compile Include="Module\Viewport.fs" />
+        <Compile Include="Module\CanvasItem.fs" />
+        <Compile Include="Module\Node3D.fs" />
+        <Compile Include="Library\NodePool.fs" />
+        <Compile Include="Library\Recorder2D.fs" />
+        <Compile Include="Library\Recorder3D.fs" />
+        <Compile Include="Library\SmoothToggle.fs" />
+        <Compile Include="Library\ProcessOption.fs" />
+        <Compile Include="CSharp.fs" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <ProjectReference Include="..\Moon.Async\Moon.Async.fsproj" />
+      <ProjectReference Include="..\Moon.Module\Moon.Module.fsproj" />
+      <ProjectReference Include="..\Moon.Extend\Moon.Extend.fsproj" />
+      <ProjectReference Include="..\Moon.CSharp\Moon.CSharp.csproj" />
+    </ItemGroup>
+
+</Project>

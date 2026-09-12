@@ -1,0 +1,24 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <TargetFramework>$(TargetFrameworkVersion)</TargetFramework>
+        <GenerateDocumentationFile>$(DocumentationFileFlag)</GenerateDocumentationFile>
+        <RootNamespace>Moon</RootNamespace>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <Compile Include="Vector.fs" />
+        <Compile Include="Rect2.fs" />
+        <Compile Include="Color.fs" />
+        <Compile Include="Transform.fs" />
+        <Compile Include="CanvasItem.fs" />
+        <Compile Include="Tween.fs" />
+        <Compile Include="PhysicsServer.fs" />
+        <Compile Include="CSharp.fs" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <ProjectReference Include="..\Moon\Moon.fsproj" />
+    </ItemGroup>
+
+</Project>

@@ -1,0 +1,22 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <TargetFramework>$(TargetFrameworkVersion)</TargetFramework>
+        <GenerateDocumentationFile>$(DocumentationFileFlag)</GenerateDocumentationFile>
+        <RootNamespace>Moon</RootNamespace>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <Compile Include="Task.fs" />
+        <Compile Include="GD.fs" />
+        <Compile Include="Signal.fs" />
+        <Compile Include="AsyncScene.fs" />
+        <Compile Include="AsyncNode.fs" />
+        <Compile Include="CSharp.fs" />
+    </ItemGroup>
+    
+    <ItemGroup>
+        <ProjectReference Include="..\Moon\Moon.fsproj" />
+    </ItemGroup>
+
+</Project>

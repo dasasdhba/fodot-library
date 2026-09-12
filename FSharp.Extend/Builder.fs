@@ -1,3 +1,4 @@
+[<AutoOpen>]
 module FSharp.Builder
 
 type MaybeBuilder() =

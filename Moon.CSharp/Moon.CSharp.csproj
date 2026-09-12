@@ -3,6 +3,12 @@
         <TargetFramework>$(TargetFrameworkVersion)</TargetFramework>
         <TargetFramework Condition=" '$(GodotTargetPlatform)' == 'android' ">$(AndroidFrameworkVersion)</TargetFramework>
         <EnableDynamicLoading>true</EnableDynamicLoading>
-        <RootNamespace>Moon.Common</RootNamespace>
-    </PropertyGroup>
+    <RootNamespace>Moon</RootNamespace>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Moon.Async\Moon.Async.fsproj" />
+    <ProjectReference Include="..\Moon.Extend\Moon.Extend.fsproj" />
+    <ProjectReference Include="..\Moon.Module\Moon.Module.fsproj" />
+  </ItemGroup>
 </Project>

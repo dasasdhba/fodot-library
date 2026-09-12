@@ -7,27 +7,27 @@
     </PropertyGroup>
 
     <ItemGroup>
-        <Compile Include="Interface\IFlipInit.fs" />
-        <Compile Include="Module\Flip.fs" />
-        <Compile Include="Module\Action.fs" />
-        <Compile Include="Module\Resource.fs" />
-        <Compile Include="Module\Node.fs" />
-        <Compile Include="Module\Viewport.fs" />
-        <Compile Include="Module\CanvasItem.fs" />
-        <Compile Include="Module\Node3D.fs" />
-        <Compile Include="Library\NodePool.fs" />
-        <Compile Include="Library\Recorder2D.fs" />
-        <Compile Include="Library\Recorder3D.fs" />
-        <Compile Include="Library\SmoothToggle.fs" />
-        <Compile Include="Library\ProcessOption.fs" />
-        <Compile Include="CSharp.fs" />
+        <ProjectReference Include="..\FSharp.Extend\FSharp.Extend.fsproj" />
+        <ProjectReference Include="..\Moon.Bridge\Moon.Bridge.csproj" />
     </ItemGroup>
 
     <ItemGroup>
-      <ProjectReference Include="..\Fodot.Async\Fodot.Async.fsproj" />
-      <ProjectReference Include="..\Fodot.Module\Fodot.Module.fsproj" />
-      <ProjectReference Include="..\Fodot.Extend\Fodot.Extend.fsproj" />
-      <ProjectReference Include="..\Moon.CSharp\Moon.CSharp.csproj" />
+        <Compile Include="Attribute.fs" />
+        <Compile Include="Interface.fs" />
+        <Compile Include="Logger.fs" />
+        <Compile Include="Singleton.fs" />
+        <Compile Include="GDThread.fs" />
+        <Compile Include="WeakMeta.fs" />
+        <Compile Include="Variant.fs" />
+        <Compile Include="Callable.fs" />
+        <Compile Include="GodotObject.fs" />
+        <Compile Include="GD.fs" />
+        <Compile Include="FScript.fs" />
+        <Compile Include="Node.fs" />
+        <Compile Include="PackedScene.fs" />
+        <Compile Include="Library.fs" />
+        <Compile Include="FlushPool.fs" />
+        <Compile Include="Engine.fs" />
     </ItemGroup>
 
 </Project>
