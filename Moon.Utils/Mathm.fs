@@ -87,6 +87,11 @@ let inline flip (flag: bool) (value : ^a) =
     else
         value
 
+let inline boolDir (right : bool) (left : bool) =
+    let right = if right then 1 else 0
+    let left = if left then 1 else 0
+    right - left
+
 let partitionInt (total : int) (count : int) =
     let r = total / count
     let b = total % count
