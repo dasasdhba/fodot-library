@@ -9,6 +9,10 @@ open Moon
 [<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
 module Node =
 
+    let getUnique<'a when 'a : not struct and 'a :> Node> (name : string) (node : Node) =
+        let path = new NodePath ("%" + name)
+        node |> Node.getNode<'a> path
+
     // scene owner
 
     let rec getSceneOwner (node : Node) =
