@@ -9,6 +9,8 @@
 
     <ItemGroup>
         <Compile Include="Generator.fs" />
+        <PackageReference Include="Myriad.Sdk" Version="0.85.0" />
         <PackageReference Include="Myriad.Core" Version="0.85.0" />
+        <PackageDownload Include="Myriad" Version="[0.85.0]" />
     </ItemGroup>
 </Project>
