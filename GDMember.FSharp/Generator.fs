@@ -9,8 +9,7 @@ open Myriad.Core
 module private SourceGenerator =
     type Member =
         { Name: string
-          Arguments: string list
-          IsVoid: bool }
+          Arguments: string list }
 
     let private typePattern =
         Regex(
@@ -20,7 +19,7 @@ module private SourceGenerator =
 
     let private memberPattern =
         Regex(
-            "(?ms)^\\s*\\[<GDMember(?:\\s*\\([^)]*\\))?\\s*>\\]\\s*\\r?\\n\\s*member\\s+this\\.(?<name>[A-Za-z_][A-Za-z0-9_]*)\\s*\\((?<args>[^)]*)\\)\\s*=\\s*(?<body>.*?)(?=^\\s*\\[<GDMember|\\z)",
+            "(?ms)^\\s*\\[<GDMember(?:\\s*\\([^)]*\\))?\\s*>\\]\\s*\\r?\\n\\s*member\\s+this\\.(?<name>[A-Za-z_][A-Za-z0-9_]*)\\s*\\((?<args>[^)]*)\\)\\s*(?::\\s*[^=\\r\\n]+)?=\\s*(?<body>.*?)(?=^\\s*\\[<GDMember|\\z)",
             RegexOptions.Compiled
         )
 
@@ -74,12 +73,6 @@ module private SourceGenerator =
 
         matchResult.Groups["name"].Value
 
-    let private isUnitExpression (expression: string) =
-        Regex.IsMatch(expression, "^\\(\\s*\\)$")
-        || Regex.IsMatch(expression, "^[A-Za-z_][A-Za-z0-9_'.]*\\s*\\(\\s*\\)$")
-        || Regex.IsMatch(expression, "(?s)\\|>\\s*Task\\.forget(?:With)?\\s*$")
-        || Regex.IsMatch(expression, "(?s)\\|>\\s*ignore\\s*$")
-
     let private parseMembers (body: string) =
         [ for item in memberPattern.Matches(body) do
               let args = item.Groups["args"].Value.Trim()
@@ -91,10 +84,8 @@ module private SourceGenerator =
               if List.length arguments > 16 then
                   invalidArg "GDMember" $"GDMember.FSharp member '{memberName}' supports at most 16 parameters."
 
-              let expression = item.Groups["body"].Value.Trim()
               { Name = memberName
-                Arguments = arguments
-                IsVoid = isUnitExpression expression } ]
+                Arguments = arguments } ]
 
     let generate (source: string) =
         let builder = StringBuilder()
@@ -149,6 +140,26 @@ module private SourceGenerator =
                 | Some prefix -> $"{prefix}.{name}"
                 | None -> name
 
+            // Use the existing field as an overload witness: it carries the exact
+            // C# signature even when the F# member has no return annotation.
+            let delegateFactory = $"{name}GDMemberDelegate"
+            builder.AppendLine($"type private {delegateFactory} =") |> ignore
+            for arity in members |> List.map (fun memberInfo -> memberInfo.Arguments.Length) |> List.distinct do
+                let typeArguments = [ for i in 1 .. arity -> $"'T{i}" ]
+                let arguments = [ for i in 1 .. arity -> $"arg{i}" ]
+                let lambdaArguments = if arity = 0 then "()" else String.Join(" ", arguments)
+                let call = $"callback {lambdaArguments}"
+                for isVoid in [true; false] do
+                    let returnType = if isVoid then "unit" else "'TResult"
+                    let callbackType = String.Join(" -> ", (if arity = 0 then ["unit"] else typeArguments) @ [returnType])
+                    let delegateArguments = if isVoid then typeArguments else typeArguments @ [returnType]
+                    let delegateName = if isVoid then "System.Action" else "System.Func"
+                    let delegateType =
+                        if delegateArguments.IsEmpty then delegateName
+                        else delegateName + "<" + String.Join(", ", delegateArguments) + ">"
+                    builder.AppendLine($"    static member Create(_: {delegateType}, callback: {callbackType}) = {delegateType}(fun {lambdaArguments} -> {call})") |> ignore
+            builder.AppendLine() |> ignore
+
             builder.AppendLine($"[<FScript({tag})>]") |> ignore
             builder.AppendLine($"type private {name}Generated({node}: {nodeType}) =") |> ignore
             builder.AppendLine($"    let script = lazy ({node} |> FScript.get<{scriptType}>)") |> ignore
@@ -156,33 +167,12 @@ module private SourceGenerator =
             for memberInfo in members do
                 let invocationArguments = String.Join(", ", memberInfo.Arguments)
                 let invocation = $"script.Value.{memberInfo.Name}({invocationArguments})"
-                let callback =
+                let lambdaArguments =
                     match memberInfo.Arguments with
-                    | [] -> $"fun () -> {invocation}"
-                    | arguments ->
-                        let tupleArguments = String.Join(", ", arguments)
-                        $"fun ({tupleArguments}) -> {invocation}"
+                    | [] -> "()"
+                    | arguments -> String.Join(" ", arguments)
 
-                let delegateType =
-                    if memberInfo.IsVoid then
-                        match memberInfo.Arguments with
-                        | [] -> "System.Action"
-                        | arguments ->
-                            let delegateArguments = String.Join(", ", List.replicate (List.length arguments) "_")
-                            $"System.Action<{delegateArguments}>"
-                    else
-                        let delegateArguments = String.Join(", ", List.replicate (List.length memberInfo.Arguments + 1) "_")
-                        $"System.Func<{delegateArguments}>"
-
-                let delegateCallback =
-                    match memberInfo.Arguments with
-                    | [] -> $"{delegateType}({callback})"
-                    | arguments ->
-                        let curriedArguments = String.Join(" ", arguments)
-                        let tupleArguments = String.Join(", ", arguments)
-                        $"{delegateType}(fun {curriedArguments} -> ({callback}) ({tupleArguments}))"
-
-                builder.AppendLine($"    do {node}._FSharpInvoke{memberInfo.Name} <- ({delegateCallback})") |> ignore
+                builder.AppendLine($"    do {node}._FSharpInvoke{memberInfo.Name} <- {delegateFactory}.Create({node}._FSharpInvoke{memberInfo.Name}, fun {lambdaArguments} -> {invocation})") |> ignore
 
         builder.ToString()
 

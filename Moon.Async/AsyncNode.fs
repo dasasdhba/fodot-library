@@ -19,9 +19,11 @@ type AsyncNode =
             Physics = physics
             Ct = ct
         }
-    static member NewIdle (node : Node) ct =
+    static member NewIdle (node : Node, ?ct : CancellationToken) =
+        let ct = defaultArg ct CancellationToken.None
         AsyncNode.New node false ct
-    static member NewPhysics (node : Node) ct =
+    static member NewPhysics (node : Node, ?ct : CancellationToken) =
+        let ct = defaultArg ct CancellationToken.None
         AsyncNode.New node true ct
 
 module AsyncNode =
