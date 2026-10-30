@@ -13,7 +13,7 @@ module private SourceGenerator =
 
     let private typePattern =
         Regex(
-            "(?ms)^\\s*\\[<FScript\\((?<tag>.*?)\\)>\\]\\s*\\r?\\n\\s*type\\s+(?<private>private\\s+)?(?<name>[A-Za-z_][A-Za-z0-9_]*)\\s*\\(\\s*(?<node>[A-Za-z_][A-Za-z0-9_]*)\\s*:\\s*(?<nodeType>[^)]+?)\\s*\\)\\s*=\\s*(?<body>.*?)(?=^\\s*\\[<FScript\\(|\\z)",
+            "(?ms)^\\s*\\[<(?<attribute>FScript(?:\\s*\\(.*?\\))?)\\s*>\\]\\s*\\r?\\n\\s*type\\s+(?<private>private\\s+)?(?<name>[A-Za-z_][A-Za-z0-9_]*)\\s*\\(\\s*(?<node>[A-Za-z_][A-Za-z0-9_]*)\\s*:\\s*(?<nodeType>[^)]+?)\\s*\\)\\s*=\\s*(?<body>.*?)(?=^\\s*\\[<FScript\\b|\\z)",
             RegexOptions.Compiled
         )
 
@@ -131,7 +131,7 @@ module private SourceGenerator =
         builder.AppendLine() |> ignore
 
         for item, members in typesWithMembers do
-            let tag = item.Groups["tag"].Value.Trim()
+            let attribute = item.Groups["attribute"].Value.Trim()
             let name = item.Groups["name"].Value
             let node = item.Groups["node"].Value
             let nodeType = item.Groups["nodeType"].Value.Trim()
@@ -160,7 +160,7 @@ module private SourceGenerator =
                     builder.AppendLine($"    static member Create(_: {delegateType}, callback: {callbackType}) = {delegateType}(fun {lambdaArguments} -> {call})") |> ignore
             builder.AppendLine() |> ignore
 
-            builder.AppendLine($"[<FScript({tag})>]") |> ignore
+            builder.AppendLine($"[<{attribute}>]") |> ignore
             builder.AppendLine($"type private {name}Generated({node}: {nodeType}) =") |> ignore
             builder.AppendLine($"    let script = lazy ({node} |> FScript.get<{scriptType}>)") |> ignore
 

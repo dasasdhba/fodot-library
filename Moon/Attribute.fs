@@ -5,6 +5,7 @@ open System
 [<AttributeUsage(AttributeTargets.Class, AllowMultiple = false)>]
 type FScriptAttribute(tag : obj) =
     inherit Attribute()
+    new() = FScriptAttribute(null)
     member this.Tag = tag
 
 [<AttributeUsage(AttributeTargets.Field, AllowMultiple = false)>]

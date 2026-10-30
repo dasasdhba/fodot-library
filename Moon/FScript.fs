@@ -30,8 +30,15 @@ module FScript =
 
             |> Array.tryHead
             |> Option.map (fun attr ->
-                let tag = (attr :?> FScriptAttribute).Tag
-                t, tag
+                let cons = t.GetConstructors()
+                let tag =
+                    (attr :?> FScriptAttribute).Tag
+                    |> Option.ofObj
+                    |> Option.defaultWith (fun _ ->
+                        let ps = cons[0].GetParameters()
+                        ps[0].ParameterType
+                    )
+                t, tag, cons
             )
         )
 
@@ -41,6 +48,7 @@ module FScript =
     let private attrMap = lazy (
         let dict =
             typeList.Value
+            |> List.map (fun (typ, tag, _) -> typ, tag)
             |> dict
         dict.ToFrozenDictionary()
     )
@@ -50,8 +58,9 @@ module FScript =
 
     let private typeMap = lazy (
         let dict =
-            typeList.Value
-            |> List.fold (fun (s: Dictionary<obj, Type list>) (t, tag) ->
+            attrMap.Value
+            |> Seq.map _.Deconstruct()
+            |> Seq.fold (fun (s: Dictionary<obj, Type list>) (t, tag) ->
                 if s.ContainsKey tag then
                     s[tag] <- t :: s[tag]
                 else
@@ -89,7 +98,7 @@ module FScript =
     let private paramMap = lazy (
         let dict =
             typeList.Value
-            |> List.map (fun (t, _) -> t, t.GetConstructors())
+            |> List.map (fun (t, _, c) -> t, c)
             |> dict
         dict.ToFrozenDictionary ()
     )
